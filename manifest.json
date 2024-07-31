@@ -1,0 +1,23 @@
+{
+   "manifest_version": 3,
+   "name": "miniGestures",
+   "version": "1.5",
+   "description": "a very simple mouse gestures program",
+   "background": {
+     "service_worker": "background.js"
+   },
+   "content_scripts": [
+     {
+       "all_frames": true,
+       "js": ["mouseTrack.js"],
+       "matches": ["<all_urls>"],
+       "run_at": "document_start"
+     }
+   ],
+   "permissions": ["tabs", "storage", "activeTab"],
+   "options_page": "options.html",
+   "host_permissions": ["<all_urls>"],
+   "action": {
+     "default_popup": "options.html"
+   }
+ }
