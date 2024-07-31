@@ -12,6 +12,41 @@
             padding: 0;
             min-width: 350px; /* Set minimum width */
         }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Position the tooltip above the text */
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%; /* Arrow at the bottom */
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
         h1 {
             color: #333;
         }
@@ -96,9 +131,11 @@
                     <option value="4">4</option>
                     <option value="5">5</option>
                 </select>
+                <span class="tooltip">?
+                    <span class="tooltiptext">Enable or disable rocker gestures.</span>
+                </span>
             </td>
         </tr>
-        <tr><th colspan="2" align="center">Gestures</th></tr>
         <tr>
             <th>Gesture</th>
             <th>Action</th>
