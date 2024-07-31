@@ -1,5 +1,6 @@
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-    console.log('Received message:', request.msg); // Debug log
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('Received message:', request.msg); // Debug log
+  (async () => {
     try {
       if (request.msg === "newtab") {
         await chrome.tabs.create({});
@@ -85,5 +86,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       console.error('Error in onMessage listener:', error);
       sendResponse({ resp: "error" });
     }
-    return true; // This keeps the message channel open for asynchronous responses
-  });
+  })();
+  return true; // This keeps the message channel open for asynchronous responses
+});
