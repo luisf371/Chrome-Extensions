@@ -207,30 +207,30 @@ function sendChromeMessage(msg, callback) {
     }
   
     console.log('Sending message:', msg);
-  
+
     const timeoutId = setTimeout(() => {
-      console.warn('Message response timeout for:', msg);
-      callback(null);
+        console.warn('Message response timeout for:', msg);
+        callback(new Error('Message response timeout'));
     }, 5000);
-  
+
     try {
-      chrome.runtime.sendMessage({ msg: msg }, (response) => {
-        clearTimeout(timeoutId);
-        if (chrome.runtime.lastError) {
-          console.error('Error in sendChromeMessage:', chrome.runtime.lastError.message);
-          callback(chrome.runtime.lastError);
-        } else if (response) {
-          console.log('Received response:', response.resp);
-          callback(null, response);
-        } else {
-          console.log('No response received for message:', msg);
-          callback(null);
-        }
-      });
+        chrome.runtime.sendMessage({ msg: msg }, (response) => {
+            clearTimeout(timeoutId);
+            if (chrome.runtime.lastError) {
+                console.error('Error in sendChromeMessage:', chrome.runtime.lastError.message);
+                callback(new Error(chrome.runtime.lastError.message));
+            } else if (response) {
+                console.log('Received response:', response.resp);
+                callback(null, response);
+            } else {
+                console.log('No response received for message:', msg);
+                callback(new Error('No response received'));
+            }
+        });
     } catch (e) {
-      clearTimeout(timeoutId);
-      console.error('Exception in sendChromeMessage:', e.message);
-      callback(e);
+        clearTimeout(timeoutId);
+        console.error('Exception in sendChromeMessage:', e.message);
+        callback(new Error(e.message));
     }
   }
 
