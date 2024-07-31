@@ -1,8 +1,8 @@
 {
    "manifest_version": 3,
-   "name": "miniGestures",
-   "version": "1.5",
-   "description": "a very simple mouse gestures program",
+   "name": "sGestures",
+   "version": "1.0",
+   "description": "a simple mouse gestures (sGestures) program with no bloat.",
    "background": {
      "service_worker": "background.js"
    },

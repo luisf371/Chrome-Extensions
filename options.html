@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>miniGestures Config</title>
+    <title>sGestures Config</title>
     <script src="options.js" defer></script>
     <style>
         body {
@@ -94,20 +94,21 @@
     </style>
 </head>
 <body>
-    <h1>miniGestures Config</h1>
+    <h1>sGestures Config</h1>
 
     <table id="optsTab" border="3">
         <tr>
-            <th>Rocker Gestures On:</th>
+            <th>Gesture Trails:<span class="tooltip">❓
+                <span class="tooltiptext">Enable or disable gesture trails.</span></span></th>
             <td>
-                <input type="checkbox" id="rocker" checked><span class="tooltip">?
-                    <span class="tooltiptext">Enable or disable rocker gestures.</span></span>
+                <input type="checkbox" id="trail" checked>
             </td>
         </tr>
         <tr>
-            <th>Show Gesture Trails:</th>
+            <th>Rocker Gestures:<span class="tooltip">❓
+                <span class="tooltiptext">Enable or disable rocker gestures.</span></span></th>
             <td>
-                <input type="checkbox" id="trail" checked>
+                <input type="checkbox" id="rocker" checked>
             </td>
         </tr>
         <tr>
