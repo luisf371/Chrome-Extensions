@@ -1,3 +1,8 @@
+-v4-
+fixed 2 bugs
+a) gesture displayed incorrectly due to being displayed based on page cords rather than client.
+b) gesture scripts load once page is "idle" to prevent issues on loading at "start"
+
 -v3-
 renamed to sGesture
 fixed async errors

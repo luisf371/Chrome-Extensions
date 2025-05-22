@@ -61,3 +61,5 @@ This project is licensed under the MIT License. See the `LICENSE` file for more 
 ## Acknowledgments
 
 - Thanks to the contributors and the open-source community for their support and resources.
+
+Version 1.4

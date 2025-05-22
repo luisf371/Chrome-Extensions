@@ -12,6 +12,10 @@ const ROCKER_DELAY = 200; // ms
 console.log("mouseTrack.js loaded"); // Debug log
 
 function createCanvas() {
+  if (!document.body) { // Add this check
+    console.warn("sGesture: document.body not ready for canvas creation.");
+    return;
+  }
   if (!canvas) {
     canvas = document.createElement('canvas');
     canvas.id = "gestCanvas";
@@ -19,7 +23,7 @@ function createCanvas() {
     canvas.style.top = '0';
     canvas.style.left = '0';
     canvas.style.zIndex = '10000';
-    document.body.appendChild(canvas);
+    document.body.appendChild(canvas); // This line is critical
     ctx = canvas.getContext('2d');
   }
   canvas.width = window.innerWidth;
@@ -60,8 +64,8 @@ document.addEventListener('mousedown', function(event) {
         loadOptions();
         loaded = true;
       }
-      my = event.pageY;
-      mx = event.pageX;
+      my = event.clientY; // Use clientY
+      mx = event.clientX; // Use clientX
       lx = mx;
       ly = my;
       move = "";
@@ -74,8 +78,8 @@ document.addEventListener('mousedown', function(event) {
 
 document.addEventListener('mousemove', function(event) {
   if (rmousedown) {
-    ny = event.pageY;
-    nx = event.pageX;
+    ny = event.clientY; // Use clientY
+    nx = event.clientX; // Use clientX
     const r = Math.sqrt(Math.pow(nx - mx, 2) + Math.pow(ny - my, 2));
     if (r > 16) {
       phi = Math.atan2(ny - my, nx - mx);
