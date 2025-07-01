@@ -46,17 +46,6 @@ const colorCodes = {
     return inv;
   }
   
-  function fillMenu() {
-    const gestures = ["U", "D", "L", "R"];
-    gestures.forEach(gesture => {
-      chrome.storage.local.get(gesture, (items) => {
-        const action = items[gesture] || defaultGests[gesture];
-        const select = document.getElementById(`gesture-${gesture}`);
-        select.value = action;
-      });
-    });
-  }
-  
   function save_options() {
     // Save color
     let colorSelect = document.getElementById("color");
@@ -104,7 +93,9 @@ const colorCodes = {
   }
   
   function restore_options() {
-    chrome.storage.local.get(["colorCode", "width", "rocker", "trail"], (result) => {
+    const gestures = ["U", "D", "L", "R"];
+    const settingsToGet = ["colorCode", "width", "rocker", "trail", ...gestures];
+    chrome.storage.local.get(settingsToGet, (result) => {
       console.log("Restored options:", result); // Debug log
   
       // Restore color
@@ -127,21 +118,16 @@ const colorCodes = {
       trailCheckbox.checked = result.trail === true;
   
       // Restore gestures
-      ["U", "D", "L", "R"].forEach(gesture => {
+      gestures.forEach(gesture => {
         let gestureSelect = document.getElementById(`gesture-${gesture}`);
         gestureSelect.value = result[gesture] || defaultGests[gesture];
       });
     });
   }
   
-  function loadInfo() {
-    restore_options();
-    fillMenu();
-  }
-  
   // Event Listener
   document.addEventListener('DOMContentLoaded', function() {
     console.log("Options page loaded"); // Debug log
-    loadInfo();
+    restore_options();
     document.querySelector('#save').addEventListener('click', save_options);
   });

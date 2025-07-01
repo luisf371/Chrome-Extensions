@@ -1,288 +1,279 @@
-let rmousedown = false, moved = false, lmousedown = false;
-let rocker = false, trail = false;
-let mx, my, nx, ny, lx, ly, phi;
-let move = "", omove = "";
-const pi = Math.PI;
-let suppress = 1;
-let canvas, ctx;
-let link, myColor = "red", myWidth = 3;
-let loaded = false, rocked = false;
-let lastMouseDown = 0;
-const ROCKER_DELAY = 200; // ms
-console.log("mouseTrack.js loaded"); // Debug log
+(function() {
+  const state = {
+    rmousedown: false,
+    moved: false,
+    lmousedown: false,
+    rocker: false,
+    trail: false,
+    mx: 0,
+    my: 0,
+    nx: 0,
+    ny: 0,
+    lx: 0,
+    ly: 0,
+    phi: 0,
+    move: "",
+    omove: "",
+    link: null,
+    myColor: "red",
+    myWidth: 3,
+    rocked: false,
+  };
+  const pi = Math.PI;
+  let canvas, ctx;
 
-function createCanvas() {
-  if (!document.body) { // Add this check
-    console.warn("sGesture: document.body not ready for canvas creation.");
-    return;
-  }
-  if (!canvas) {
-    canvas = document.createElement('canvas');
-    canvas.id = "gestCanvas";
-    canvas.style.position = 'fixed';
-    canvas.style.top = '0';
-    canvas.style.left = '0';
-    canvas.style.zIndex = '10000';
-    document.body.appendChild(canvas); // This line is critical
-    ctx = canvas.getContext('2d');
-  }
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  canvas.style.display = 'block';
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-function draw(x, y) {
-  if (!ctx) return;
-  ctx.beginPath();
-  ctx.strokeStyle = myColor;
-  ctx.lineWidth = myWidth;
-  ctx.moveTo(lx, ly);
-  ctx.lineTo(x, y);
-  ctx.stroke();
-  lx = x;
-  ly = y;
-}
-
-document.addEventListener('mousedown', function(event) {
-  const now = Date.now();
-  if (event.button === 0) {
-    lmousedown = true;
-    lastMouseDown = now;
-  } else if (event.button === 2) {
-    rmousedown = true;
-    if (now - lastMouseDown < ROCKER_DELAY && rocker && suppress) {
-      if (!loaded) {
-        loadOptions();
-        loaded = true;
-      }
-      move = 'back';
-      rocked = true;
-      exeRock();
-    } else if (suppress) {
-      if (!loaded) {
-        loadOptions();
-        loaded = true;
-      }
-      my = event.clientY; // Use clientY
-      mx = event.clientX; // Use clientX
-      lx = mx;
-      ly = my;
-      move = "";
-      omove = "";
-      moved = false;
-      link = event.target.closest('a') ? event.target.closest('a').href : null;
-    }
-  }
-});
-
-document.addEventListener('mousemove', function(event) {
-  if (rmousedown) {
-    ny = event.clientY; // Use clientY
-    nx = event.clientX; // Use clientX
-    const r = Math.sqrt(Math.pow(nx - mx, 2) + Math.pow(ny - my, 2));
-    if (r > 16) {
-      phi = Math.atan2(ny - my, nx - mx);
-      if (phi < 0) phi += 2 * pi;
-      let tmove = "";
-      if (phi >= pi / 4 && phi < 3 * pi / 4) tmove = "D";
-      else if (phi >= 3 * pi / 4 && phi < 5 * pi / 4) tmove = "L";
-      else if (phi >= 5 * pi / 4 && phi < 7 * pi / 4) tmove = "U";
-      else if (phi >= 7 * pi / 4 || phi < pi / 4) tmove = "R";
-      if (tmove !== omove) {
-        move += tmove;
-        omove = tmove;
-      }
-      if (!moved) {
-        createCanvas();
-      }
-      moved = true;
-      if (trail) {
-        draw(nx, ny);
-      }
-      mx = nx;
-      my = ny;
-    }
-  }
-});
-
-document.addEventListener('mouseup', function(event) {
-  if (event.button === 0) {
-    lmousedown = false;
-  }
-
-  if (event.button === 2) {
-    rmousedown = false;
-    if (moved) {
-      exeFunc();
-    } else if (rocked) {
-      rocked = false;
-    } else {
-      suppress--;
-    }
-    if (canvas) {
-      canvas.style.display = 'none';
-    }
-  }
-});
-
-function exeRock() {
-  if (move === "back") {
-    window.history.back();
-  } else if (move === "forward") {
-    window.history.forward();
-  }
-}
-
-function exeFunc() {
-  try {
-    if (!chrome.runtime || !chrome.runtime.id) {
-      console.error("Extension context invalidated.");
+  function createCanvas() {
+    if (!document.body) {
+      console.warn("sGesture: document.body not ready for canvas creation.");
       return;
     }
-    chrome.storage.local.get(["U", "D", "L", "R"], (gests) => {
-      if (chrome.runtime.lastError) {
-        console.error(chrome.runtime.lastError);
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      canvas.id = "gestCanvas";
+      canvas.style.position = 'fixed';
+      canvas.style.top = '0';
+      canvas.style.left = '0';
+      canvas.style.zIndex = '10000';
+      document.body.appendChild(canvas);
+      ctx = canvas.getContext('2d');
+    }
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.display = 'block';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function draw(x, y) {
+    if (!ctx) return;
+    ctx.beginPath();
+    ctx.strokeStyle = state.myColor;
+    ctx.lineWidth = state.myWidth;
+    ctx.moveTo(state.lx, state.ly);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    state.lx = x;
+    state.ly = y;
+  }
+
+  function exeFunc() {
+    try {
+      if (!chrome.runtime || !chrome.runtime.id) {
+        console.error("sGesture: Extension context invalidated. Cannot execute function.");
         return;
       }
-      const action = gests[move];
-      if (action) {
-        if (action === "back") {
-          window.history.back();
-        } else if (action === "forward") {
-          window.history.forward();
-        } else if (action === "newtab") {
-          if (link === null) {
-            sendChromeMessage("newtab", (error, response) => {
-              if (error) console.error('Error opening new tab:', error.message);
-            });
-          } else {
-            window.open(link);
+      // Ping the background script to ensure it's responsive
+      chrome.runtime.sendMessage({ msg: "ping" }, (response) => {
+        if (chrome.runtime.lastError || !response || response.resp !== "pong") {
+          console.error("sGesture: Background script is not responsive.", chrome.runtime.lastError?.message || "");
+          return;
+        }
+
+        // Background is responsive, proceed with getting gestures
+        const gesturesToGet = state.move.split('').filter((v, i, a) => a.indexOf(v) === i);
+        chrome.storage.local.get(gesturesToGet, (gests) => {
+          if (chrome.runtime.lastError) {
+            console.error("sGesture: Error getting gestures from storage:", chrome.runtime.lastError.message);
+            return;
           }
-        } else if (action === "closetab") {
-          sendChromeMessage("closetab", (error, response) => {
-            if (error) console.error('Error closing tab:', error.message);
-          });
-        } else if (action === "lasttab") {
-          sendChromeMessage("lasttab", (error, response) => {
-            if (error) console.error('Error opening last tab:', error.message);
-          });
-        } else if (action === "reloadall") {
-          sendChromeMessage("reloadall", (error, response) => {
-            if (error) console.error('Error reloading all tabs:', error.message);
-          });
-        } else if (action === "closeall") {
-          sendChromeMessage("closeall", (error, response) => {
-            if (error) console.error('Error closing all tabs:', error.message);
-          });
-        } else if (action === "nexttab") {
-          sendChromeMessage("nexttab", (error, response) => {
-            if (error) console.error('Error switching to next tab:', error.message);
-          });
-        } else if (action === "prevtab") {
-          sendChromeMessage("prevtab", (error, response) => {
-            if (error) console.error('Error switching to previous tab:', error.message);
-          });
-        } else if (action === "closeback") {
-          sendChromeMessage("closeback", (error, response) => {
-            if (error) console.error('Error closing background tabs:', error.message);
-          });
-        } else if (action === "scrolltop") {
-          window.scrollTo(0, 0);
-        } else if (action === "scrollbottom") {
-          window.scrollTo(0, document.body.scrollHeight);
-        } else if (action === "reload") {
-          window.location.reload();
-        } else if (action === "stop") {
-          window.stop();
+          const action = gests[state.move];
+          if (action) {
+            handleAction(action);
+          }
+        });
+      });
+    } catch (e) {
+      console.error("sGesture: Error executing function: ", e);
+    }
+  }
+
+  function handleAction(action) {
+    const actions = {
+      back: () => window.history.back(),
+      forward: () => window.history.forward(),
+      newtab: () => {
+        if (state.link === null) {
+          sendChromeMessage("newtab");
+        }
+        else {
+          window.open(state.link);
+        }
+      },
+      closetab: () => sendChromeMessage("closetab"),
+      lasttab: () => sendChromeMessage("lasttab"),
+      reloadall: () => sendChromeMessage("reloadall"),
+      closeall: () => sendChromeMessage("closeall"),
+      nexttab: () => sendChromeMessage("nexttab"),
+      prevtab: () => sendChromeMessage("prevtab"),
+      closeback: () => sendChromeMessage("closeback"),
+      scrolltop: () => window.scrollTo(0, 0),
+      scrollbottom: () => window.scrollTo(0, document.body.scrollHeight),
+      reload: () => window.location.reload(),
+      stop: () => window.stop(),
+    };
+
+    if (actions[action]) {
+      console.log(`sGesture: Executing action: ${action}`);
+      actions[action]();
+    } else {
+      console.warn("sGesture: Unknown action:", action);
+    }
+  }
+
+  function sendChromeMessage(msg, retries = 3) {
+    if (!chrome.runtime || !chrome.runtime.id) {
+      console.error("sGesture: Extension context invalidated.");
+      return;
+    }
+
+    chrome.runtime.sendMessage({ msg: "ping" }, (response) => {
+      if (chrome.runtime.lastError || !response || response.resp !== "pong") {
+        if (retries > 0) {
+          setTimeout(() => sendChromeMessage(msg, retries - 1), 100);
+        } else {
+          console.error("sGesture: Failed to connect to background script after multiple retries.");
+        }
+        return;
+      }
+
+      chrome.runtime.sendMessage({ msg: msg }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('sGesture: Error in sendChromeMessage:', chrome.runtime.lastError.message);
+        }
+      });
+    });
+  }
+
+  function loadOptions() {
+    try {
+      if (!chrome.runtime || !chrome.runtime.id) {
+        return;
+      }
+      chrome.storage.local.get(["colorCode", "width", "rocker", "trail"], (result) => {
+        if (chrome.runtime.lastError) {
+          console.error(chrome.runtime.lastError);
+          return;
+        }
+        state.myColor = "#" + (result.colorCode || "FF3300");
+        state.myWidth = result.width || 3;
+        state.rocker = result.rocker === true;
+        state.trail = result.trail === true;
+        console.log("sGesture: Options loaded", state);
+      });
+    } catch (e) {
+      console.error("sGesture: Error loading options: ", e);
+    }
+  }
+
+  function initEventListeners() {
+    document.addEventListener('mousedown', (event) => {
+      if (event.button === 0) { // Left-click
+        state.lmousedown = true;
+        if (state.rmousedown && state.rocker) {
+          // R->L rocker gesture
+          handleAction("back");
+          state.rocked = true;
+          console.log("sGesture: Rocker (R->L) detected. state.rocked = true");
+          event.preventDefault();
+        }
+      } else if (event.button === 2) { // Right-click
+        state.rmousedown = true;
+        if (state.lmousedown && state.rocker) {
+          // L->R rocker gesture
+          handleAction("forward");
+          state.rocked = true;
+          console.log("sGesture: Rocker (L->R) detected. state.rocked = true");
+          event.preventDefault();
+        } else {
+          // Start of a normal gesture
+          state.moved = false;
+          state.my = event.clientY;
+          state.mx = event.clientX;
+          state.lx = state.mx;
+          state.ly = state.my;
+          state.move = "";
+          state.omove = "";
+          state.link = event.target.closest('a') ? event.target.closest('a').href : null;
         }
       }
     });
-  } catch (e) {
-    console.error("Error executing function: ", e);
-  }
-}
 
-function sendChromeMessage(msg, callback) {
-    if (!chrome.runtime || !chrome.runtime.id) {
-      console.error("Extension context invalidated.");
-      callback(new Error("Extension context invalidated"));
-      return;
-    }
-  
-    console.log('Sending message:', msg);
-
-    const timeoutId = setTimeout(() => {
-        console.warn('Message response timeout for:', msg);
-        callback(new Error('Message response timeout'));
-    }, 5000);
-
-    try {
-        chrome.runtime.sendMessage({ msg: msg }, (response) => {
-            clearTimeout(timeoutId);
-            if (chrome.runtime.lastError) {
-                console.error('Error in sendChromeMessage:', chrome.runtime.lastError.message);
-                callback(new Error(chrome.runtime.lastError.message));
-            } else if (response) {
-                console.log('Received response:', response.resp);
-                callback(null, response);
-            } else {
-                console.log('No response received for message:', msg);
-                callback(new Error('No response received'));
-            }
-        });
-    } catch (e) {
-        clearTimeout(timeoutId);
-        console.error('Exception in sendChromeMessage:', e.message);
-        callback(new Error(e.message));
-    }
-  }
-
-document.addEventListener('contextmenu', function(event) {
-  if (suppress) {
-    event.preventDefault();
-    return false;
-  } else {
-    suppress++;
-    if (canvas) {
-      canvas.style.display = 'none';
-    }
-    rmousedown = false;
-    return true;
-  }
-});
-
-function loadOptions() {
-  try {
-    if (!chrome.runtime || !chrome.runtime.id) {
-      console.log("Extension context invalidated.");
-      return;
-    }
-    console.log("Extension context is valid. Loading options..."); // Debug log
-    chrome.storage.local.get(["colorCode", "width", "rocker", "trail"], (result) => {
-      if (chrome.runtime.lastError) {
-        console.error(chrome.runtime.lastError);
-        return;
+    document.addEventListener('mousemove', (event) => {
+      if (state.rmousedown && !state.lmousedown) { // Only if right button is down (and not left)
+        state.ny = event.clientY;
+        state.nx = event.clientX;
+        const r = Math.sqrt(Math.pow(state.nx - state.mx, 2) + Math.pow(state.ny - state.my, 2));
+        if (r > 16) {
+          state.phi = Math.atan2(state.ny - state.my, state.nx - state.mx);
+          if (state.phi < 0) state.phi += 2 * pi;
+          let tmove = "";
+          if (state.phi >= pi / 4 && state.phi < 3 * pi / 4) tmove = "D";
+          else if (state.phi >= 3 * pi / 4 && state.phi < 5 * pi / 4) tmove = "L";
+          else if (state.phi >= 5 * pi / 4 && state.phi < 7 * pi / 4) tmove = "U";
+          else if (state.phi >= 7 * pi / 4 || state.phi < pi / 4) tmove = "R";
+          if (tmove !== state.omove) {
+            state.move += tmove;
+            state.omove = tmove;
+          }
+          if (!state.moved) {
+            createCanvas();
+          }
+          state.moved = true;
+          if (state.trail) {
+            draw(state.nx, state.ny);
+          }
+          state.mx = state.nx;
+          state.my = state.ny;
+        }
       }
-      myColor = "#" + (result.colorCode || "FF3300"); // Add "#" prefix
-      myWidth = result.width || 3;
-      rocker = result.rocker === true;
-      trail = result.trail === true;
-      console.log("Loaded options:", { myColor, myWidth, rocker, trail }); // Debug log
     });
-  } catch (e) {
-    console.error("Error loading options: ", e);
-  }
-}
 
-document.addEventListener('DOMContentLoaded', function() {
-  loadOptions();
-});
+    document.addEventListener('mouseup', (event) => {
+      const wasRocked = state.rocked;
+      console.log(`sGesture: mouseup event.button: ${event.button}, wasRocked: ${wasRocked}, state.rocked: ${state.rocked}`);
 
-// Ensure the canvas is resized when the window is resized
-window.addEventListener('resize', function() {
-  if (canvas) {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+      if (event.button === 0) { // Left-click up
+        state.lmousedown = false;
+      } else if (event.button === 2) { // Right-click up
+        state.rmousedown = false;
+        if (state.moved && !state.rocked) {
+          exeFunc();
+        }
+        if (canvas) {
+          canvas.style.display = 'none';
+        }
+        state.link = null; // Reset link on right mouse up
+      }
+
+      // Prevent default action if a rocker gesture was performed
+      if (wasRocked) {
+        event.preventDefault();
+      }
+    });
+
+    document.addEventListener('contextmenu', (event) => {
+      console.log(`sGesture: contextmenu event. state.rocked: ${state.rocked}, state.moved: ${state.moved}`);
+      if (state.rocked || state.moved) {
+        event.preventDefault();
+        event.stopPropagation(); // Add this line
+        state.rocked = false; // Reset after preventing context menu
+        state.moved = false;  // Reset after preventing context menu
+        return false;
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (canvas) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+    });
   }
-});
+
+  function init() {
+    loadOptions();
+    initEventListeners();
+  }
+
+  init();
+})();
+

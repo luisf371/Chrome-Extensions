@@ -14,7 +14,7 @@
        "run_at": "document_idle"
      }
    ],
-   "permissions": ["tabs", "storage", "activeTab"],
+   "permissions": ["tabs", "storage", "activeTab", "sessions"],
    "options_page": "options.html",
    "host_permissions": ["<all_urls>"],
    "action": {
