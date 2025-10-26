@@ -1,0 +1,23 @@
+{
+   "background": {
+      "persistent": true,
+      "scripts": [ "background.js" ]
+   },
+   "description": "Manage your tabs",
+   "icons": {
+      "128": "stack.png",
+      "16": "stack.png",
+      "48": "stack.png"
+   },
+   "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCmP7Qo26TuIIKhYWaVxahJMNrHnuz4An6hFqBbk6pniDVyhR+8wlrCTmUQf0Gtus1YDCAnbkhNdtaRGCXQI96Ma+U7b5ndNM3+0gt3dCBuEj+GJ8/0LCy2s5ikVAypcaVykLui9ns2D/lAS0RK6DUMrqq6rN0M1SIW3pQbGgyLgQIDAQAB",
+   "manifest_version": 2,
+   "name": "TabsPlus",
+   "options_page": "options.html",
+   "page_action": {
+      "default_icon": "unpin.png",
+      "default_title": "Pin tab\n\n[ DON'T USE  it for Last Used Order ]"
+   },
+   "permissions": [ "tabs", "contextMenus" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "8.8.5"
+}
