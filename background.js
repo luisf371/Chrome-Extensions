@@ -1,174 +1,356 @@
-// variables
-var currentTabIndex = 0;
-var currentTabId = 0;
-var currentWindowId = 0;
-var tabsArray = new Array();
-var pinnedTabsArray = new Array();
-var fromOnRemoved = false;
+'use strict';
 
-// context menu
-createContextMenu(localStorage["useContextMenuIcon"]);
-
-// events
-chrome.tabs.query({currentWindow: true, active: true}, function(tabs) {
-   currentTabIndex = tabs[0].index;
-   currentTabId = tabs[0].id;
-   currentWindowId = tabs[0].windowId;
-});
-chrome.tabs.query({currentWindow: true}, function(tabs) {
-   if(pinnedTabsArray[currentWindowId] === undefined)    pinnedTabsArray[currentWindowId] = new Array();
-   for(var i=currentTabIndex; i<tabs.length; i++) {
-      tabsArray.push(tabs[i].id);
-      chrome.pageAction.show(tabs[i].id);
-      if(tabs[i].pinned == true) pinnedTabsArray[currentWindowId].push(tabs[i].id);
-   }
-   for(var i=currentTabIndex-1; i>=0; i--) {
-      tabsArray.push(tabs[i].id);
-      chrome.pageAction.show(tabs[i].id);
-      if(tabs[i].pinned == true) pinnedTabsArray[currentWindowId].push(tabs[i].id);
-   }
-});
-chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
-   fromOnRemoved = true;
-   if(tabsArray.indexOf(tabId) != -1) {
-      tabsArray.splice(tabsArray.indexOf(tabId), 1);
-   }
-   if(pinnedTabsArray[currentWindowId].indexOf(tabId) != -1) {
-      pinnedTabsArray[currentWindowId].splice(pinnedTabsArray[currentWindowId].indexOf(tabId), 1);
-   }
-   if(currentTabId == tabId) {
-      switch(localStorage["tabsActivate"]) {
-         case "last_used":
-            chrome.tabs.update(tabsArray[0], {active: true});
-            break;
-         case "left":
-            chrome.tabs.query({windowId: currentWindowId}, function(tabs) {
-               if(currentTabIndex > 0) currentTabIndex = currentTabIndex - 1;
-               chrome.tabs.update(tabs[currentTabIndex].id, {active: true});
-            });
-            break;
-         case "right":
-            chrome.tabs.query({windowId: currentWindowId}, function(tabs) {
-               if(currentTabIndex >= tabs.length)  currentTabIndex = tabs.length - 1;
-               chrome.tabs.update(tabs[currentTabIndex].id, {active: true});
-            });
-            break;
-      }
-   }
-   else {
-      fromOnRemoved = false;
-   }
-});
-chrome.tabs.onCreated.addListener(function(tab) {
-   if(!fromOnRemoved) {
-      switch(localStorage["tabsBehaviour"]) {
-      case "first":
-         chrome.tabs.move(tab.id, {index: pinnedTabsArray[tab.windowId].length});
-         break;
-      case "last":
-         chrome.tabs.move(tab.id, {index: 9999});
-         break;
-      case "left":
-         chrome.tabs.get(currentTabId, function(selectedTab) {
-            var moveToIndex = selectedTab.index;
-            if(moveToIndex < pinnedTabsArray[tab.windowId].length)
-               moveToIndex = pinnedTabsArray[tab.windowId].length;
-            chrome.tabs.move(tab.id, {index: moveToIndex});
-         });
-         break;
-      case "right":
-         chrome.tabs.get(currentTabId, function(selectedTab) {
-            var moveToIndex = selectedTab.index + 1;
-            if(moveToIndex < pinnedTabsArray[tab.windowId].length)
-               moveToIndex = pinnedTabsArray[tab.windowId].length;
-            chrome.tabs.move(tab.id, {index: moveToIndex});
-         });
-         break;
-      }
-   }
-   if(fromOnRemoved || (localStorage["tabsOpenMethod"] == "foreground"))
-      chrome.tabs.update(tab.id, {active: true});
-   else if(localStorage["tabsOpenMethod"] == "background" && !tab.url.match(/^chrome/))
-      chrome.tabs.update(currentTabId, {active: true});
-   tabsArray.push(tab.id);
-   showIcon(tab.id);
-});
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-   switch(changeInfo.pinned) {
-   case true:
-      pinnedTabsArray[tab.windowId].splice(pinnedTabsArray[tab.windowId].indexOf(tabId), 1);
-      pinnedTabsArray[tab.windowId].push(tabId);
-      break;
-   case false:
-      pinnedTabsArray[tab.windowId].splice(pinnedTabsArray[tab.windowId].indexOf(tabId), 1);
-      break;
-   }
-   showIcon(tabId);
-});
-chrome.tabs.onActivated.addListener(function(activeInfo) {
-   currentTabId = activeInfo.tabId;
-   currentWindowId = activeInfo.windowId;
-   chrome.tabs.get(currentTabId, function(selectedTab) {
-      currentTabIndex = selectedTab.index;
-   });
-
-   if(!fromOnRemoved && (tabsArray.indexOf(activeInfo.tabId) != -1 || localStorage["useIcon"] == "no")) {
-      tabsArray.splice(tabsArray.indexOf(activeInfo.tabId), 1);
-      tabsArray.splice(0,0,activeInfo.tabId);
-   }
-   fromOnRemoved = false;
-   showIcon(activeInfo.tabId);
-});
-chrome.tabs.onMoved.addListener(function(tabId, moveInfo) {
-   currentWindowId = moveInfo.windowId;
-   currentTabIndex = moveInfo.toIndex;
-});
-chrome.tabs.onDetached.addListener(function(tabId, detachInfo) {
-   pinnedTabsArray[detachInfo.oldWindowId].splice(pinnedTabsArray[detachInfo.oldWindowId].indexOf(tabId), 1);
-});
-chrome.tabs.onAttached.addListener(function(tabId, attachInfo) {
-   if(pinnedTabsArray[attachInfo.newWindowId] === undefined)   pinnedTabsArray[attachInfo.newWindowId] = new Array();
-   pinnedTabsArray[attachInfo.newWindowId].push(tabId);
-});
-chrome.pageAction.onClicked.addListener(function(tab) {
-   chrome.tabs.query({currentWindow: true, active: true}, function(tabs) {
-      if(tabsArray.indexOf(tab.id) == -1)
-         tabsArray.splice(0,0,tab.id);
-      else
-         tabsArray.splice(tabsArray.indexOf(tab.id), 1);
-      showIcon(tab.id);
-   });
+const DEFAULT_SETTINGS = Object.freeze({
+   tabsBehaviour: 'default',
+   tabsActivate: 'last_used',
+   tabsOpenMethod: 'default'
 });
 
-// functions
-function showIcon(tabId) {
-   if(localStorage["useIcon"] == "no") {
-      chrome.pageAction.hide(tabId);
+const windowState = new Map();
+let settingsCache = { ...DEFAULT_SETTINGS };
+const sessionStorageAvailable = Boolean(chrome.storage && chrome.storage.session);
+let readyPromise = null;
+bootstrap();
+
+chrome.runtime.onInstalled.addListener(() => {
+   void ensureDefaults().catch(console.error);
+});
+
+chrome.runtime.onStartup.addListener(() => {
+   readyPromise = bootstrap();
+});
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+   if (areaName !== 'sync') return;
+   for (const [key, change] of Object.entries(changes)) {
+      const newValue = change.newValue !== undefined ? change.newValue : DEFAULT_SETTINGS[key];
+      settingsCache[key] = newValue;
    }
-   else {
-      if(tabsArray.indexOf(tabId) == -1) {
-         chrome.pageAction.setIcon({path: "pin.png", tabId: tabId});
-         chrome.pageAction.setTitle({title: "Unpin tab\n\n[ USE  it for Last Used Order ]", tabId: tabId});
+});
+
+chrome.tabs.onCreated.addListener(tab => {
+   void handleTabCreated(tab).catch(console.error);
+});
+chrome.tabs.onActivated.addListener(activeInfo => {
+   void handleTabActivated(activeInfo).catch(console.error);
+});
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+   void handleTabRemoved(tabId, removeInfo).catch(console.error);
+});
+chrome.tabs.onMoved.addListener((tabId, moveInfo) => {
+   void handleTabMoved(tabId, moveInfo).catch(console.error);
+});
+chrome.tabs.onDetached.addListener((tabId, detachInfo) => {
+   void handleTabDetached(tabId, detachInfo).catch(console.error);
+});
+chrome.tabs.onAttached.addListener((tabId, attachInfo) => {
+   void handleTabAttached(tabId, attachInfo).catch(console.error);
+});
+
+function bootstrap() {
+   const promise = bootstrapInternal();
+   readyPromise = promise;
+   return promise;
+}
+
+async function bootstrapInternal() {
+   await ensureDefaults();
+   await loadSettings();
+   await restoreSessionState();
+   await rebuildStateFromWindows();
+}
+
+async function ensureDefaults() {
+   const stored = await chrome.storage.sync.get(Object.keys(DEFAULT_SETTINGS));
+   const updates = {};
+   for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
+      if (!Object.prototype.hasOwnProperty.call(stored, key)) {
+         updates[key] = value;
       }
-      else {
-         chrome.pageAction.setIcon({path: "unpin.png", tabId: tabId});
-         chrome.pageAction.setTitle({title: "Pin tab\n\n[ DON'T USE  it for Last Used Order ]", tabId: tabId});
-      }
-      chrome.pageAction.show(tabId);
+   }
+   if (Object.keys(updates).length > 0) {
+      await chrome.storage.sync.set(updates);
    }
 }
-function createContextMenu(yes_no) {
-   if(yes_no == "yes") {
-      chrome.contextMenus.create({"title":"Last used TAB","id":"tabsPlusID","type": "normal","contexts": ["all"]});
-      chrome.contextMenus.onClicked.addListener(lastUsedTabSelect);
-   }
-   else
-      chrome.contextMenus.removeAll();
+
+async function loadSettings() {
+   const stored = await chrome.storage.sync.get(DEFAULT_SETTINGS);
+   settingsCache = { ...DEFAULT_SETTINGS, ...stored };
 }
-function lastUsedTabSelect(info, tab) {
-   if(tabsArray[0] == tab.id) {
-      tabsArray.push(tabsArray[0]);
-      tabsArray.splice(0,1);
+
+async function restoreSessionState() {
+   if (!sessionStorageAvailable) return;
+   try {
+      const stored = await chrome.storage.session.get('windowState');
+      const rawState = stored.windowState || {};
+      for (const [windowIdString, entry] of Object.entries(rawState)) {
+         const windowId = Number(windowIdString);
+         windowState.set(windowId, {
+            order: Array.isArray(entry.order) ? [...entry.order] : [],
+            activeTabId: Number.isInteger(entry.activeTabId) ? entry.activeTabId : null,
+            activeTabIndex: Number.isInteger(entry.activeTabIndex) ? entry.activeTabIndex : 0,
+            fromRemoval: false
+         });
+      }
+   } catch (error) {
+      console.error('Failed to restore session state', error);
    }
-   chrome.tabs.update(tabsArray[0], {active: true});
+}
+
+async function persistSessionState() {
+   if (!sessionStorageAvailable) return;
+   const serialised = {};
+   for (const [windowId, state] of windowState.entries()) {
+      serialised[windowId] = {
+         order: [...state.order],
+         activeTabId: state.activeTabId,
+         activeTabIndex: state.activeTabIndex
+      };
+   }
+   try {
+      await chrome.storage.session.set({ windowState: serialised });
+   } catch (error) {
+      console.error('Failed to persist session state', error);
+   }
+}
+
+async function rebuildStateFromWindows() {
+   const windows = await chrome.windows.getAll({ populate: true });
+   const openWindowIds = new Set();
+   for (const win of windows) {
+      const tabs = Array.isArray(win.tabs) ? win.tabs : [];
+      openWindowIds.add(win.id);
+      const state = getOrCreateWindowState(win.id);
+      const openTabIds = new Set(tabs.map(tab => tab.id));
+      state.order = state.order.filter(tabId => openTabIds.has(tabId));
+      for (const tab of tabs) {
+         if (!state.order.includes(tab.id)) {
+            state.order.push(tab.id);
+         }
+         if (tab.active) {
+            state.activeTabId = tab.id;
+            state.activeTabIndex = tab.index;
+         }
+      }
+   }
+   for (const windowId of [...windowState.keys()]) {
+      if (!openWindowIds.has(windowId)) {
+         windowState.delete(windowId);
+      }
+   }
+   await persistSessionState();
+}
+
+async function handleTabCreated(tab) {
+   await waitForReady();
+   const state = getOrCreateWindowState(tab.windowId);
+   removeTabFromState(state, tab.id);
+   state.order.push(tab.id);
+
+   if (!state.fromRemoval) {
+      await repositionTab(tab);
+   }
+
+   if (state.fromRemoval || settingsCache.tabsOpenMethod === 'foreground') {
+      await activateTab(tab.id);
+   } else if (settingsCache.tabsOpenMethod === 'background') {
+      const url = typeof tab.url === 'string' ? tab.url : '';
+      if (!url.startsWith('chrome') && state.activeTabId && state.activeTabId !== tab.id) {
+         await activateTab(state.activeTabId);
+      }
+   }
+
+   state.fromRemoval = false;
+   await persistSessionState();
+}
+
+async function repositionTab(tab) {
+   if (tab.pinned) return;
+   switch (settingsCache.tabsBehaviour) {
+      case 'first': {
+         const index = await countPinnedTabs(tab.windowId);
+         await moveTab(tab.id, index);
+         break;
+      }
+      case 'last':
+         await moveTab(tab.id, -1);
+         break;
+      case 'left':
+      case 'right': {
+         const activeTab = await getActiveTab(tab.windowId);
+         if (!activeTab) return;
+         let targetIndex = activeTab.index;
+         if (settingsCache.tabsBehaviour === 'right') targetIndex += 1;
+         const pinnedCount = await countPinnedTabs(tab.windowId);
+         if (targetIndex < pinnedCount) targetIndex = pinnedCount;
+         await moveTab(tab.id, targetIndex);
+         break;
+      }
+      default:
+         break;
+   }
+}
+
+async function handleTabActivated(activeInfo) {
+   await waitForReady();
+   const tab = await chrome.tabs.get(activeInfo.tabId);
+   const state = getOrCreateWindowState(activeInfo.windowId);
+   const trackedIndex = state.order.indexOf(activeInfo.tabId);
+   if (!state.fromRemoval) {
+      if (trackedIndex !== -1) {
+         state.order.splice(trackedIndex, 1);
+      }
+      state.order.unshift(activeInfo.tabId);
+   } else if (trackedIndex === -1) {
+      state.order.unshift(activeInfo.tabId);
+   }
+
+   state.activeTabId = activeInfo.tabId;
+   state.activeTabIndex = tab.index;
+   state.fromRemoval = false;
+   await persistSessionState();
+}
+
+async function handleTabRemoved(tabId, removeInfo) {
+   await waitForReady();
+   const windowId = removeInfo.windowId;
+   const state = getOrCreateWindowState(windowId);
+   const wasActive = state.activeTabId === tabId;
+   removeTabFromState(state, tabId);
+
+   if (removeInfo.isWindowClosing) {
+      windowState.delete(windowId);
+      await persistSessionState();
+      return;
+   }
+
+   if (wasActive) {
+      state.fromRemoval = true;
+      await handlePostRemovalActivation(windowId, state);
+   } else {
+      state.fromRemoval = false;
+   }
+
+   await persistSessionState();
+}
+
+async function handlePostRemovalActivation(windowId, state) {
+   switch (settingsCache.tabsActivate) {
+      case 'last_used': {
+         const tabs = await chrome.tabs.query({ windowId });
+         const openIds = new Set(tabs.map(tab => tab.id));
+         const targetId = state.order.find(id => openIds.has(id));
+         if (targetId !== undefined) {
+            await activateTab(targetId);
+         }
+         break;
+      }
+      case 'left':
+      case 'right': {
+         const tabs = await chrome.tabs.query({ windowId });
+         if (!tabs.length) return;
+         let targetIndex = settingsCache.tabsActivate === 'left'
+            ? Math.max(state.activeTabIndex - 1, 0)
+            : Math.min(state.activeTabIndex, tabs.length - 1);
+         const targetTab = tabs[targetIndex] || tabs[tabs.length - 1];
+         if (targetTab) {
+            await activateTab(targetTab.id);
+         }
+         break;
+      }
+      default:
+         break;
+   }
+}
+
+async function handleTabMoved(tabId, moveInfo) {
+   await waitForReady();
+   const state = getOrCreateWindowState(moveInfo.windowId);
+   if (state.activeTabId === tabId) {
+      state.activeTabIndex = moveInfo.toIndex;
+      await persistSessionState();
+   }
+}
+
+async function handleTabDetached(tabId, detachInfo) {
+   await waitForReady();
+   const state = windowState.get(detachInfo.oldWindowId);
+   if (!state) return;
+   removeTabFromState(state, tabId);
+   state.activeTabId = state.activeTabId === tabId ? null : state.activeTabId;
+   await persistSessionState();
+}
+
+async function handleTabAttached(tabId, attachInfo) {
+   await waitForReady();
+   const state = getOrCreateWindowState(attachInfo.newWindowId);
+   if (!state.order.includes(tabId)) {
+      const insertionIndex = Math.min(Math.max(attachInfo.newPosition, 0), state.order.length);
+      state.order.splice(insertionIndex, 0, tabId);
+   }
+   await persistSessionState();
+}
+
+async function countPinnedTabs(windowId) {
+   const tabs = await chrome.tabs.query({ windowId, pinned: true });
+   return tabs.length;
+}
+
+async function getActiveTab(windowId) {
+   const tabs = await chrome.tabs.query({ windowId, active: true });
+   return tabs[0];
+}
+
+async function moveTab(tabId, index) {
+   try {
+      await chrome.tabs.move(tabId, { index });
+   } catch (error) {
+      logIgnorableError(error);
+   }
+}
+
+async function activateTab(tabId) {
+   try {
+      await chrome.tabs.update(tabId, { active: true });
+   } catch (error) {
+      logIgnorableError(error);
+   }
+}
+
+function getOrCreateWindowState(windowId) {
+   if (!windowState.has(windowId)) {
+      windowState.set(windowId, {
+         order: [],
+         activeTabId: null,
+         activeTabIndex: 0,
+         fromRemoval: false
+      });
+   }
+   return windowState.get(windowId);
+}
+
+async function waitForReady() {
+   if (readyPromise) {
+      await readyPromise;
+   }
+}
+
+function removeTabFromState(state, tabId) {
+   const index = state.order.indexOf(tabId);
+   if (index !== -1) {
+      state.order.splice(index, 1);
+   }
+}
+
+function logIgnorableError(error) {
+   if (isIgnorableError(error)) return;
+   console.error(error);
+}
+
+function isIgnorableError(error) {
+   if (!error) return false;
+   const message = error.message || String(error);
+   return message.includes('No tab with id') ||
+      message.includes('Tabs cannot be edited right now') ||
+      message.includes('Invalid tab ID');
 }

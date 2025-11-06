@@ -1,37 +1,63 @@
 <!DOCTYPE html>
 <head>
-<title>TabsPlus Options</title>
+<title>sTabControl Options</title>
 <style>
+body {
+   margin: 0;
+   min-height: 100vh;
+   font-family: "Segoe UI", Arial, sans-serif;
+   background-color: #121212;
+   color: #E0E0E0;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+}
 select {
-   font-family: tahoma;
-   font-size: 16px;
-   width: 140px;
+   font-family: "Segoe UI", Arial, sans-serif;
+   font-size: 15px;
+   width: 180px;
+   padding: 6px 10px;
+   border-radius: 6px;
+   border: 1px solid #2A2A2A;
+   background-color: #1E1E1E;
+   color: #F5F5F5;
+   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+select:focus {
+   outline: none;
+   border-color: #5C6BC0;
+   box-shadow: 0 0 0 2px rgba(92, 107, 192, 0.35);
 }
 .title {
-   color: black;
-   font-family: tahoma;
-   font-size:   24px;
-   font-weight: bold;
-}
-.prompt {
-   background-color: #DEE0E0;
-   color: black;
-   font-family: tahoma;
-   font-size:   14px;
+   color: #FFFFFF;
+   font-size: 24px;
+   font-weight: 600;
+   margin-bottom: 20px;
    text-align: left;
 }
+.prompt {
+   color: #C1C6D7;
+   font-size: 14px;
+   text-align: left;
+   padding-right: 16px;
+}
 .options_table {
-   position: absolute;
-   top: 25%;
-   width: 100%;
    border: none;
 }
 .options {
-   background-image: url("background.png");
-   background-repeat: no-repeat;
-   background-position: center;
-   width: 592px;
-   height: 285px;
+   background-color: rgba(30, 30, 30, 0.95);
+   border-radius: 16px;
+   padding: 36px 44px;
+   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+   min-width: 420px;
+}
+.options table {
+   width: 100%;
+   border-collapse: separate;
+   border-spacing: 0 12px;
+}
+.options td {
+   vertical-align: middle;
 }
 </style>
 <script type="text/javascript" src="jquery.min.js"></script>
@@ -39,12 +65,13 @@ select {
 </head>
 
 <body>
-<table cellspacing=0 cellpadding=0 class=options_table>
-<tr><td class=options align=center>
-<table cellspacing=3 cellpadding=3 border=0 width=330px>
+<table cellspacing="0" cellpadding="0" class="options_table">
+<tr><td class="options" align="center">
+<div class="title">sTabControl Options</div>
+<table cellspacing="0" cellpadding="0" border="0">
 <tr>
-<td nowrap class=prompt>&nbsp;&nbsp;Position of a new tab:&nbsp;&nbsp;</td>
-<td nowrap align=right width=100%>
+<td nowrap class="prompt">Position of a new tab:</td>
+<td nowrap align="right" width="100%">
 <select id="tabsBehaviour">
 <option value="default" selected>*** default ***</option>
 <option value="first">first</option>
@@ -55,8 +82,8 @@ select {
 </td>
 </tr>
 <tr>
-<td nowrap class=prompt>&nbsp;&nbsp;After closing go to:&nbsp;&nbsp;</td>
-<td nowrap align=right width=100%>
+<td nowrap class="prompt">After closing go to:</td>
+<td nowrap align="right" width="100%">
 <select id="tabsActivate">
 <option value="default">*** default ***</option>
 <option value="last_used">last used tab</option>
@@ -66,30 +93,12 @@ select {
 </td>
 </tr>
 <tr>
-<td nowrap class=prompt>&nbsp;&nbsp;Open a new tab in:&nbsp;&nbsp;</td>
-<td nowrap align=right width=100%>
+<td nowrap class="prompt">Open a new tab in:</td>
+<td nowrap align="right" width="100%">
 <select id="tabsOpenMethod">
 <option value="default">*** default ***</option>
 <option value="foreground">foreground</option>
 <option value="background">background</option>
-</select>
-</td>
-</tr>
-<tr>
-<td nowrap class=prompt>&nbsp;&nbsp;Use pin-unpin button:&nbsp;&nbsp;</td>
-<td nowrap align=right width=100%>
-<select id="useIcon">
-<option value="yes">yes</option>
-<option value="no">no</option>
-</select>
-</td>
-</tr>
-<tr>
-<td nowrap class=prompt>&nbsp;&nbsp;Use context menu:&nbsp;&nbsp;</td>
-<td nowrap align=right width=100%>
-<select id="useContextMenuIcon">
-<option value="yes">yes</option>
-<option value="no">no</option>
 </select>
 </td>
 </tr>
