@@ -9,16 +9,7 @@ const DEFAULT_SETTINGS = Object.freeze({
 const windowState = new Map();
 let settingsCache = { ...DEFAULT_SETTINGS };
 const sessionStorageAvailable = Boolean(chrome.storage && chrome.storage.session);
-let readyPromise = null;
-bootstrap();
-
-chrome.runtime.onInstalled.addListener(() => {
-   void ensureDefaults().catch(console.error);
-});
-
-chrome.runtime.onStartup.addListener(() => {
-   readyPromise = bootstrap();
-});
+let readyPromise = bootstrap().catch(handleStartupError);
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
    if (areaName !== 'sync') return;
@@ -29,35 +20,34 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 });
 
 chrome.tabs.onCreated.addListener(tab => {
-   void handleTabCreated(tab).catch(console.error);
+   handleTabCreated(tab).catch(handleRuntimeError);
 });
 chrome.tabs.onActivated.addListener(activeInfo => {
-   void handleTabActivated(activeInfo).catch(console.error);
+   handleTabActivated(activeInfo).catch(handleRuntimeError);
 });
 chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
-   void handleTabRemoved(tabId, removeInfo).catch(console.error);
+   handleTabRemoved(tabId, removeInfo).catch(handleRuntimeError);
 });
 chrome.tabs.onMoved.addListener((tabId, moveInfo) => {
-   void handleTabMoved(tabId, moveInfo).catch(console.error);
+   handleTabMoved(tabId, moveInfo).catch(handleRuntimeError);
 });
 chrome.tabs.onDetached.addListener((tabId, detachInfo) => {
-   void handleTabDetached(tabId, detachInfo).catch(console.error);
+   handleTabDetached(tabId, detachInfo).catch(handleRuntimeError);
 });
 chrome.tabs.onAttached.addListener((tabId, attachInfo) => {
-   void handleTabAttached(tabId, attachInfo).catch(console.error);
+   handleTabAttached(tabId, attachInfo).catch(handleRuntimeError);
 });
 
-function bootstrap() {
-   const promise = bootstrapInternal();
-   readyPromise = promise;
-   return promise;
-}
-
-async function bootstrapInternal() {
-   await ensureDefaults();
-   await loadSettings();
-   await restoreSessionState();
-   await rebuildStateFromWindows();
+async function bootstrap() {
+   try {
+      await ensureDefaults();
+      await loadSettings();
+      await restoreSessionState();
+      await rebuildStateFromWindows();
+   } catch (error) {
+      console.error('Bootstrap failed:', error);
+      throw error;
+   }
 }
 
 async function ensureDefaults() {
@@ -331,7 +321,13 @@ function getOrCreateWindowState(windowId) {
 
 async function waitForReady() {
    if (readyPromise) {
-      await readyPromise;
+      try {
+         await readyPromise;
+      } catch (error) {
+         console.error('waitForReady failed:', error);
+         // Re-throw to prevent operations during failed state
+         throw error;
+      }
    }
 }
 
@@ -342,9 +338,17 @@ function removeTabFromState(state, tabId) {
    }
 }
 
-function logIgnorableError(error) {
-   if (isIgnorableError(error)) return;
-   console.error(error);
+function handleRuntimeError(error) {
+   if (isIgnorableError(error)) {
+      console.warn('Ignorable error:', error.message);
+      return;
+   }
+   console.error('Runtime error:', error);
+}
+
+function handleStartupError(error) {
+   console.error('Startup error - extension may be disabled:', error);
+   // Don't re-throw startup errors to prevent extension crash
 }
 
 function isIgnorableError(error) {
@@ -352,5 +356,11 @@ function isIgnorableError(error) {
    const message = error.message || String(error);
    return message.includes('No tab with id') ||
       message.includes('Tabs cannot be edited right now') ||
-      message.includes('Invalid tab ID');
+      message.includes('Invalid tab ID') ||
+      message.includes('The tab was closed');
 }
+
+
+chrome.action.onClicked.addListener(() => {
+   chrome.runtime.openOptionsPage();
+});

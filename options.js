@@ -12,7 +12,7 @@ const SETTING_SELECTORS = [
    { key: 'tabsOpenMethod', selector: '#tabsOpenMethod' }
 ];
 
-$(document).ready(() => {
+document.addEventListener('DOMContentLoaded', () => {
    init().catch(console.error);
 });
 
@@ -55,15 +55,21 @@ async function loadSettings() {
 function applySettings(settings) {
    for (const { key, selector } of SETTING_SELECTORS) {
       const value = settings[key] || DEFAULT_SETTINGS[key];
-      $(selector).val(value);
+      const element = document.querySelector(selector);
+      if (element) {
+         element.value = value;
+      }
    }
 }
 
 function registerHandlers() {
    for (const { key, selector } of SETTING_SELECTORS) {
-      $(selector).on('change', async function handleChange() {
-         const value = $(this).val();
-         await chrome.storage.sync.set({ [key]: value });
-      });
+      const element = document.querySelector(selector);
+      if (element) {
+         element.addEventListener('change', async function handleChange() {
+            const value = this.value;
+            await chrome.storage.sync.set({ [key]: value });
+         });
+      }
    }
 }
