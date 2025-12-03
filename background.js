@@ -39,11 +39,16 @@ chrome.tabs.onAttached.addListener((tabId, attachInfo) => {
 });
 
 async function bootstrap() {
+   console.log('[sTabControl] Bootstrap sequence started.');
    try {
       await ensureDefaults();
+      console.log('[sTabControl] Defaults ensured.');
       await loadSettings();
+      console.log('[sTabControl] Settings loaded.');
       await restoreSessionState();
+      console.log('[sTabControl] Session state restored.');
       await rebuildStateFromWindows();
+      console.log('[sTabControl] State rebuilt from windows. Bootstrap complete.');
    } catch (error) {
       console.error('Bootstrap failed:', error);
       throw error;
@@ -340,14 +345,14 @@ function removeTabFromState(state, tabId) {
 
 function handleRuntimeError(error) {
    if (isIgnorableError(error)) {
-      console.warn('Ignorable error:', error.message);
+      console.warn('[sTabControl] Ignorable runtime error:', error.message);
       return;
    }
-   console.error('Runtime error:', error);
+   console.error('[sTabControl] Unhandled runtime error:', error);
 }
 
 function handleStartupError(error) {
-   console.error('Startup error - extension may be disabled:', error);
+   console.error('[sTabControl] Critical startup error:', error);
    // Don't re-throw startup errors to prevent extension crash
 }
 
