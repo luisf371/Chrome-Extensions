@@ -1,0 +1,260 @@
+{
+   "cLog_title": {
+      "message": "Változáslista"
+   },
+   "cred_line1": {
+      "message": "A SimpleUndoClose a \u003Ca href=\"https://chrome.google.com/webstore/detail/bcennaiejdjpomgmmohhpgnjlmpcjmbg\">Sexy Undo Close Tab\u003C/a> alapján készült."
+   },
+   "cred_line2": {
+      "message": "Köszönet az Undo Close tab fejlesztőjének, ami pedig a Sexy Undo Close Tab kiegészítőt ihlette."
+   },
+   "cred_line3": {
+      "message": "Végül köszönet az összes többi kiegészítőnek, amik talán az Undo Close tab kiegészítőt ihlették. :)"
+   },
+   "cred_line4": {
+      "message": "A jobb felső sarokban látható ikonok az \u003Ca href=\"https://developer.android.com/design/index.html\">Android Design\u003C/a> oldalról származnak."
+   },
+   "cred_title": {
+      "message": "Névjegy"
+   },
+   "ext_font": {
+      "message": "'Segoe UI', Tahoma, sans-serif"
+   },
+   "feed_text1": {
+      "message": "Ha észrevettél egy hibát, kérdésed vagy javaslatod van, írj egy üzenetet!"
+   },
+   "feed_text2": {
+      "message": "Itt tudsz nekem írni"
+   },
+   "feed_title": {
+      "message": "Visszajelzés"
+   },
+   "html_topbtn_tooltip1": {
+      "message": "Beállítások"
+   },
+   "html_topbtn_tooltip2": {
+      "message": "Névjegy és változáslista"
+   },
+   "html_topbtn_tooltip3": {
+      "message": "Információ"
+   },
+   "manifest_description": {
+      "message": "Egy egyszerű eszköz a bezárt fülek újranyitásához, és egy kicsit többhöz."
+   },
+   "manifest_kbshort1": {
+      "message": "Undo utolsó bezárt fülek"
+   },
+   "manifest_toolbarbtn_tooltip": {
+      "message": "Bezárt fülek"
+   },
+   "opera_description": {
+      "message": "Egy egyszerű megoldás a korábban bezárt fülek újranyitásához. \n (A fülek előzményeit nem hozza vissza.) \n Így használd: \n - Kattints az eszköztár gombjára a bezárt fülek listájához! \n - Kattints arra a fülre, amit újra meg akarsz nyitni! \n - Használhatsz billentyűkombinációkat is. \n - A lista elemeit egyesével is tudod törölni a jobb alsó sarokban lévő gombbal. \n - A lista alján lévő keresőmezővel kereshetsz is a bezárt fülek között. \n A részletes és naprakész változáslistát a bövítmény Beállítások oldalán olvashatod. \n Ez a bővítményt a J. K. által írt Sexy Undo Close Tab bővítmény ihlette."
+   },
+   "opt_blogbtn_tooltip": {
+      "message": "A blog meglátogatása"
+   },
+   "opt_func_opt1": {
+      "message": "Kifejezés keresése:"
+   },
+   "opt_func_opt10": {
+      "message": "A fülenként megjelenítendő sorok száma:"
+   },
+   "opt_func_opt11": {
+      "message": "Hosszú kattintási tartam"
+   },
+   "opt_func_opt12": {
+      "message": "Középső kattintás után zárja be a felugró"
+   },
+   "opt_func_opt1_tooltip": {
+      "message": "A keresőmezőben írt kifejezésekre vonatkozik."
+   },
+   "opt_func_opt2": {
+      "message": "az oldal címében"
+   },
+   "opt_func_opt3": {
+      "message": "az oldal URL-jében"
+   },
+   "opt_func_opt4": {
+      "message": "az oldal címében és URL-jében"
+   },
+   "opt_func_opt5": {
+      "message": "Szerkesztése egyéni billentyűkombináció"
+   },
+   "opt_func_opt5_tooltip": {
+      "message": "Az alábbi oldalakon nem működik: a böngésző Beállítások és Új fül oldala, Chrome Web Store"
+   },
+   "opt_func_opt5a": {
+      "message": "Szerkesztése"
+   },
+   "opt_func_opt6": {
+      "message": "A duplakattintás funkció kikapcsolása"
+   },
+   "opt_func_opt6b": {
+      "message": "A triplakattintás funkció kikapcsolása"
+   },
+   "opt_func_opt7": {
+      "message": "A bezárt fülek listájának mentése a böngésző bezárásakor"
+   },
+   "opt_func_opt8": {
+      "message": "A menteni kívánt fülek száma:"
+   },
+   "opt_func_opt9": {
+      "message": "Az egy oldalon megjelenítendő fülek száma:"
+   },
+   "opt_func_title": {
+      "message": "Működés"
+   },
+   "opt_looks_opt1": {
+      "message": "Az eszköztár gombja mutassa a bezárt fülek számát"
+   },
+   "opt_looks_opt10": {
+      "message": "Az ablak szélessége:"
+   },
+   "opt_looks_opt11": {
+      "message": "Válasszon egy stílust:"
+   },
+   "opt_looks_opt12": {
+      "message": "Téma:"
+   },
+   "opt_looks_opt13": {
+      "message": "rendszer alapértelmezett"
+   },
+   "opt_looks_opt14": {
+      "message": "light"
+   },
+   "opt_looks_opt15": {
+      "message": "sötét"
+   },
+   "opt_looks_opt2": {
+      "message": "A keresőmező felül jelenjen meg"
+   },
+   "opt_looks_opt3": {
+      "message": "A keresőmező megjelenítése"
+   },
+   "opt_looks_opt4": {
+      "message": "A 'Törlés' gomb megjelenítése"
+   },
+   "opt_looks_opt5": {
+      "message": "A bezárás időpontjának megjelenítése"
+   },
+   "opt_looks_opt6": {
+      "message": "Félkövér szöveg"
+   },
+   "opt_looks_opt7": {
+      "message": "A weboldal címének megjelenítése az URL helyett az eszköztippekben"
+   },
+   "opt_looks_opt8": {
+      "message": "Alternatív eszköztár gomb használata"
+   },
+   "opt_looks_opt9": {
+      "message": "Az időt a jobb oldalon mutassa"
+   },
+   "opt_looks_title": {
+      "message": "Megjelenés"
+   },
+   "opt_resetbtn": {
+      "message": "A mentett lista törlése?"
+   },
+   "opt_resetbtn_popupMsg": {
+      "message": "Ki akarod törölni a bezárt fülek listáját?"
+   },
+   "other_text1": {
+      "message": "Ha kíváncsi vagy más munkáimra is, nézz szét a DeviantArt oldalamon!"
+   },
+   "other_title": {
+      "message": "További munkáim"
+   },
+   "perm_reason2a": {
+      "message": "A lapokhoz és a böngészési előzményekhez"
+   },
+   "perm_reason2b": {
+      "message": "MIÉRT: Azért szükséges, hogy a bővítmény hozzáférjen a fülek állapotához és tartalmához."
+   },
+   "perm_text1": {
+      "message": "A SimpleUndoClose hozzáfér:"
+   },
+   "perm_text2": {
+      "message": "Az engedélykérésekről \u003Ca href=\"http://developer.chrome.com/extensions/permission_warnings.html#warnings\">itt\u003C/a> olvashatsz bővebben."
+   },
+   "perm_title": {
+      "message": "Az engedélykérések okai"
+   },
+   "popup_cancel_tooltip": {
+      "message": "Mégse"
+   },
+   "popup_clrbtn": {
+      "message": "Törlés"
+   },
+   "popup_clrbtn_tooltip": {
+      "message": "A lista törlése"
+   },
+   "popup_delbtn": {
+      "message": "Törlés"
+   },
+   "popup_delbtn_tooltip": {
+      "message": "A kereséssel kilistázott fülek törlése"
+   },
+   "popup_delete2_tooltip": {
+      "message": "Törölje a kijelölt lapokat"
+   },
+   "popup_noSearchResult": {
+      "message": "Nincs olyan bezárt fül, ami tartalmazza a következő kifejezést:"
+   },
+   "popup_noTabsMsg": {
+      "message": "\u003Ccenter>Nincsenek bezárt fülek\u003C/center>"
+   },
+   "popup_nxtbtn_tooltip": {
+      "message": "Következő oldal"
+   },
+   "popup_open1_btn": {
+      "message": "Nyissa"
+   },
+   "popup_open1_tooltip": {
+      "message": "Kijelölt lapokat megnyitása"
+   },
+   "popup_open2_btn": {
+      "message": "Új ablakban"
+   },
+   "popup_open2_tooltip": {
+      "message": "Kijelölt lapokat megnyitása új ablakban"
+   },
+   "popup_prvbtn_tooltip": {
+      "message": "Előző oldal"
+   },
+   "popup_search_tooltip": {
+      "message": "Írd be a keresett kifejezést"
+   },
+   "tips_tip1": {
+      "message": "Billentyűkombináció az utoljára bezárt fül újranyitásához"
+   },
+   "tips_tip1_line1": {
+      "message": "HOGYAN: Konfigurálja opciót, majd nyomja meg a billentyűkombináció"
+   },
+   "tips_tip2": {
+      "message": "Duplakattintás az eszköztár ikonján az utoljára bezárt fül újranyitásához"
+   },
+   "tips_tip2_line1": {
+      "message": "HOGYAN: Engedélyezd az opciót a beállításokban, majd kattints duplán az eszköztáron lévő ikonra!"
+   },
+   "tips_tip2_line2": {
+      "message": "MEGJEGYZÉS: Egy kicsit gyakorolni kell a megfelelő időzítést."
+   },
+   "tips_tip3": {
+      "message": "Navigálás billentyűzet segítségével a listában"
+   },
+   "tips_tip3_line1": {
+      "message": "HOGYAN: Nyisd meg a listát, majd használd a kurzormozgató billentyűket!"
+   },
+   "tips_tip3_line2": {
+      "message": "BILLENTYŰK: ←, → = Előző és következő oldal; ↑, ↓ = Fel és le; Enter = Fül kiválasztása"
+   },
+   "tips_tip4": {
+      "message": "Billentyűkombináció hozzárendelése a kiegészítőhöz"
+   },
+   "tips_tip4_line1": {
+      "message": "HOGYAN: Nyisd meg a böngésző Bővítmények oldalát, görgess az oldal aljára, és kattints a \"Bővítmények billentyűparancsai\" feliratú gombra!"
+   },
+   "tips_title": {
+      "message": "Használati tippek"
+   }
+}

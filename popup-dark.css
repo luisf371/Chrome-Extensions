@@ -1,0 +1,26 @@
+body {
+  background-color: #292A2D;
+}
+
+.contentDiv a {
+color: #E8EAED;
+}
+.item:hover {
+color: #292A2D;
+}
+.item2:hover a{
+color: #292A2D;
+}
+
+#searchQ{
+border-color: #305464;
+color: #E8EAED;
+}
+button {
+background-color: #292A2D;
+border-color: #305464;
+}
+
+::-webkit-scrollbar-track {
+background:#292A2D;
+}

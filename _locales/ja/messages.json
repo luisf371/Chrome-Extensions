@@ -1,0 +1,260 @@
+{
+   "cLog_title": {
+      "message": "変更履歴"
+   },
+   "cred_line1": {
+      "message": "この拡張機能は 「\u003Ca href=\"https://chrome.google.com/webstore/detail/bcennaiejdjpomgmmohhpgnjlmpcjmbg\">Sexy Undo Close Tab\u003C/a>」 からフォークしたものとなっていますとしてあの拡張機能の作者に感謝。"
+   },
+   "cred_line2": {
+      "message": "さらに、「Sexy Undo Close Tab」 から来た 「Undo Close tab」 に感謝します。"
+   },
+   "cred_line3": {
+      "message": "最後に、「Sexy Undo Close Tab」 から分岐したかもしれないの拡張機能に感謝します :)"
+   },
+   "cred_line4": {
+      "message": "上部の3アイコンは\u003Ca href=\"https://developer.android.com/design/index.html\">Android Design\u003C/a>のものを利用しています。"
+   },
+   "cred_title": {
+      "message": "謝辞"
+   },
+   "ext_font": {
+      "message": "'ヒラギノ角ゴ Pro W3', 'Hiragino Kaku Gothic Pro',Osaka, 'メイリオ', Meiryo, 'ＭＳ Ｐゴシック', 'MS PGothic', sans-serif"
+   },
+   "feed_text1": {
+      "message": "バグ、質問や提案に関して、次のリンクからメッセージを書いてください。"
+   },
+   "feed_text2": {
+      "message": "フィードバックのリンク！"
+   },
+   "feed_title": {
+      "message": "フィードバックを送信"
+   },
+   "html_topbtn_tooltip1": {
+      "message": "設定"
+   },
+   "html_topbtn_tooltip2": {
+      "message": "謝辞と変更履歴"
+   },
+   "html_topbtn_tooltip3": {
+      "message": "情報"
+   },
+   "manifest_description": {
+      "message": "閉じたタブを元に戻すのは簡単のポップアップ。"
+   },
+   "manifest_kbshort1": {
+      "message": "最後に閉じたタブを元に戻す"
+   },
+   "manifest_toolbarbtn_tooltip": {
+      "message": "閉じたタブ元に戻す"
+   },
+   "opera_description": {
+      "message": "閉じたタブを元に戻す簡単な方法。 \n （しかし、タブの歴史を持ち帰ることはできません） \n 使用方法： \n - ツールバーボタンをクリック後に閉じたタブを示すポップアップ表れる \n - リストアしたいの閉じたタブをクリック \n - キーボードナビゲーションのサポートは、ヘルプページを参照してください \n - 単一のエントリを削除の場合は、、焦点を当てた青いエリア右下隅にある[削除]ボタンをクリックします \n - 検索バーに入力して検索してください \n 更新された変更履歴は、拡張オプションページである。 \n J K.のベースSexy Undo Close Tab拡張の機能を保持します。"
+   },
+   "opt_blogbtn_tooltip": {
+      "message": "ブログ"
+   },
+   "opt_func_opt1": {
+      "message": "キーワードの検索対象わ:"
+   },
+   "opt_func_opt10": {
+      "message": "閉じたタブを何行で表示するか:"
+   },
+   "opt_func_opt11": {
+      "message": "ロングクリック時間"
+   },
+   "opt_func_opt12": {
+      "message": "中クリック後ポップアップを閉じる"
+   },
+   "opt_func_opt1_tooltip": {
+      "message": "ポップアップで検索バーの検索結果に影響を与えます。"
+   },
+   "opt_func_opt2": {
+      "message": "タブのタイトルだけ"
+   },
+   "opt_func_opt3": {
+      "message": "タブのURLだけ"
+   },
+   "opt_func_opt4": {
+      "message": "タブのタイトルとURLの両方"
+   },
+   "opt_func_opt5": {
+      "message": "カスタムホットキーの編集"
+   },
+   "opt_func_opt5_tooltip": {
+      "message": "通常のウェブページ上だけ使える、ブラウザの内蔵ページやChromeウェブストアのページ使えない。"
+   },
+   "opt_func_opt5a": {
+      "message": "編集"
+   },
+   "opt_func_opt6": {
+      "message": "ツールバーボタンをダブルクリックした時、最後に閉じたタブを開き直さない"
+   },
+   "opt_func_opt6b": {
+      "message": "ツールバーボタンをトリプルクリックした時、最後に閉じたタブを開き直さない"
+   },
+   "opt_func_opt7": {
+      "message": "ブラウザ閉じる時に、閉じたタブの情報をクリアしない"
+   },
+   "opt_func_opt8": {
+      "message": "タブの保存件数:"
+   },
+   "opt_func_opt9": {
+      "message": "（ポップアップ内で） 1 ページに表示するタブの件数:"
+   },
+   "opt_func_title": {
+      "message": "機能"
+   },
+   "opt_looks_opt1": {
+      "message": "ツールバーボタン上に、閉じたタブの件数を表示する"
+   },
+   "opt_looks_opt10": {
+      "message": "ポップアップの幅："
+   },
+   "opt_looks_opt11": {
+      "message": "スタイルを選択:"
+   },
+   "opt_looks_opt12": {
+      "message": "テーマ:"
+   },
+   "opt_looks_opt13": {
+      "message": "システムデフォルト"
+   },
+   "opt_looks_opt14": {
+      "message": "ライト"
+   },
+   "opt_looks_opt15": {
+      "message": "ダーク"
+   },
+   "opt_looks_opt2": {
+      "message": "検索バーを、ポップアップの上部に表示する"
+   },
+   "opt_looks_opt3": {
+      "message": "ポップアップ内に、検索バーを表示する"
+   },
+   "opt_looks_opt4": {
+      "message": "ポップアップ内に、履歴クリアボタンを表示する"
+   },
+   "opt_looks_opt5": {
+      "message": "タブを閉じた時期も表示する"
+   },
+   "opt_looks_opt6": {
+      "message": "テキストを太字にする"
+   },
+   "opt_looks_opt7": {
+      "message": "ツールチップにページタイトルを表示する （デフォルトはURL）"
+   },
+   "opt_looks_opt8": {
+      "message": "別のツールバーボタンを使用"
+   },
+   "opt_looks_opt9": {
+      "message": "時間は右側に移動する"
+   },
+   "opt_looks_title": {
+      "message": "外観"
+   },
+   "opt_resetbtn": {
+      "message": "保存のタブを消去する?"
+   },
+   "opt_resetbtn_popupMsg": {
+      "message": "本当に保存のタブを消去する?"
+   },
+   "other_text1": {
+      "message": "私の他の作品を見るために私のDeviantArtのページに立ち寄ってください！"
+   },
+   "other_title": {
+      "message": "その他の作品"
+   },
+   "perm_reason2a": {
+      "message": "あなたのタブとブラウジング活動"
+   },
+   "perm_reason2b": {
+      "message": "なぜか？: タブの状態を検出とタブの詳細を取得するためchrome.tabs APIを使用するために必要"
+   },
+   "perm_text1": {
+      "message": "この拡張機能は下記に権限にアクセスするできます:"
+   },
+   "perm_text2": {
+      "message": "権限アクセスの詳細については\u003Ca href=\"http://developer.chrome.com/extensions/permission_warnings.html#warnings\">こちら\u003C/a>をご覧ください"
+   },
+   "perm_title": {
+      "message": "権限アクセスの理由"
+   },
+   "popup_cancel_tooltip": {
+      "message": "キャンセル"
+   },
+   "popup_clrbtn": {
+      "message": "クリア"
+   },
+   "popup_clrbtn_tooltip": {
+      "message": "タブ履歴を削除する"
+   },
+   "popup_delbtn": {
+      "message": "削除"
+   },
+   "popup_delbtn_tooltip": {
+      "message": "見つかったタブを削除"
+   },
+   "popup_delete2_tooltip": {
+      "message": "選択したタブを削除する"
+   },
+   "popup_noSearchResult": {
+      "message": "そのキーワードのタブ見つけません："
+   },
+   "popup_noTabsMsg": {
+      "message": "\u003Ccenter>閉じたタブない\u003C/center>"
+   },
+   "popup_nxtbtn_tooltip": {
+      "message": "次のページ"
+   },
+   "popup_open1_btn": {
+      "message": "開く"
+   },
+   "popup_open1_tooltip": {
+      "message": "選択したタブを開く"
+   },
+   "popup_open2_btn": {
+      "message": "新ウィンドウで"
+   },
+   "popup_open2_tooltip": {
+      "message": "新しいウィンドウで選択したタブを開く"
+   },
+   "popup_prvbtn_tooltip": {
+      "message": "前のページ"
+   },
+   "popup_search_tooltip": {
+      "message": "検索キーワードを入力"
+   },
+   "tips_tip1": {
+      "message": "ホットキーは最後に開いたタブを復元することができます"
+   },
+   "tips_tip1_line1": {
+      "message": "何と: オプション設定はその後ホットキーの組み合わせを打ちます"
+   },
+   "tips_tip2": {
+      "message": "ツールバーのアイコンをダブルクリックは最後に開いたタブを復元することができます"
+   },
+   "tips_tip2_line1": {
+      "message": "何と: オプションでチェックされていないを確認し、ツールバーのアイコンをダブルクリックし"
+   },
+   "tips_tip2_line2": {
+      "message": "注意: 第二のクリックのタイミング"
+   },
+   "tips_tip3": {
+      "message": "ポップアップのキーボードナビゲーション"
+   },
+   "tips_tip3_line1": {
+      "message": "何と: ポップアップをトリガー、ナビゲートするために矢印キーを使用して"
+   },
+   "tips_tip3_line2": {
+      "message": "操作: ←, → = 前、次のページ; ↑, ↓ = 閉じたタブのリストを実行する; Enter = リンクを選択"
+   },
+   "tips_tip4": {
+      "message": "拡張機能にキーボードショートカットを割り当て"
+   },
+   "tips_tip4_line1": {
+      "message": "何と: ブラウザの拡張機能設定ページの一番下には「キーボード ショートカット」というボタンがあります。"
+   },
+   "tips_title": {
+      "message": "使い方のヒント"
+   }
+}

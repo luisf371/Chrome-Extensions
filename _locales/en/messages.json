@@ -1,0 +1,260 @@
+{
+   "cLog_title": {
+      "message": "Changelog"
+   },
+   "cred_line1": {
+      "message": "Credits to \u003Ca href=\"https://chrome.google.com/webstore/detail/bcennaiejdjpomgmmohhpgnjlmpcjmbg\">Sexy Undo Close Tab\u003C/a> as SimpleUndoClose is a fork of it."
+   },
+   "cred_line2": {
+      "message": "Also thanks to Undo Close tab plugin, which Sexy Undo Close Tab came from."
+   },
+   "cred_line3": {
+      "message": "Finally also thanks to all other extensions the Undo Close tab plugin may have forked from :)"
+   },
+   "cred_line4": {
+      "message": "Additional credits to \u003Ca href=\"https://developer.android.com/design/index.html\">Android Design\u003C/a> for the 3 icons located top right."
+   },
+   "cred_title": {
+      "message": "Credits"
+   },
+   "ext_font": {
+      "message": "'Segoe UI', Tahoma, sans-serif"
+   },
+   "feed_text1": {
+      "message": "Feel free to leave a message in regards to bugs, questions or suggestions."
+   },
+   "feed_text2": {
+      "message": "Feedback here!"
+   },
+   "feed_title": {
+      "message": "Feedback"
+   },
+   "html_topbtn_tooltip1": {
+      "message": "Settings"
+   },
+   "html_topbtn_tooltip2": {
+      "message": "Credits and Changelog"
+   },
+   "html_topbtn_tooltip3": {
+      "message": "Information"
+   },
+   "manifest_description": {
+      "message": "A simple popup to undo closed tabs, just that and a bit more."
+   },
+   "manifest_kbshort1": {
+      "message": "Undo latest closed tab"
+   },
+   "manifest_toolbarbtn_tooltip": {
+      "message": "Undo closed tabs"
+   },
+   "opera_description": {
+      "message": "Just a simple way to undo your closed tabs. \n (Doesn't bring back the tab's history though) \n To use: \n - click the toolbar button, a popup showing closed tabs appear \n - click on the closed page you want to restore \n - keyboard navigation supported \n - to delete a single entry, click the delete button at the lower right corner of the focused blue area \n - search by typing at the search bar. \n Updated changelog is in the extension option pages. \n Retains the features of the base Sexy Undo Close Tab extension by J K."
+   },
+   "opt_blogbtn_tooltip": {
+      "message": "Visit blogsite"
+   },
+   "opt_func_opt1": {
+      "message": "Look for search keyword in :"
+   },
+   "opt_func_opt10": {
+      "message": "Amount of lines of text to display for each tab :"
+   },
+   "opt_func_opt11": {
+      "message": "Long click duration"
+   },
+   "opt_func_opt12": {
+      "message": "Close popup after middle click"
+   },
+   "opt_func_opt1_tooltip": {
+      "message": "Affects the result of the search via the search bar in the popup."
+   },
+   "opt_func_opt2": {
+      "message": "tab title only"
+   },
+   "opt_func_opt3": {
+      "message": "tab URL only"
+   },
+   "opt_func_opt4": {
+      "message": "both tab title and URL"
+   },
+   "opt_func_opt5": {
+      "message": "Edit custom undo hotkey"
+   },
+   "opt_func_opt5_tooltip": {
+      "message": "Works only when you use the hotkey on a normal webpage, not a browser settings page, New Tab page or Chrome Web Store page."
+   },
+   "opt_func_opt5a": {
+      "message": "Edit"
+   },
+   "opt_func_opt6": {
+      "message": "Disable double click feature"
+   },
+   "opt_func_opt6b": {
+      "message": "Disable triple click feature"
+   },
+   "opt_func_opt7": {
+      "message": "Save closed tabs on browser close"
+   },
+   "opt_func_opt8": {
+      "message": "Amount of closed tabs to save :"
+   },
+   "opt_func_opt9": {
+      "message": "Amount of closed tabs to display per page :"
+   },
+   "opt_func_title": {
+      "message": "Function"
+   },
+   "opt_looks_opt1": {
+      "message": "Show badge with number of closed tabs on toolbar icon"
+   },
+   "opt_looks_opt10": {
+      "message": "Width of popup :"
+   },
+   "opt_looks_opt11": {
+      "message": "Select a style :"
+   },
+   "opt_looks_opt12": {
+      "message": "Theme :"
+   },
+   "opt_looks_opt13": {
+      "message": "system default"
+   },
+   "opt_looks_opt14": {
+      "message": "light"
+   },
+   "opt_looks_opt15": {
+      "message": "dark"
+   },
+   "opt_looks_opt2": {
+      "message": "Search bar &amp; buttons on top"
+   },
+   "opt_looks_opt3": {
+      "message": "Show search bar"
+   },
+   "opt_looks_opt4": {
+      "message": "Show 'Clear' button"
+   },
+   "opt_looks_opt5": {
+      "message": "Show time"
+   },
+   "opt_looks_opt6": {
+      "message": "Bold text"
+   },
+   "opt_looks_opt7": {
+      "message": "Show page title instead of URL in tooltips"
+   },
+   "opt_looks_opt8": {
+      "message": "Use alternate toolbar button"
+   },
+   "opt_looks_opt9": {
+      "message": "Move time to right end"
+   },
+   "opt_looks_title": {
+      "message": "Looks"
+   },
+   "opt_resetbtn": {
+      "message": "Clear saved tabs?"
+   },
+   "opt_resetbtn_popupMsg": {
+      "message": "Clear saved tabs?"
+   },
+   "other_text1": {
+      "message": "Do drop by my DeviantArt page to see more of my works!"
+   },
+   "other_title": {
+      "message": "Other Works"
+   },
+   "perm_reason2a": {
+      "message": "Your tabs and browsing activity"
+   },
+   "perm_reason2b": {
+      "message": "WHY: Required for use of the chrome.tabs API to detect tab status and to get the tab details"
+   },
+   "perm_text1": {
+      "message": "As stated SimpleUndoClose can access:"
+   },
+   "perm_text2": {
+      "message": "You can find out more about permission warning triggers \u003Ca href=\"http://developer.chrome.com/extensions/permission_warnings.html#warnings\">here\u003C/a>"
+   },
+   "perm_title": {
+      "message": "Reason For Permission Requests"
+   },
+   "popup_cancel_tooltip": {
+      "message": "Cancel"
+   },
+   "popup_clrbtn": {
+      "message": "Clear"
+   },
+   "popup_clrbtn_tooltip": {
+      "message": "Clear tab history"
+   },
+   "popup_delbtn": {
+      "message": "Delete"
+   },
+   "popup_delbtn_tooltip": {
+      "message": "Delete found tabs"
+   },
+   "popup_delete2_tooltip": {
+      "message": "Delete selected tabs"
+   },
+   "popup_noSearchResult": {
+      "message": "No closed tabs found containing"
+   },
+   "popup_noTabsMsg": {
+      "message": "\u003Ccenter>No closed tabs\u003C/center>"
+   },
+   "popup_nxtbtn_tooltip": {
+      "message": "Next page"
+   },
+   "popup_open1_btn": {
+      "message": "Open"
+   },
+   "popup_open1_tooltip": {
+      "message": "Open selected"
+   },
+   "popup_open2_btn": {
+      "message": "New window"
+   },
+   "popup_open2_tooltip": {
+      "message": "Open selected in new window"
+   },
+   "popup_prvbtn_tooltip": {
+      "message": "Previous page"
+   },
+   "popup_search_tooltip": {
+      "message": "Enter search keyword"
+   },
+   "tips_tip1": {
+      "message": "Hotkey to undo latest closed tab"
+   },
+   "tips_tip1_line1": {
+      "message": "HOW: Make sure option is set then hit the hotkey combination"
+   },
+   "tips_tip2": {
+      "message": "Double-click on toolbar icon to undo latest closed tab"
+   },
+   "tips_tip2_line1": {
+      "message": "HOW: Make sure option is not checked then double-click on toolbar icon"
+   },
+   "tips_tip2_line2": {
+      "message": "NOTE: You might need to time your second click"
+   },
+   "tips_tip3": {
+      "message": "Keyboard navigation in the extension popup"
+   },
+   "tips_tip3_line1": {
+      "message": "HOW: Trigger the popup then use arrow keys to navigate"
+   },
+   "tips_tip3_line2": {
+      "message": "CONTROLS: ←, → = Previous, Next page; ↑, ↓ = Run through the closed tab list; Enter = select link"
+   },
+   "tips_tip4": {
+      "message": "Assign a keyboard shortcut to the extension"
+   },
+   "tips_tip4_line1": {
+      "message": "HOW: Go to the the browser's Extensions settings page, scroll to the bottom and click \"Keyboard shortcuts\""
+   },
+   "tips_title": {
+      "message": "Usage Tips"
+   }
+}

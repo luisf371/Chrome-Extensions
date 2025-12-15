@@ -1,0 +1,113 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <title>SimpleUndoClose Options</title>
+    <link href="options.css" rel="stylesheet" type="text/css" />
+    <link href="scrollbar.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="options-dark.css" media="(prefers-color-scheme: dark)" id="dark">
+    <script src="common.js"></script>
+    <script src="options.js"></script>
+    <script src="theme.js"></script>
+    <script src="il8n.js"></script>
+  </head>
+  <body>
+    <center>
+	
+      <div class="header">
+        <center><div class="header-inner"><img class="headIco" src="icon-128.png"><font class="headerText">SimpleUndoClose</font> <font class="headerText2"><img id="topbtn1" class="headOpIco" src="settings.png" title="Settings"><a class="headerLink" href="credits.html"><img id="topbtn2" class="headOpIco" src="log.png" title="Credits and Changelog"></a><a class="headerLink" href="about.html"><img id="topbtn3" class="headOpIco" src="about.png" title="Information" ></a></font></div></center>
+      </div>
+	  
+      <div class="boxx">
+	  
+        <div class="optionGrpTitle" i18n="opt_looks_title">Looks</div>
+        
+        <div class="option">
+          <span i18n="opt_looks_opt12">Theme:</span>
+		  <div class="option"><input type="radio" id="theme1" name="theme" value="1"> <label for="theme1" i18n="opt_looks_opt13">system default</label></div>
+		  <div class="option"><input type="radio" id="theme2" name="theme" value="2"> <label for="theme2" i18n="opt_looks_opt14">light</label></div>
+		  <div class="option"><input type="radio" id="theme3" name="theme" value="3"> <label for="theme3" i18n="opt_looks_opt15">dark</label></div>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="showBadge"> <label for="showBadge" i18n="opt_looks_opt1">Show badge with number of closed tabs on toolbar icon</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="menuTop"> <label for="menuTop" i18n="opt_looks_opt2">Search bar &amp; buttons on top</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="showSearch"> <label for="showSearch" i18n="opt_looks_opt3">Show search bar</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="showClear"> <label for="showClear" i18n="opt_looks_opt4">Show 'Clear' button</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="showTime"> <label for="showTime" i18n="opt_looks_opt5">Show time</label>
+          <div class="suboption" id="sexyBack">
+            <input type="checkbox" id="sexy"> <label for="sexy" i18n="opt_looks_opt9">Move time to right end</label>
+          </div>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="bold"> <label for="bold" i18n="opt_looks_opt6">Bold text</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="tooltipText"> <label for="tooltipText" i18n="opt_looks_opt7">Show page title instead of URL in tooltips</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="altBut"> <label for="altBut" i18n="opt_looks_opt8">Use alternate toolbar button</label>
+        </div>
+        <div id="styleOpt" class="option">
+          <span i18n="opt_looks_opt11">Select a style:</span>
+          <div class="option"><input type="radio" id="style1" name="styleIn" value="1"> <label for="style1" i18n="">Default</label></div>
+          <div class="option"><input type="radio" id="style2" name="styleIn" value="2"> <label for="style2" i18n="">Classic</label></div>
+          <div class="option"><input type="radio" id="style3" name="styleIn" value="3"> <label for="style3" i18n="">Delete-less</label></div>
+          <span i18n="opt_looks_opt10">Width of popup :</span><br>
+          <input type="range" min="300" max="800" step="10" value="" id="wPop">
+          <n id="wPop-value" class="number"></n>
+        </div>
+		
+        <div class="optionGrpTitle" i18n="opt_func_title">Function</div>
+        
+        <div id="searchOpt" class="option" title="Affects the result of the search via the search bar in the popup.">
+          <span i18n="opt_func_opt1">Look for search keyword in:</span>
+          <div class="option"><input type="radio" id="searchIn1" name="searchIn" value="1"> <label for="searchIn1" i18n="opt_func_opt2">tab title only</label></div>
+          <div class="option"><input type="radio" id="searchIn2" name="searchIn" value="2"> <label for="searchIn2" i18n="opt_func_opt3">tab URL only</label></div>
+          <div class="option"><input type="radio" id="searchIn3" name="searchIn" value="3"> <label for="searchIn3" i18n="opt_func_opt4">both tab title and URL</label></div>
+        </div>
+        <div id="ctrlzOpt" class="option">
+          <span i18n="opt_func_opt5">Enable custom undo hotkey </span> : <button id="openKBshort" i18n="opt_func_opt5a">Edit</button>
+        </div>
+		<div id="lpDelay" class="option">
+          <span i18n="opt_func_opt11">Long click delay time </span> : <input id="lpdValue" type="number" value="" min="1" class="number"/> s
+        </div>
+		<div class="option" id="mClickFunc">
+          <input type="checkbox" id="mClickClose"> <label for="mClickClose" i18n="opt_func_opt12" id="mClickCloseLbl">Close popup after middle click</label>
+        </div>
+        <div class="option" id="doubleClickFunc">
+          <input type="checkbox" id="disableDClick"> <label for="disableDClick" i18n="opt_func_opt6" id="disableDClickLbl">Disable double click feature</label>
+        </div>
+        <div class="option">
+          <input type="checkbox" id="saveHistory"> <label for="saveHistory" i18n="opt_func_opt7">Save closed tabs even if I close Chrome</label><br>
+          <br>
+          <span i18n="opt_func_opt8">Amount of closed tabs to save :</span><br>
+          <input type="range" min="50" max="600" step="1" value="" id="numLimit">
+          <n id="numLimit-value" class="number"></n>
+        </div>
+        <div class="option">
+          <span i18n="opt_func_opt9">Amount of closed tabs to display per page :</span><br>
+          <input type="range" min="3" max="250" step="1" value="" id="numItems">
+          <n id="numItems-value" class="number"></n>
+        </div>
+        <div class="option">
+          <span i18n="opt_func_opt10">Amount of lines of text to display for each tab :</span><br>
+          <input type="range" min="0" max="6" step="1" value="" id="numLines">
+          <n id="numLines-value"  class="number"></n>
+        </div>
+        <div class="spacing"></div>
+        <div class="footer">	
+          <button id="resetButton" class="small" i18n="opt_resetbtn">Clear saved tabs?</button>
+        </div>
+        
+      </div>
+    </center>
+    <a class="headerLink bld" href="http://blandlifedev.blogspot.sg"><img id="blogbtn" src="bldLogo.png" title="Visit blogsite"></a>
+  </body>
+</html>
