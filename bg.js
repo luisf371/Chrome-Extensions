@@ -79,54 +79,52 @@ async function initialize(){
 }
 
 async function settingsUpdate(){
-	let data = await getStorage(['settings', 'updatedTill']);
-	
-	if(!data.settings){ await initialize(); return; }
+	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+		let data = await getStorage(['settings', 'updatedTill']);
+		
+		if(!data.settings){ await initialize(); return; }
 
-	const manifest = chrome.runtime.getManifest();
-	if(data.settings && (!data.updatedTill || needUpdateOrNot(data.updatedTill, "1.3.11"))){
-		// console.log("Updating...");
-		
-		let settings = data.settings;
-		var localKeys = Object.keys(settings).sort();
-		var currDefKeys = Object.keys(defaultSettings).sort();
-		
-		if(localKeys.length != currDefKeys.length){
+		const manifest = chrome.runtime.getManifest();
+		if(data.settings && (!data.updatedTill || needUpdateOrNot(data.updatedTill, "1.3.11"))){
+			// console.log("Updating...");
 			
-			if(localKeys.length < currDefKeys.length){
-				// console.log("Updating settings...type 1");
-				for(var i=0; i < currDefKeys.length; i++){
-					if (!settings.hasOwnProperty(currDefKeys[i])) {
-                        settings[currDefKeys[i]] = defaultSettings[currDefKeys[i]];
-                    }
+			let settings = data.settings;
+			var localKeys = Object.keys(settings).sort();
+			var currDefKeys = Object.keys(defaultSettings).sort();
+			
+			if(localKeys.length != currDefKeys.length){
+				
+				if(localKeys.length < currDefKeys.length){
+					// console.log("Updating settings...type 1");
+					for(var i=0; i < currDefKeys.length; i++){
+						if (!settings.hasOwnProperty(currDefKeys[i])) {
+							settings[currDefKeys[i]] = defaultSettings[currDefKeys[i]];
+						}
+					}
+					
+				}else{
+					// console.log("Updating settings...type 2");
+					for(var i=0; i < localKeys.length; i++){
+						var found = false;
+						for(var j=0; j < currDefKeys.length; j++){
+							if(localKeys[i] === currDefKeys[j]) {found = true; break;}
+						}
+						if(!found) {delete settings[localKeys[i]];}
+					}
 				}
 				
-			}else{
-				// console.log("Updating settings...type 2");
-				for(var i=0; i < localKeys.length; i++){
-					var found = false;
-					for(var j=0; j < currDefKeys.length; j++){
-						if(localKeys[i] === currDefKeys[j]) {found = true; break;}
-					}
-					if(!found) {delete settings[localKeys[i]];}
-				}
+				await setStorage({ settings: settings });
 			}
 			
-			await setStorage({ settings: settings });
+			let checks = await getStorage(['TabListIndex', 'ClosedTabIndex']);
+			if(!checks.TabListIndex){ await setStorage({ TabListIndex: [] }); }
+			if(!checks.ClosedTabIndex){ await setStorage({ ClosedTabIndex: [] }); }
+			
+			//updateCTabs();
+			
+			await setStorage({ updatedTill: manifest.version });
 		}
-		
-		//disable DClick - 1.3.6
-		settings.disableDClick = true;
-		await setStorage({ settings: settings });
-		
-		let checks = await getStorage(['TabListIndex', 'ClosedTabIndex']);
-		if(!checks.TabListIndex){ await setStorage({ TabListIndex: [] }); }
-		if(!checks.ClosedTabIndex){ await setStorage({ ClosedTabIndex: [] }); }
-		
-		//updateCTabs();
-		
-		await setStorage({ updatedTill: manifest.version });
-	}
+	});
 }
 
 //compare updatedTill with specified version, if greater true

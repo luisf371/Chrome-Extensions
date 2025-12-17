@@ -28,7 +28,7 @@ function dClickHandler() {
 function createLink(id, url, pgTitle) {
 	var link = document.createElement('a');
 	var animate = "longpress "+settings.lpDelay+"s";
-	link.href="javascript:void(0);";
+	link.href="#";
 	
 	//modified long click code from http://stackoverflow.com/questions/2625210/long-press-in-javascript
 	var presstimer = null;
@@ -44,6 +44,7 @@ function createLink(id, url, pgTitle) {
 	};
 
 	var click = function(e) {
+		e.preventDefault();
 		if (presstimer !== null) {
 			clearTimeout(presstimer);
 			presstimer = null;
@@ -61,7 +62,8 @@ function createLink(id, url, pgTitle) {
 		}
 	};
 	
-	var mclick = function(e) {	
+	var mclick = function(e) {
+		e.preventDefault();	
 		//if middle mouse button click
 		if (e.button == 1){ 
 			createTab(id,false); 
@@ -97,7 +99,7 @@ function createLink(id, url, pgTitle) {
 	link.addEventListener("touchcancel", cancel);
   
 	if(settings.tooltipText){
-		link.href = "javascript:void(0);";
+		link.href = "#";
 		link.title = pgTitle;
 	}else{
 		link.title = url;
@@ -210,7 +212,7 @@ async function populate(){
 			document.getElementById("next").style.visibility="visible";
 			}
 		}else{
-			if (j==0) content.innerHTML="<center>"+chrome.i18n.getMessage("popup_noSearchResult")+" '"+unescape(filterStrings.join(" "))+"'</center>";
+			if (j==0) content.innerHTML="<center>"+chrome.i18n.getMessage("popup_noSearchResult")+" '"+encodeHtml(filterStrings.join(" "))+"'</center>";
 		}
 	}
 	
@@ -221,9 +223,9 @@ function createEntry(i,closedTab) {
 	var split = closedTab.split("|!|");
 	var tabTime = split[0];
 	var tabUrl = split[1];
-	var tabTitle = encodeHtml(split[2]);
+	var tabTitle = split[2];
 
-	var text_link = createLink(i, tabUrl, tabTitle);
+	var text_link = createLink(i, tabUrl, encodeHtml(tabTitle));
 	var html="";
 	var fragment = document.createDocumentFragment();
 
@@ -234,6 +236,7 @@ function createEntry(i,closedTab) {
 	html+="<img class=\"icon\" src=\""+faviconUrl+"\" alt=\""+tabUrl+"\">"; 
 
 	if (filterStrings!=null) tabTitle=tabTitle.multiReplace(filterStrings);
+	else tabTitle=encodeHtml(tabTitle);
 	
 	html+="<div class=\"titleTxt";
 	if (settings.numLines!=0 && !isNaN(settings.numLines) && filterStrings==null) html+=" maxh"+settings.numLines+"";
@@ -325,7 +328,7 @@ function buildDelBtn(i){
 		delBtn.id = "del-"+i;
 		delBtn.className = "del";
 		delBtn.title = chrome.i18n.getMessage("popup_delbtn");
-		delBtn.innerHTML = "<p class=\"delTxt\">×</p>";
+		delBtn.innerHTML = "<p class=\"delTxt\">&times;</p>";
 		delBtn.addEventListener('click', async function(event){ 
 		  event.stopPropagation(); //click-shield!
 		  await removeClosedTab(i); 
@@ -347,7 +350,7 @@ function buildDelBtn(i){
 		delBtn.id = "del-"+i;
 		delBtn.className = "del2";
 		delBtn.title = chrome.i18n.getMessage("popup_delbtn");
-		delBtn.innerHTML = "<p class=\"delTxt2\">×</p>";
+		delBtn.innerHTML = "<p class=\"delTxt2\">&times;</p>";
 		delBtn.addEventListener('click', async function(event){ 
 		  event.stopPropagation(); //click-shield!
 		  await removeClosedTab(i); 
@@ -361,7 +364,6 @@ function buildDelBtn(i){
 }
 
 function searchFor(string) {
-	string = string.replace(/(\%)/g, "%25");
 	string = string.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
 	string = stripVowelAccent(string);
 
@@ -551,20 +553,22 @@ String.prototype.multiFind = function ( strings ) {
 	return (foundAmount==strings.length);
 };
 String.prototype.multiReplace = function ( strings ) {
-	var str_real = this, i;
-	var str = str_real;
-	str = stripVowelAccent(str);
-	str = str.toLowerCase();
-	var position=-1;
-	for(i = 0, j = strings.length; i < j; i++ ) {
-		position = str.indexOf(strings[i]);
+	var str_real = this;
+	var str;
+	var startTag = "\uE000";
+	var endTag = "\uE001";
+
+	for(var i = 0, j = strings.length; i < j; i++ ) {
+		str = stripVowelAccent(str_real).toLowerCase();
+		var position = str.indexOf(strings[i]);
 		if (position!= -1) {
-			str_real = str_real.substr(0,position) + "<u>" + str_real.substr(position, strings[i].length) + "</u>" + str_real.substr(position + strings[i].length); 
-			str = stripVowelAccent(str_real).toLowerCase();
+			str_real = str_real.substr(0,position) + startTag + str_real.substr(position, strings[i].length) + endTag + str_real.substr(position + strings[i].length); 
 		}
-		//str = str.replace(new RegExp('(' + strings[i] + ')','gi'), replaceBy);
 	}
-	return str_real;
+	
+	var encoded = encodeHtml(str_real);
+	encoded = encoded.split(startTag).join("<u>").split(endTag).join("</u>");
+	return encoded;
 };
 
 //keyboard navigation

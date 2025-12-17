@@ -139,13 +139,24 @@ async function trimTabs(tablimit){
 	let closedTabIndex = data.ClosedTabIndex || [];
 
 	var noToDelete = closedTabIndex.length - tablimit;
-	for(var i = 0; i<noToDelete; i++){
-		let key = "ClosedTab-"+closedTabIndex[i];
-		let cData = await getStorage([key]);
-		if(cData[key]){
-			await removeStorage([key]);
-			closedTabIndex.splice(closedTabIndex.indexOf(closedTabIndex[i]),1);
+	// Ensure we don't try to delete more tabs than available
+	if (noToDelete <= 0) {
+		return;
+	}
+
+	let keysToRemove = [];
+	for(var i = 0; i < noToDelete; i++){
+		// Add the key of the oldest tab to the list to remove
+		if (closedTabIndex.length > 0) { // Safety check
+			keysToRemove.push("ClosedTab-" + closedTabIndex[0]);
+			closedTabIndex.shift(); // Remove the oldest tab ID from the index array
+		} else {
+			break; // No more tabs to remove
 		}
+	}
+
+	if (keysToRemove.length > 0) {
+		await removeStorage(keysToRemove);
 	}
 	await setStorage({ ClosedTabIndex: closedTabIndex });
 }
