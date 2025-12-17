@@ -225,22 +225,32 @@ async function updateIcon() {
 		chrome.action.setIcon({ path: { "19": "icon-19-1.png", "38": "icon-38-1.png" } });
 	} else {
 		let isDark = false;
-		if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+		
+		// Check explicit theme setting first
+		if (settings.theme == "3") {
 			isDark = true;
+		} else if (settings.theme == "2") {
+			isDark = false;
+		} else {
+			// System default (Theme "1") or undefined
+			// Check if window is available (popup/options) to detect system preference
+			if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+				isDark = true;
+			}
 		}
 
-		if (isDark) {
+		if (isDark) { // If dark mode is determined, use icon-xx-2.png
 			chrome.action.setIcon({
 				path: {
 					"19": "icon-19-2.png",
 					"38": "icon-38-2.png"
 				}
 			});
-		} else {
+		} else { // If light mode is determined, use icon-xx-1.png
 			chrome.action.setIcon({
 				path: {
-					"19": "icon-19-0.png",
-					"38": "icon-38-0.png"
+					"19": "icon-19-1.png", // Changed to icon-19-1.png for light theme
+					"38": "icon-38-1.png"  // Changed to icon-38-1.png for light theme
 				}
 			});
 		}

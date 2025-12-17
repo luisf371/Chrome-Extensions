@@ -93,14 +93,16 @@ document.addEventListener('DOMContentLoaded', async function () {
 	document.getElementById('mClickClose').addEventListener('click', save);
 	
 	document.getElementById('theme'+settings.theme).checked = true;
-	document.getElementById('theme1').addEventListener('click', function(){save();location.reload();});
-	document.getElementById('theme2').addEventListener('click', function(){save();location.reload();});
-	document.getElementById('theme3').addEventListener('click', function(){save();location.reload();});
+	document.getElementById('theme1').addEventListener('click', async function(){await save();location.reload();});
+	document.getElementById('theme2').addEventListener('click', async function(){await save();location.reload();});
+	document.getElementById('theme3').addEventListener('click', async function(){await save();location.reload();});
 	
 	var popWidth = document.getElementById('wPop');
 	var popWidthValue = document.getElementById('wPop-value');
 	popWidth.value = popWidthValue.textContent = parseInt(settings.wPop,10);
 	popWidth.addEventListener('input', function(event) { popWidthValue.textContent = event.target.value;save();}, false);
+
+	await updateIcon();
 
 	var limitValue = document.getElementById('numLimit-value');
 	document.getElementById('numLimit').value = parseInt(Math.pow((((settings.numLimit-5)*Math.pow(600,5))/99994),0.2),10);

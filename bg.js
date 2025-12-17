@@ -33,6 +33,8 @@ chrome.runtime.onStartup.addListener(async function() {
 		await tabListProcessing();
 		await cleanClosedTabs();
 		await setBadge();
+		regExistingTabs();
+		await updateIcon();
 	}
 });
 
@@ -46,6 +48,7 @@ chrome.runtime.onInstalled.addListener(async function(runInfo) {
 		// resetData(); 
 	}
 	await setBadge();
+	await updateIcon();
 });
 
 chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tab){
