@@ -1,4 +1,4 @@
-window.addEventListener("load", bgOnLoad);
+importScripts('common.js');
 
 var defaultSettings = {
 	"showClear" : true,
@@ -23,133 +23,86 @@ var defaultSettings = {
 	"theme" : "1"
 };
 
-settingsUpdate();
-
-function bgOnLoad(){
-	// console.log("SUC Loaded");
-	if(localStorage.getItem('settings')!==null)updateIcon();
-	if(localStorage.getItem('TabListIndex')!==null){regExistingTabs();}
-}
-
-
-chrome.runtime.onStartup.addListener(function() {
-// console.log("LOAD");
-	var settings = JSON.parse(localStorage.settings);
-	if (!settings.saveHistory) {
-		resetData(); 
+chrome.runtime.onStartup.addListener(async function() {
+	let data = await getStorage(['settings']);
+	let settings = data.settings;
+	if (settings && !settings.saveHistory) {
+		await resetData(); 
 	}
-	else {
-		tabListProcessing();
-		cleanClosedTabs();
-		setBadge();
+	else if (settings) {
+		await tabListProcessing();
+		await cleanClosedTabs();
+		await setBadge();
 	}
-	//console.log("START: "+Object.keys(settings).length);
 });
 
-chrome.runtime.onInstalled.addListener(function(runInfo) {
+chrome.runtime.onInstalled.addListener(async function(runInfo) {
 	if (runInfo.reason=="install") {
-		initialize();
+		await initialize();
 	}
 	if (runInfo.reason=="update") {
-		localStorage.dcTime = Date.now();
-
-		settingsUpdate();
+		await setStorage({ dcTime: Date.now() });
+		await settingsUpdate();
 		// resetData(); 
 	}
-	setBadge();
+	await setBadge();
 });
 
 chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tab){
-if(tab.status==="complete"){addNewTab(tab);}
+	if(tab.status==="complete"){addNewTab(tab);}
 });
 
 chrome.tabs.onRemoved.addListener(function(tabId, info)  {
-addClosedTab(tabId,0);
+	addClosedTab(tabId,0);
 });
 
 chrome.commands.onCommand.addListener(function(command) {
 	if(command==="undo-latest") getLatestCTab();
 });
 
-//http://stackoverflow.com/questions/13804213/how-can-i-capture-events-triggered-on-an-extension-icon
-var OnDoubleClickListener = function(config){
-    // Max time between click events occurrence;
-    var CONTROL_TIME = 400;
-
-    //Set click to false at beginning
-    var alreadyClicked = false;
-    var timer;
-
-    if(config && config.onDoubleClick instanceof Function)
-    return function(tab) {
-
-        //Check for previous click
-        if (alreadyClicked) {
-            //Yes, Previous Click Detected
-
-            //Clear timer already set in earlier Click
-            clearTimeout(timer);
-
-            //Clear all Clicks
-            alreadyClicked = false;
-
-            return config.onDoubleClick.apply(config.onDoubleClick,[tab]);
-        }
-
-        //Set Click to  true
-        alreadyClicked = true;
-
-        //Add a timer to detect next click to a sample of 250
-        timer = setTimeout(function () {
-            //Clear all timers
-            clearTimeout(timer);
-            //Ignore clicks
-            alreadyClicked = false;
-        }, CONTROL_TIME);
-    };
-    throw new Error("[InvalidArgumentException]");
-};
-
-chrome.runtime.onMessage.addListener(new OnDoubleClickListener({
-    onDoubleClick : function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+    if (message === "dclick") {
 		getLatestCTab();
-}}));
+    }
+});
 
-function initialize(){
-	localStorage.settings = JSON.stringify(defaultSettings);
-		
-	localStorage.dcTime = Date.now();
-	
-	localStorage.updatedTill = chrome.runtime.getManifest().version;
-	
-	localStorage.setItem("TabListIndex",JSON.stringify([]));
-	localStorage.setItem("ClosedTabIndex",JSON.stringify([]));
+async function initialize(){
+	const manifest = chrome.runtime.getManifest();
+	await setStorage({
+        settings: defaultSettings,
+        dcTime: Date.now(),
+        updatedTill: manifest.version,
+        TabListIndex: [],
+        ClosedTabIndex: []
+    });
 	regExistingTabs();
 }
 
-/*preserve old settings while adding new one*/
-function settingsUpdate(){
-	if(localStorage.settings === undefined){ initialize();}
-	if(localStorage.settings !== undefined&&(localStorage.updatedTill === undefined||needUpdateOrNot("1.3.11"))){
-		console.log("Updating...");
+async function settingsUpdate(){
+	let data = await getStorage(['settings', 'updatedTill']);
+	
+	if(!data.settings){ await initialize(); return; }
+
+	const manifest = chrome.runtime.getManifest();
+	if(data.settings && (!data.updatedTill || needUpdateOrNot(data.updatedTill, "1.3.11"))){
+		// console.log("Updating...");
 		
-		var localKeys = Object.keys(JSON.parse(localStorage.settings)).sort();
+		let settings = data.settings;
+		var localKeys = Object.keys(settings).sort();
 		var currDefKeys = Object.keys(defaultSettings).sort();
+		
 		if(localKeys.length != currDefKeys.length){
-			var settings = JSON.parse(localStorage.settings);
 			
 			if(localKeys.length < currDefKeys.length){
-				console.log("Updating settings...type 1");
+				// console.log("Updating settings...type 1");
 				for(var i=0; i < currDefKeys.length; i++){
-					var found = false;
-					for(var j=0; j < localKeys.length; j++){
-						if(currDefKeys[i] === localKeys[j]) {found = true; break;}
-					}
-					if(!found) {settings[currDefKeys[i]] = defaultSettings[currDefKeys[i]];}
+					if (!settings.hasOwnProperty(currDefKeys[i])) {
+                        settings[currDefKeys[i]] = defaultSettings[currDefKeys[i]];
+                    }
 				}
 				
 			}else{
-				console.log("Updating settings...type 2");
+				// console.log("Updating settings...type 2");
 				for(var i=0; i < localKeys.length; i++){
 					var found = false;
 					for(var j=0; j < currDefKeys.length; j++){
@@ -159,64 +112,31 @@ function settingsUpdate(){
 				}
 			}
 			
-			localStorage.settings = JSON.stringify(settings);
+			await setStorage({ settings: settings });
 		}
 		
-		//delete localStorage["dcTime"]; //1.3.5.2
-		
 		//disable DClick - 1.3.6
-		var settings = JSON.parse(localStorage.settings);
 		settings.disableDClick = true;
-		localStorage.settings = JSON.stringify(settings);
+		await setStorage({ settings: settings });
 		
-		if(localStorage.getItem('TabListIndex')===null){localStorage.setItem("TabListIndex",JSON.stringify([]));}
-		if(localStorage.getItem('ClosedTabIndex')===null){localStorage.setItem("ClosedTabIndex",JSON.stringify([]));}
+		let checks = await getStorage(['TabListIndex', 'ClosedTabIndex']);
+		if(!checks.TabListIndex){ await setStorage({ TabListIndex: [] }); }
+		if(!checks.ClosedTabIndex){ await setStorage({ ClosedTabIndex: [] }); }
 		
 		//updateCTabs();
 		
-		localStorage.updatedTill = chrome.runtime.getManifest().version;
+		await setStorage({ updatedTill: manifest.version });
 	}
-}
-
-//split 5 4 3 %% |!|
-function updateCTabs(){
-console.log("Updating closed tabs...");
-	var closedTabIndex = JSON.parse(localStorage.ClosedTabIndex);
-	
-	for(i = localStorage["closedUpperBound"] - 1; i>localStorage["closedLowerBound"]; i--){
-		var closedTab=localStorage["ClosedTab-"+i];
-		
-		if (closedTab){
-			var rId = randomIdGen();
-			//old vers
-			if (closedTab.split("%%").length > 3){
-				var split = closedTab.split("%%");
-				localStorage["ClosedTab-"+rId] = split[1]+"|!|"+split[2]+"|!|"+split[3];
-			}
-			//1.3.2.3
-			if (closedTab.split("|!|").length === 3){
-				localStorage["ClosedTab-"+rId] = localStorage["ClosedTab-"+i];
-			}
-			
-			delete localStorage["ClosedTab-"+i];
-			closedTabIndex.unshift(rId);
-		}
-	}
-	localStorage.ClosedTabIndex = JSON.stringify(closedTabIndex);
-	
-	delete localStorage["closedUpperBound"];
-	delete localStorage["closedLowerBound"];
-	delete localStorage["closedTabCount"];
 }
 
 //compare updatedTill with specified version, if greater true
-function needUpdateOrNot(specVer){
+function needUpdateOrNot(localVersion, specVer){
 	var need = false;
-	if(localStorage.updatedTill === undefined){need = true;}
-	else if(localStorage.updatedTill !== undefined && specVer !== "skip"){
-		if(localStorage.updatedTill !== specVer){
+	if(localVersion === undefined){need = true;}
+	else if(localVersion !== undefined && specVer !== "skip"){
+		if(localVersion !== specVer){
 			var spcVer = specVer.split(".").map(Number);
-			var tillVer = localStorage.updatedTill.split(".").map(Number);
+			var tillVer = localVersion.split(".").map(Number);
 			var len = Math.max(spcVer.length, tillVer.length);
 			for(var i = 0; i<len; i++){
 				if(spcVer[i]===undefined){spcVer[i]=0;}
@@ -228,21 +148,30 @@ function needUpdateOrNot(specVer){
 	return need;
 }
 
-function addClosedTab(tabId, mode){
+async function addClosedTab(tabId, mode){
 	// console.log("REMOVED: "+tabId+"==="+(localStorage["TabList-"+tabId]!=undefined));
-	if(localStorage["TabList-"+tabId]!=undefined){
-		var settings = JSON.parse(localStorage.settings);
-		var closedTabIndex = JSON.parse(localStorage.ClosedTabIndex);
+	const key = "TabList-" + tabId;
+	let data = await getStorage([key, 'settings', 'ClosedTabIndex']);
+
+	if(data[key] != undefined){
+		var settings = data.settings || defaultSettings;
+		var closedTabIndex = data.ClosedTabIndex || [];
+		
 		// Should we record this tab?
-		var splitValue = localStorage["TabList-"+tabId].split("|!|");
+		var splitValue = data[key].split("|!|");
 		var url = splitValue[0];
 		var re = /^(http:|https:|chrome-extension:)/;
 		//if url is valid?
 		if (url && re.test(url)) {
 			var exists = -1;
+			
+			// Batch get all closed tabs to check existence
+			let closedTabKeys = closedTabIndex.map(id => "ClosedTab-" + id);
+			let closedTabsData = await getStorage(closedTabKeys);
+
 			//go through all saved closed tabs
 			for(var i = closedTabIndex.length-1; i>=0; i--){
-				var closedTab=localStorage["ClosedTab-"+closedTabIndex[i]];
+				var closedTab = closedTabsData["ClosedTab-" + closedTabIndex[i]];
 				if (closedTab){
 					var split = closedTab.split("|!|");
 					//if new removed exists in saved closed tabs
@@ -252,57 +181,62 @@ function addClosedTab(tabId, mode){
 					}
 				}
 			}
-			//settle the time according to mode
-			// var timing;
-			// if(mode==0) {timing = Date.now();} else {timing = localStorage.lastCloseTime;}
-			// var createStr = timing + "|!|" + localStorage["TabList-"+tabId];
-			var createStr = Date.now() + "|!|" + localStorage["TabList-"+tabId];
+
+			var createStr = Date.now() + "|!|" + data[key];
 			//if new removed exists in saved closed tabs, remove it first
 			if (exists!=-1){
-				delete localStorage["ClosedTab-"+exists];
+				await removeStorage(["ClosedTab-"+exists]);
 				closedTabIndex.splice(closedTabIndex.indexOf(exists),1);
 			}
 
 			var rId = randomIdGen();
-			localStorage["ClosedTab-"+rId] = createStr;
+			await setStorage({ ["ClosedTab-"+rId]: createStr });
 			closedTabIndex.push(rId);
 
 			// Code for managing overflow
-			if (closedTabIndex.length>settings.numLimit){
+			if (closedTabIndex.length > settings.numLimit){
 			// console.log("OVERFLOW - "+closedTabIndex.length+">"+settings.numLimit);
 				for(var i = 0; i<closedTabIndex.length; i++){
-					var closedTab=localStorage["ClosedTab-"+closedTabIndex[i]];
+					let cTabKey = "ClosedTab-" + closedTabIndex[i];
+					let cData = await getStorage([cTabKey]);
+					let closedTab = cData[cTabKey];
 					if (closedTab){
 					// console.log("CLOSE TAB - delete and lower bound to "+i);
-						delete localStorage["ClosedTab-"+closedTabIndex[i]];
+						await removeStorage([cTabKey]);
 						closedTabIndex.splice(closedTabIndex.indexOf(closedTabIndex[i]),1);
 						break;
 					}
 				}
 			}
-			localStorage.ClosedTabIndex = JSON.stringify(closedTabIndex);
-			setBadge();
+			await setStorage({ ClosedTabIndex: closedTabIndex });
+			await setBadge();
 		}
-		delete localStorage["TabList-"+tabId];
-		var tabListIndex = JSON.parse(localStorage.TabListIndex);
-		tabListIndex.splice(tabListIndex.indexOf(tabId),1);
-		localStorage.TabListIndex = JSON.stringify(tabListIndex);
+		await removeStorage([key]);
+		
+		let idxData = await getStorage(['TabListIndex']);
+		var tabListIndex = idxData.TabListIndex || [];
+		const tIdx = tabListIndex.indexOf(tabId);
+		if (tIdx > -1) {
+			tabListIndex.splice(tIdx, 1);
+			await setStorage({ TabListIndex: tabListIndex });
+		}
 	}
 }
 
 //check for open tabs of previous browser close and make them closed tabs
-function tabListProcessing() {
-	var storageSize = localStorage.length;
-	var tabListIndex = JSON.parse(localStorage.TabListIndex);
-	for(var i = 0; i < storageSize; i++){
+async function tabListProcessing() {
+	let allData = await getStorage(null);
+	let tabListIndex = allData.TabListIndex || [];
+	
+	for (const key in allData) {
 	// console.log("TLC"+i+" of "+storageSize+": "+localStorage.key(i));
-		if(localStorage.key(i).indexOf("TabList-")!=-1) {
-			var tabListId = parseInt(localStorage.key(i).substr(8));
+		if(key.indexOf("TabList-")!=-1) {
+			var tabListId = parseInt(key.substr(8));
 			if(tabListIndex.indexOf(tabListId)!=-1){
-				addClosedTab(tabListId,1);
-			}else{localStorage.removeItem(localStorage.key(i));}
-			storageSize = localStorage.length;
-			--i;
+				await addClosedTab(tabListId,1);
+			}else{
+				await removeStorage([key]);
+			}
 		}
 	}
 }
@@ -312,18 +246,19 @@ function randomIdGen(){
 }
 
 //thanks to Ehsan Kia, deletes orphaned ClosedTab entries
-function cleanClosedTabs() {
+async function cleanClosedTabs() {
+	let data = await getStorage(['ClosedTabIndex']);
+	var indexList = data.ClosedTabIndex || [];
 	var db = {};
-	var indexList = JSON.parse(localStorage.ClosedTabIndex);
 	for (var i = 0; i < indexList.length; i++) {
 		db[indexList[i]] = true;
 	}
 
-	for (key in localStorage) {
-		if (!localStorage.hasOwnProperty(key)) continue;
+	let allData = await getStorage(null);
+	for (key in allData) {
 		var parts = key.split('-');
 		if (parts[0] === 'ClosedTab' && !db.hasOwnProperty(parts[1])) {
-			delete localStorage[key];
+			await removeStorage([key]);
 		}
 	}
 }

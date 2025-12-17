@@ -1,4 +1,4 @@
-﻿var settings = JSON.parse(localStorage.settings);
+var settings = {};
 
 var pageNo = 0;
 
@@ -12,11 +12,10 @@ var noTabs;
 
 var tWidth, tWidth2, tWidth3;
 
-var delType = settings.style;
+var delType;
 var longpress = false;
-var lpdVal = settings.lpDelay * 1000;
+var lpdVal;
 var chkArray;
-//dClickHandler();
 
 //--Detect double click
 //Wake the background page and do the stuff there
@@ -56,7 +55,7 @@ function createLink(id, url, pgTitle) {
 			return false;
 		}
 		
-		if (e.button == 0){ 
+		if (e.button == 0){
 			createTab(id,true);
 			setup();
 		}
@@ -111,14 +110,14 @@ function encodeHtml(str) {
         .replace(/>/g, '&gt;');
 }
 
-function setup(){
+async function setup(){
 
 	content = document.getElementById("content");
 
 	if (settings.menuTop == true) content = document.getElementById("content2");
 	if (settings.boldFont == true) content.className+=" bold";
 	
-	populate();
+	await populate();
 	
 	if(!noTabs && (settings.showSearch == true || settings.showClear == true || settings.numLimit > settings.numItems || longpress)) {
 	//console.log("Controls show..");
@@ -158,9 +157,11 @@ function setup(){
 	else{ document.getElementById("controls").style.display="none"; }
 }
 
-function populate(){
+async function populate(){
 	
-	var closedTabIndex = JSON.parse(localStorage.ClosedTabIndex);	
+	let data = await getStorage(['ClosedTabIndex']);
+	let closedTabIndex = data.ClosedTabIndex || [];
+
 	if (closedTabIndex.length == 0){
 		//console.log("No tabs");
 		content.innerHTML=chrome.i18n.getMessage("popup_noTabsMsg");
@@ -171,17 +172,20 @@ function populate(){
 		noTabs = false;
 		content.innerHTML="";
 		
-		var closedTabIndex = JSON.parse(localStorage.ClosedTabIndex);
 		var disp_per_pg=settings.numItems;
 		if (filterStrings!=null) disp_per_pg=1000;
 
 		currentTime = Date.now(); 
 		
+		let allKeys = closedTabIndex.map(id => "ClosedTab-" + id);
+		let closedTabsMap = await getStorage(allKeys);
+
 		var i = closedTabIndex.length - 1;
-		for(var j = 0; i>=0 && j<pageNo*disp_per_pg; i--){ if (localStorage["ClosedTab-"+closedTabIndex[i]]) j++;}
+		for(var j = 0; i>=0 && j<pageNo*disp_per_pg; i--){ if (closedTabsMap["ClosedTab-"+closedTabIndex[i]]) j++;}
 
 		for(var j = 0; i>=0 && j<disp_per_pg; i--){
-			var closedTab = localStorage["ClosedTab-"+closedTabIndex[i]];
+			let key = "ClosedTab-"+closedTabIndex[i];
+			var closedTab = closedTabsMap[key];
 			if (closedTab){
 				if (filterStrings==null || (filterStrings!=null && closedTab.multiFind(filterStrings))){
 					createEntry(closedTabIndex[i],closedTab);
@@ -206,7 +210,7 @@ function populate(){
 			document.getElementById("next").style.visibility="visible";
 			}
 		}else{
-			if (j==0) content.innerHTML="<center>"+chrome.i18n.getMessage("popup_noSearchResult")+" \'"+unescape(filterStrings.join(" "))+"\'</center>";
+			if (j==0) content.innerHTML="<center>"+chrome.i18n.getMessage("popup_noSearchResult")+" '"+unescape(filterStrings.join(" "))+"'</center>";
 		}
 	}
 	
@@ -223,7 +227,11 @@ function createEntry(i,closedTab) {
 	var html="";
 	var fragment = document.createDocumentFragment();
 
-	html+="<img class=\"icon\" src=\"chrome://favicon/"+tabUrl+"\" alt=\""+tabUrl+"\">"; 
+    // V3 favicon URL
+    const faviconUrl = `_favicon/?pageUrl=${encodeURIComponent(tabUrl)}&size=16`;
+    // const faviconUrl = "chrome://favicon/"+tabUrl; // Old way
+    
+	html+="<img class=\"icon\" src=\""+faviconUrl+"\" alt=\""+tabUrl+"\">"; 
 
 	if (filterStrings!=null) tabTitle=tabTitle.multiReplace(filterStrings);
 	
@@ -318,10 +326,10 @@ function buildDelBtn(i){
 		delBtn.className = "del";
 		delBtn.title = chrome.i18n.getMessage("popup_delbtn");
 		delBtn.innerHTML = "<p class=\"delTxt\">×</p>";
-		delBtn.addEventListener('click',function(event){ 
+		delBtn.addEventListener('click', async function(event){ 
 		  event.stopPropagation(); //click-shield!
-		  removeClosedTab(i); 
-		  populate();
+		  await removeClosedTab(i); 
+		  await populate();
 		},false);
 		delBtn.addEventListener('mousedown',function(event){ 
 		  event.stopPropagation(); //click-shield!
@@ -340,10 +348,10 @@ function buildDelBtn(i){
 		delBtn.className = "del2";
 		delBtn.title = chrome.i18n.getMessage("popup_delbtn");
 		delBtn.innerHTML = "<p class=\"delTxt2\">×</p>";
-		delBtn.addEventListener('click',function(event){ 
+		delBtn.addEventListener('click', async function(event){ 
 		  event.stopPropagation(); //click-shield!
-		  removeClosedTab(i); 
-		  populate();
+		  await removeClosedTab(i); 
+		  await populate();
 		},false);
 		
 		fragment.appendChild(delBtn);
@@ -372,14 +380,20 @@ function searchFor(string) {
 	filterTimeOut=setTimeout(setup,200);
 }
 function next() {
-	var closedTabIndex = JSON.parse(localStorage.ClosedTabIndex);
-	if (closedTabIndex.length > (pageNo+1) * settings.numItems) pageNo++;
-	setup();
+    // async wrapper
+    (async () => {
+        let data = await getStorage(['ClosedTabIndex']);
+        let closedTabIndex = data.ClosedTabIndex || [];
+        if (closedTabIndex.length > (pageNo+1) * settings.numItems) pageNo++;
+        await setup();
+    })();
 }
 
 function prev() {
-	if (pageNo > 0) pageNo--;
-	setup();
+    (async () => {
+        if (pageNo > 0) pageNo--;
+        await setup();
+    })();
 }
 
 function reset(){
@@ -387,26 +401,31 @@ function reset(){
 		document.getElementById("searchQ").value="";
 		searchFor("");
 	}else{
-		resetData();
-		pageNo = 0;
-		setup();
+		resetData().then(() => {
+            pageNo = 0;
+            setup();
+        });
 	}
 }
 
-function deleteFoundTabs(){
+async function deleteFoundTabs(){
 	if (filterStrings==null) return;
-	var closedTabIndex = JSON.parse(localStorage.ClosedTabIndex);
+	let data = await getStorage(['ClosedTabIndex']);
+    let closedTabIndex = data.ClosedTabIndex || [];
+    let keys = closedTabIndex.map(id => "ClosedTab-" + id);
+    let closedTabsMap = await getStorage(keys);
+    
 	for(i = closedTabIndex.length - 1; i>=0; i--){
-		var closedTab = localStorage["ClosedTab-"+closedTabIndex[i]];
+		var closedTab = closedTabsMap["ClosedTab-"+closedTabIndex[i]];
 		if (closedTab){
 			if (filterStrings!=null && closedTab.multiFind(filterStrings)){
-				removeClosedTab(closedTabIndex[i]);
+				await removeClosedTab(closedTabIndex[i]);
 			}
 		}
 	}
 	document.getElementById('searchQ').value = "";
 	filterStrings = null;
-	setup();
+	await setup();
 }
 
 //math from http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
@@ -435,16 +454,17 @@ function getElapsedTime(ms){
 }
 
 function cleanInvalidTabs(){
-	chrome.tabs.query({"url":"*://*/*"}, function(tabs) {
-		var tabListIndex = JSON.parse(localStorage.TabListIndex);
-		// console.log(tabs.length+" tabs vs "+tabListIndex.length+" indexed");
-		if(tabListIndex.length>tabs.length){
+	chrome.tabs.query({"url":"*://*/*"}, async function(tabs) {
+		let data = await getStorage(['TabListIndex']);
+        let tabListIndex = data.TabListIndex || [];
+        
+		if(tabListIndex.length > tabs.length){
 			var tabsToClean = tabListIndex.length-tabs.length;
 			for(var t = 0; t<tabsToClean; t++){
-				delete localStorage["TabList-"+tabListIndex[t]];
+                await removeStorage(["TabList-"+tabListIndex[t]]);
 			}
 			tabListIndex.splice(0,tabsToClean);
-			localStorage.TabListIndex = JSON.stringify(tabListIndex);
+            await setStorage({ TabListIndex: tabListIndex });
 		}
 	});
 }
@@ -463,11 +483,11 @@ function findTabCBM(id){
 
 function stripVowelAccent(str)
 {
-	var rExps=[ /[\xC0-\xC2]/g, /[\xE0-\xE2]/g,
-		/[\xC8-\xCA]/g, /[\xE8-\xEB]/g,
-		/[\xCC-\xCE]/g, /[\xEC-\xEE]/g,
-		/[\xD2-\xD4]/g, /[\xF2-\xF4]/g,
-		/[\xD9-\xDB]/g, /[\xF9-\xFB]/g ];
+	var rExps=[ /[\u00C0-\u00C2]/g, /[\u00E0-\u00E2]/g,
+		/[\u00C8-\u00CA]/g, /[\u00E8-\u00EB]/g,
+		/[\u00CC-\u00CE]/g, /[\u00EC-\u00EE]/g,
+		/[\u00D2-\u00D4]/g, /[\u00F2-\u00F4]/g,
+		/[\u00D9-\u00DB]/g, /[\u00F9-\u00FB]/g ];
 
 	var repChar=['A','a','E','e','I','i','O','o','U','u'];
 
@@ -565,74 +585,81 @@ document.onkeydown = function(evt) {
 };
 
 //populate popup and bind functions to buttons on popup load
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
 
-document.body.style.width = settings.wPop+'px';
-tWidth = settings.wPop - 30-5;
-if(settings.sexy) tWidth -= 91;
-if(!settings.sexy && delType == 2) tWidth -= 28;
-tWidth2 = settings.wPop - 28;
+    let data = await getStorage(['settings']);
+    settings = data.settings;
+    if (!settings) return;
 
-chkArray = [];
+    delType = settings.style;
+    lpdVal = settings.lpDelay * 1000;
 
-btnLangAdj();
-setup();
+    document.body.style.width = settings.wPop+'px';
+    tWidth = settings.wPop - 30-5;
+    if(settings.sexy) tWidth -= 91;
+    if(!settings.sexy && delType == 2) tWidth -= 28;
+    tWidth2 = settings.wPop - 28;
 
-document.getElementById('clr').addEventListener('click',reset);
-document.getElementById('clr').title = chrome.i18n.getMessage("popup_clrbtn_tooltip");
-document.getElementById('clr').innerHTML = chrome.i18n.getMessage("popup_clrbtn");
-document.getElementById('searchQ').addEventListener('input',function(){
- searchFor(document.getElementById('searchQ').value);
-});
-document.getElementById('searchQ').title = chrome.i18n.getMessage("popup_search_tooltip");
-document.getElementById('delete').addEventListener('click',deleteFoundTabs);
-document.getElementById('delete').title = chrome.i18n.getMessage("popup_delbtn_tooltip");
-document.getElementById('delete').innerHTML = chrome.i18n.getMessage("popup_delbtn");
-document.getElementById('prev').addEventListener('click',prev);
-document.getElementById('prev').title = chrome.i18n.getMessage("popup_prvbtn_tooltip");
-document.getElementById('next').addEventListener('click',next);
-document.getElementById('next').title = chrome.i18n.getMessage("popup_nxtbtn_tooltip");
+    chkArray = [];
 
-document.getElementById('open1').innerHTML = chrome.i18n.getMessage("popup_open1_btn");
-document.getElementById('open1').title = chrome.i18n.getMessage("popup_open1_tooltip");
-document.getElementById('open1').addEventListener('click',function(e){
-	if(chkArray.length>0){
-		for(var i = chkArray.length - 1; i >= 0; i--) {
-			createTab(chkArray[i]);
-		}
-		window.close();
-	}
-},false);
-document.getElementById('open2').innerHTML = chrome.i18n.getMessage("popup_open2_btn");
-document.getElementById('open2').title = chrome.i18n.getMessage("popup_open2_tooltip");
-document.getElementById('open2').addEventListener('click',function(e){
-	chrome.windows.create(function(newWin){	
-		if(chkArray.length>0){
-			for(var i = chkArray.length - 1; i >= 0; i--) {
-				createTabWindow(chkArray[i],newWin.id);
-			}
-			window.close();
-		}
-	});
-},false);
-document.getElementById('delete2').innerHTML = chrome.i18n.getMessage("popup_delbtn");
-document.getElementById('delete2').title = chrome.i18n.getMessage("popup_delete2_tooltip");
-document.getElementById('delete2').addEventListener('click',function(e){
-	if(chkArray.length>0){
-		for(var i = chkArray.length - 1; i >= 0; i--) {
-			removeClosedTab(chkArray[i]);
-		}
-		chkArray = [];
-		setup();
-	}
-},false);
-document.getElementById('cancel').title = chrome.i18n.getMessage("popup_cancel_tooltip");
-document.getElementById('cancel').addEventListener('click',function(e){
-	longpress = false;
-	chkArray = [];
-	setup();
-},false);
+    btnLangAdj();
+    await setup();
 
-cleanInvalidTabs();
+    document.getElementById('clr').addEventListener('click',reset);
+    document.getElementById('clr').title = chrome.i18n.getMessage("popup_clrbtn_tooltip");
+    document.getElementById('clr').innerHTML = chrome.i18n.getMessage("popup_clrbtn");
+    document.getElementById('searchQ').addEventListener('input',function(){
+    searchFor(document.getElementById('searchQ').value);
+    });
+    document.getElementById('searchQ').title = chrome.i18n.getMessage("popup_search_tooltip");
+    document.getElementById('delete').addEventListener('click',deleteFoundTabs);
+    document.getElementById('delete').title = chrome.i18n.getMessage("popup_delbtn_tooltip");
+    document.getElementById('delete').innerHTML = chrome.i18n.getMessage("popup_delbtn");
+    document.getElementById('prev').addEventListener('click',prev);
+    document.getElementById('prev').title = chrome.i18n.getMessage("popup_prvbtn_tooltip");
+    document.getElementById('next').addEventListener('click',next);
+    document.getElementById('next').title = chrome.i18n.getMessage("popup_nxtbtn_tooltip");
+
+    document.getElementById('open1').innerHTML = chrome.i18n.getMessage("popup_open1_btn");
+    document.getElementById('open1').title = chrome.i18n.getMessage("popup_open1_tooltip");
+    document.getElementById('open1').addEventListener('click',async function(e){
+        if(chkArray.length>0){
+            for(var i = chkArray.length - 1; i >= 0; i--) {
+                await createTab(chkArray[i]);
+            }
+            window.close();
+        }
+    },false);
+    document.getElementById('open2').innerHTML = chrome.i18n.getMessage("popup_open2_btn");
+    document.getElementById('open2').title = chrome.i18n.getMessage("popup_open2_tooltip");
+    document.getElementById('open2').addEventListener('click',function(e){
+        chrome.windows.create(async function(newWin){    
+            if(chkArray.length>0){
+                for(var i = chkArray.length - 1; i >= 0; i--) {
+                    await createTabWindow(chkArray[i],newWin.id);
+                }
+                window.close();
+            }
+        });
+    },false);
+    document.getElementById('delete2').innerHTML = chrome.i18n.getMessage("popup_delbtn");
+    document.getElementById('delete2').title = chrome.i18n.getMessage("popup_delete2_tooltip");
+    document.getElementById('delete2').addEventListener('click',async function(e){
+        if(chkArray.length>0){
+            for(var i = chkArray.length - 1; i >= 0; i--) {
+                await removeClosedTab(chkArray[i]);
+            }
+            chkArray = [];
+            await setup();
+        }
+    },false);
+    document.getElementById('cancel').title = chrome.i18n.getMessage("popup_cancel_tooltip");
+    document.getElementById('cancel').addEventListener('click',async function(e){
+        longpress = false;
+        chkArray = [];
+        await setup();
+    },false);
+
+    cleanInvalidTabs();
 
 });

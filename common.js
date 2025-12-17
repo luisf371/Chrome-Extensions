@@ -1,126 +1,232 @@
+// Helper for storage
+const getStorage = (keys) => {
+    return new Promise(async (resolve) => {
+        // If keys is null, get everything from both sources
+        if (keys === null) {
+             let [local, sync] = await Promise.all([
+                new Promise(r => chrome.storage.local.get(null, r)),
+                new Promise(r => chrome.storage.sync.get(null, r))
+            ]);
+            resolve({...local, ...sync});
+            return;
+        }
+
+        let keysArray = Array.isArray(keys) ? keys : [keys];
+        let syncKeys = keysArray.filter(k => k === 'settings');
+        let localKeys = keysArray.filter(k => k !== 'settings');
+        
+        let promises = [];
+        if (syncKeys.length > 0) promises.push(new Promise(r => chrome.storage.sync.get(syncKeys, r)));
+        if (localKeys.length > 0) promises.push(new Promise(r => chrome.storage.local.get(localKeys, r)));
+        
+        let results = await Promise.all(promises);
+        let combined = Object.assign({}, ...results);
+        resolve(combined);
+    });
+};
+
+const setStorage = (items) => {
+    return new Promise(async (resolve) => {
+        let syncItems = {};
+        let localItems = {};
+        let hasSync = false;
+        let hasLocal = false;
+
+        for (let key in items) {
+            if (key === 'settings') {
+                syncItems[key] = items[key];
+                hasSync = true;
+            } else {
+                localItems[key] = items[key];
+                hasLocal = true;
+            }
+        }
+
+        let promises = [];
+        if (hasSync) promises.push(new Promise(r => chrome.storage.sync.set(syncItems, r)));
+        if (hasLocal) promises.push(new Promise(r => chrome.storage.local.set(localItems, r)));
+        
+        await Promise.all(promises);
+        resolve();
+    });
+};
+
+const removeStorage = (keys) => {
+     return new Promise(async (resolve) => {
+        let keysArray = Array.isArray(keys) ? keys : [keys];
+        let syncKeys = keysArray.filter(k => k === 'settings');
+        let localKeys = keysArray.filter(k => k !== 'settings');
+        
+        let promises = [];
+        if (syncKeys.length > 0) promises.push(new Promise(r => chrome.storage.sync.remove(syncKeys, r)));
+        if (localKeys.length > 0) promises.push(new Promise(r => chrome.storage.local.remove(localKeys, r)));
+        
+        await Promise.all(promises);
+        resolve();
+    });
+};
+
 // Show |url| in a new tab.
-function createTab(id,selected) {
-	var url = localStorage["ClosedTab-"+id].split("|!|")[1];
-	if (selected==true){
-		chrome.tabs.create({"url": url,"active":true});  
-		window.close();
-	}else{
-		chrome.tabs.create({"url": url,"active":false});  
+async function createTab(id, selected) {
+	const data = await getStorage(["ClosedTab-" + id]);
+	if (!data["ClosedTab-" + id]) return;
+
+	var url = data["ClosedTab-" + id].split("|!|")[1];
+	if (selected == true) {
+		chrome.tabs.create({ "url": url, "active": true });
+		if (typeof window !== 'undefined' && window.close) window.close();
+	} else {
+		chrome.tabs.create({ "url": url, "active": false });
 	}
-	
-	removeClosedTab(id);
+
+	await removeClosedTab(id);
 }
 
-function createTabWindow(id,wId) {
-	var url = localStorage["ClosedTab-"+id].split("|!|")[1];
-	chrome.tabs.create({"url": url,"windowId": wId});
-	
-	removeClosedTab(id);
+async function createTabWindow(id, wId) {
+	const data = await getStorage(["ClosedTab-" + id]);
+	if (!data["ClosedTab-" + id]) return;
+
+	var url = data["ClosedTab-" + id].split("|!|")[1];
+	chrome.tabs.create({ "url": url, "windowId": wId });
+
+	await removeClosedTab(id);
 }
 
-function addNewTab(tab) {
-// console.log("ADD NEW "+tab.url+"|!|"+tab.title+"|!|"+tab.status);
+async function addNewTab(tab) {
+	// console.log("ADD NEW "+tab.url+"|!|"+tab.title+"|!|"+tab.status);
 	// var re = /^(http:|https:|ftp:|file:)/;
 	var re = /^(http:|https:|chrome-extension:)/;
 	if (re.test(tab.url)) {
-		if(chkNewTab(tab)){
-			var insertThis = tab.url+"|!|";
+		if (await chkNewTab(tab)) {
+			var insertThis = tab.url + "|!|";
 			insertThis += tab.title;
-			localStorage["TabList-"+tab.id] = insertThis;
-			var tabListIndex = JSON.parse(localStorage.TabListIndex);
-			if(tabListIndex.indexOf(tab.id)==-1) {tabListIndex.push(tab.id);
-			localStorage.TabListIndex = JSON.stringify(tabListIndex);}
+
+			const listKey = "TabList-" + tab.id;
+			let data = await getStorage(["TabListIndex"]);
+			let tabListIndex = data.TabListIndex || [];
+
+			if (tabListIndex.indexOf(tab.id) == -1) {
+				tabListIndex.push(tab.id);
+				await setStorage({
+					[listKey]: insertThis,
+					"TabListIndex": tabListIndex
+				});
+			} else {
+				await setStorage({
+					[listKey]: insertThis
+				});
+			}
 		}
 	}
 }
 
 //check if url same, not same than pass
-function chkNewTab(tab){
+async function chkNewTab(tab) {
 	var pass = false;
-	var inList = localStorage["TabList-"+tab.id];
-	if(inList===undefined||inList&&(inList.split("|!|")[0]!==tab.url||(inList.split("|!|")[0]===tab.url&&inList.split("|!|")[1]!==tab.title))) pass = true;
+	const key = "TabList-" + tab.id;
+	const data = await getStorage([key]);
+	var inList = data[key];
+
+	if (inList === undefined || (inList && (inList.split("|!|")[0] !== tab.url || (inList.split("|!|")[0] === tab.url && inList.split("|!|")[1] !== tab.title)))) pass = true;
 	return pass;
 }
 
-function removeClosedTab(id){
-	var closedTabIndex = JSON.parse(localStorage.ClosedTabIndex);
-	delete localStorage["ClosedTab-"+id];
-	closedTabIndex.splice(closedTabIndex.indexOf(id),1);
-	localStorage.ClosedTabIndex = JSON.stringify(closedTabIndex);
-	setBadge();
+async function removeClosedTab(id) {
+	let data = await getStorage(["ClosedTabIndex"]);
+	let closedTabIndex = data.ClosedTabIndex || [];
+
+	await removeStorage(["ClosedTab-" + id]);
+
+	const index = closedTabIndex.indexOf(id);
+	if (index > -1) {
+		closedTabIndex.splice(index, 1);
+		await setStorage({ "ClosedTabIndex": closedTabIndex });
+	}
+	await setBadge();
 }
 
-function setBadge() {
-	var settings = JSON.parse(localStorage.settings);
-	if(settings.showBadge){
-		var closedTabIndex = JSON.parse(localStorage.ClosedTabIndex);
+async function setBadge() {
+	let data = await getStorage(["settings", "ClosedTabIndex"]);
+	let settings = data.settings || {};
+
+	if (settings.showBadge) {
+		let closedTabIndex = data.ClosedTabIndex || [];
 		var n = closedTabIndex.length;
-		if (n > 0){
-			chrome.browserAction.setBadgeBackgroundColor({color:[15, 161, 211, 255]});
-			chrome.browserAction.setBadgeText({text: n.toString()});
-		}else{
-			chrome.browserAction.setBadgeText({text: ""});
+		if (n > 0) {
+			chrome.action.setBadgeBackgroundColor({ color: [15, 161, 211, 255] });
+			chrome.action.setBadgeText({ text: n.toString() });
+		} else {
+			chrome.action.setBadgeText({ text: "" });
 		}
-	}else{
-		chrome.browserAction.setBadgeText({text: ""});
+	} else {
+		chrome.action.setBadgeText({ text: "" });
 	}
 }
 
-function resetData() {	
+async function resetData() {
 	//console.log("RESET");
-	var settings = JSON.parse(localStorage.settings);
-	var oldUpdTill = localStorage.updatedTill;
-	localStorage.clear();
-	
-	localStorage.settings = JSON.stringify(settings);
-	localStorage.updatedTill = oldUpdTill;
-	
-	localStorage.setItem("TabListIndex",JSON.stringify([]));
-	localStorage.setItem("ClosedTabIndex",JSON.stringify([]));
+	let data = await getStorage(["settings", "updatedTill"]);
+	let settings = data.settings;
+	let oldUpdTill = data.updatedTill;
+
+	await chrome.storage.local.clear();
+
+	await setStorage({
+		"settings": settings,
+		"updatedTill": oldUpdTill,
+		"TabListIndex": [],
+		"ClosedTabIndex": []
+	});
+
 	// localStorage.lastCloseTime = 0;
-	
+
 	regExistingTabs();
-	setBadge(); 
+	await setBadge();
 }
 
-function updateIcon() {
-	var settings = JSON.parse(localStorage["settings"]);
-	
-	if(settings.altBut){
-		chrome.browserAction.setIcon({path:{"19": "icon-19-1.png","38": "icon-38-1.png"}});
-	}else{
-		if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-			// dark mode
-			chrome.browserAction.setIcon({
-				path : {
-					"19" : "icon-19-2.png",
-					"38" : "icon-38-2.png"
+async function updateIcon() {
+	let data = await getStorage(["settings"]);
+	let settings = data.settings || {};
+
+	if (settings.altBut) {
+		chrome.action.setIcon({ path: { "19": "icon-19-1.png", "38": "icon-38-1.png" } });
+	} else {
+		let isDark = false;
+		if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+			isDark = true;
+		}
+
+		if (isDark) {
+			chrome.action.setIcon({
+				path: {
+					"19": "icon-19-2.png",
+					"38": "icon-38-2.png"
 				}
 			});
-		}
-		else{
-			chrome.browserAction.setIcon({
-				path : {
-					"19" : "icon-19-0.png",
-					"38" : "icon-38-0.png"
+		} else {
+			chrome.action.setIcon({
+				path: {
+					"19": "icon-19-0.png",
+					"38": "icon-38-0.png"
 				}
 			});
 		}
 	}
 }
 
-function regExistingTabs(){
-	chrome.tabs.query({"url":"*://*/*"}, function(tabs) {
-	// console.log(tabs.length+" tabs");
-		for(var t = 0; t<tabs.length; t++){
-		// console.log("add tab "+t);
+function regExistingTabs() {
+	chrome.tabs.query({ "url": "*://*/*" }, function (tabs) {
+		// console.log(tabs.length+" tabs");
+		for (var t = 0; t < tabs.length; t++) {
+			// console.log("add tab "+t);
 			addNewTab(tabs[t]);
 		}
 	});
 }
 
-function getLatestCTab(){
+async function getLatestCTab() {
 	// console.log("LAST CLOSED TAB");
-	var closedTabIndex = JSON.parse(localStorage.ClosedTabIndex);
-	if(closedTabIndex.length>0) createTab(closedTabIndex[closedTabIndex.length-1],true);
+	let data = await getStorage(["ClosedTabIndex"]);
+	let closedTabIndex = data.ClosedTabIndex || [];
+	if (closedTabIndex.length > 0) await createTab(closedTabIndex[closedTabIndex.length - 1], true);
 }

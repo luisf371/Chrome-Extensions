@@ -1,6 +1,6 @@
-﻿var settings = {};
+var settings = {};
 
-function save() {
+async function save() {
 	if(!document.getElementById('showTime').checked) {document.getElementById('sexyBack').style.display = "none";}
 	else {document.getElementById('sexyBack').style.display = "block";}
 
@@ -28,19 +28,24 @@ function save() {
 	settings.numItems = document.getElementById("numItems").value;
 	settings.numLines = parseInt(document.getElementById("numLines").value,10);
 	
-	localStorage.settings = JSON.stringify(settings);
-	var closedTabIndex = JSON.parse(localStorage.ClosedTabIndex);
+	await setStorage({ settings: settings });
+
+	let data = await getStorage(['ClosedTabIndex']);
+	let closedTabIndex = data.ClosedTabIndex || [];
+
 	if (closedTabIndex.length>settings.numLimit){
-	  trimTabs(settings.numLimit);
+	  await trimTabs(settings.numLimit);
 	}
-	setBadge();
-	updateIcon();
+	await setBadge();
+	await updateIcon();
 }
 
 // Make sure the options gets properly initialized from the
 // saved preference.
-document.addEventListener('DOMContentLoaded', function () {
-	settings = JSON.parse(localStorage.settings);
+document.addEventListener('DOMContentLoaded', async function () {
+	let data = await getStorage(['settings']);
+	settings = data.settings;
+	if (!settings) return;
 	
 	document.getElementById('doubleClickFunc').style.display = 'none'; //hide dclick for now
 	
@@ -128,24 +133,25 @@ document.addEventListener('DOMContentLoaded', function () {
 	document.getElementById('lpdValue').addEventListener('blur', chkLPval);
 });
 
-function trimTabs(tablimit){
+async function trimTabs(tablimit){
 	// Trim off the excess saved closed tabs
-	var closedTabIndex = JSON.parse(localStorage.ClosedTabIndex);
+	let data = await getStorage(['ClosedTabIndex']);
+	let closedTabIndex = data.ClosedTabIndex || [];
+
 	var noToDelete = closedTabIndex.length - tablimit;
 	for(var i = 0; i<noToDelete; i++){
-		if(localStorage["ClosedTab-"+closedTabIndex[i]]){
-			delete localStorage["ClosedTab-"+closedTabIndex[i]];
+		let key = "ClosedTab-"+closedTabIndex[i];
+		let cData = await getStorage([key]);
+		if(cData[key]){
+			await removeStorage([key]);
 			closedTabIndex.splice(closedTabIndex.indexOf(closedTabIndex[i]),1);
 		}
 	}
-	localStorage.ClosedTabIndex = JSON.stringify(closedTabIndex);
+	await setStorage({ ClosedTabIndex: closedTabIndex });
 }
 
 function informHotkeyChange(){
-	var tabListIndex = JSON.parse(localStorage.TabListIndex);
-	for(var i = tabListIndex.length-1; i>=0; i--){
-		chrome.tabs.sendMessage(tabListIndex[i], {key1:settings.hkey1,key2:settings.hkey2});
-	}
+	// Removed or needs update if used. Not called in original code effectively.
 }
 
 function getRadioValue(radioGroup){
