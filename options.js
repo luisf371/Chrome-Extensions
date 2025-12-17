@@ -12,7 +12,6 @@ async function save() {
 	settings.boldFont = document.getElementById('bold').checked;
 	settings.saveHistory = document.getElementById('saveHistory').checked;
 	settings.menuTop = document.getElementById('menuTop').checked;
-	settings.disableDClick = document.getElementById('disableDClick').checked;
 	settings.tooltipText = document.getElementById('tooltipText').checked;
 	settings.altBut = document.getElementById('altBut').checked;
 	
@@ -47,8 +46,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 	settings = data.settings;
 	if (!settings) return;
 	
-	document.getElementById('doubleClickFunc').style.display = 'none'; //hide dclick for now
-	
 	document.getElementById('showClear').checked = settings.showClear;
 	document.getElementById('showClear').addEventListener('click', save);
 
@@ -73,9 +70,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 	document.getElementById('menuTop').checked = settings.menuTop;
 	document.getElementById('menuTop').addEventListener('click', save);
-
-	document.getElementById('disableDClick').checked = settings.disableDClick;
-	document.getElementById('disableDClick').addEventListener('click', save);
 	
 	document.getElementById('tooltipText').checked = settings.tooltipText;
 	document.getElementById('tooltipText').addEventListener('click', save);

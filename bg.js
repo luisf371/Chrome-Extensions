@@ -49,7 +49,7 @@ chrome.runtime.onInstalled.addListener(async function(runInfo) {
 });
 
 chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tab){
-	if(tab.status==="complete"){addNewTab(tab);}
+	if(tab.url){addNewTab(tab);}
 });
 
 chrome.tabs.onRemoved.addListener(function(tabId, info)  {
@@ -58,12 +58,6 @@ chrome.tabs.onRemoved.addListener(function(tabId, info)  {
 
 chrome.commands.onCommand.addListener(function(command) {
 	if(command==="undo-latest") getLatestCTab();
-});
-
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-    if (message === "dclick") {
-		getLatestCTab();
-    }
 });
 
 async function initialize(){

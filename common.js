@@ -106,7 +106,7 @@ async function addNewTab(tab) {
 		if (await chkNewTab(tab)) {
 			await navigator.locks.request('simpleUndoClose_data', async (lock) => {
 				var insertThis = tab.url + "|!|";
-				insertThis += tab.title;
+				insertThis += tab.title.replace(/\|\!\|/g, " ");
 
 				const listKey = "TabList-" + tab.id;
 				let data = await getStorage(["TabListIndex"]);
@@ -156,6 +156,25 @@ async function removeClosedTabInternal(id) {
 		closedTabIndex.splice(index, 1);
 		await setStorage({ "ClosedTabIndex": closedTabIndex });
 	}
+	await setBadge();
+}
+
+async function removeClosedTabBatch(ids) {
+	if (!ids || ids.length === 0) return;
+	
+	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+		let data = await getStorage(["ClosedTabIndex"]);
+		let closedTabIndex = data.ClosedTabIndex || [];
+		
+		let keysToRemove = ids.map(id => "ClosedTab-" + id);
+		await removeStorage(keysToRemove);
+
+		let newIndex = closedTabIndex.filter(id => !ids.includes(id));
+		
+		if (newIndex.length !== closedTabIndex.length) {
+			await setStorage({ "ClosedTabIndex": newIndex });
+		}
+	});
 	await setBadge();
 }
 

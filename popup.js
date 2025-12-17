@@ -19,11 +19,11 @@ var chkArray;
 
 //--Detect double click
 //Wake the background page and do the stuff there
-function dClickHandler() {
-	if (!settings.disableDClick){
-		chrome.runtime.sendMessage("dclick");
-	}
-}
+// function dClickHandler() {
+// 	if (!settings.disableDClick){
+// 		chrome.runtime.sendMessage("dclick");
+// 	}
+// }
 
 function createLink(id, url, pgTitle) {
 	var link = document.createElement('a');
@@ -233,7 +233,7 @@ function createEntry(i,closedTab) {
     const faviconUrl = `_favicon/?pageUrl=${encodeURIComponent(tabUrl)}&size=16`;
     // const faviconUrl = "chrome://favicon/"+tabUrl; // Old way
     
-	html+="<img class=\"icon\" src=\""+faviconUrl+"\" alt=\""+tabUrl+"\">"; 
+	html+="<img class=\"icon\" src=\""+faviconUrl+"\" alt=\""+encodeHtml(tabUrl)+"\">"; 
 
 	if (filterStrings!=null) tabTitle=tabTitle.multiReplace(filterStrings);
 	else tabTitle=encodeHtml(tabTitle);
@@ -417,13 +417,17 @@ async function deleteFoundTabs(){
     let keys = closedTabIndex.map(id => "ClosedTab-" + id);
     let closedTabsMap = await getStorage(keys);
     
+	let idsToRemove = [];
 	for(i = closedTabIndex.length - 1; i>=0; i--){
 		var closedTab = closedTabsMap["ClosedTab-"+closedTabIndex[i]];
 		if (closedTab){
 			if (filterStrings!=null && closedTab.multiFind(filterStrings)){
-				await removeClosedTab(closedTabIndex[i]);
+				idsToRemove.push(closedTabIndex[i]);
 			}
 		}
+	}
+	if (idsToRemove.length > 0) {
+		await removeClosedTabBatch(idsToRemove);
 	}
 	document.getElementById('searchQ').value = "";
 	filterStrings = null;
@@ -667,9 +671,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('delete2').title = chrome.i18n.getMessage("popup_delete2_tooltip");
     document.getElementById('delete2').addEventListener('click',async function(e){
         if(chkArray.length>0){
-            for(var i = chkArray.length - 1; i >= 0; i--) {
-                await removeClosedTab(chkArray[i]);
-            }
+            await removeClosedTabBatch(chkArray);
             chkArray = [];
             await setup();
         }
