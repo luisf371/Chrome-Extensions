@@ -149,6 +149,12 @@ function needUpdateOrNot(localVersion, specVer){
 }
 
 async function addClosedTab(tabId, mode){
+    await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+        await addClosedTabInternal(tabId, mode);
+    });
+}
+
+async function addClosedTabInternal(tabId, mode){
 	// console.log("REMOVED: "+tabId+"==="+(localStorage["TabList-"+tabId]!=undefined));
 	const key = "TabList-" + tabId;
 	let data = await getStorage([key, 'settings', 'ClosedTabIndex']);
@@ -189,7 +195,7 @@ async function addClosedTab(tabId, mode){
 				closedTabIndex.splice(closedTabIndex.indexOf(exists),1);
 			}
 
-			var rId = randomIdGen();
+			var rId = crypto.randomUUID();
 			await setStorage({ ["ClosedTab-"+rId]: createStr });
 			closedTabIndex.push(rId);
 
@@ -225,40 +231,40 @@ async function addClosedTab(tabId, mode){
 
 //check for open tabs of previous browser close and make them closed tabs
 async function tabListProcessing() {
-	let allData = await getStorage(null);
-	let tabListIndex = allData.TabListIndex || [];
-	
-	for (const key in allData) {
-	// console.log("TLC"+i+" of "+storageSize+": "+localStorage.key(i));
-		if(key.indexOf("TabList-")!=-1) {
-			var tabListId = parseInt(key.substr(8));
-			if(tabListIndex.indexOf(tabListId)!=-1){
-				await addClosedTab(tabListId,1);
-			}else{
-				await removeStorage([key]);
-			}
-		}
-	}
-}
-
-function randomIdGen(){
-	return Math.random().toString(36).substring(2,8);
+    await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+        let allData = await getStorage(null);
+        let tabListIndex = allData.TabListIndex || [];
+        
+        for (const key in allData) {
+        // console.log("TLC"+i+" of "+storageSize+": "+localStorage.key(i));
+            if(key.indexOf("TabList-")!=-1) {
+                var tabListId = parseInt(key.substr(8));
+                if(tabListIndex.indexOf(tabListId)!=-1){
+                    await addClosedTabInternal(tabListId,1);
+                }else{
+                    await removeStorage([key]);
+                }
+            }
+        }
+    });
 }
 
 //thanks to Ehsan Kia, deletes orphaned ClosedTab entries
 async function cleanClosedTabs() {
-	let data = await getStorage(['ClosedTabIndex']);
-	var indexList = data.ClosedTabIndex || [];
-	var db = {};
-	for (var i = 0; i < indexList.length; i++) {
-		db[indexList[i]] = true;
-	}
+    await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+        let data = await getStorage(['ClosedTabIndex']);
+        var indexList = data.ClosedTabIndex || [];
+        var db = {};
+        for (var i = 0; i < indexList.length; i++) {
+            db[indexList[i]] = true;
+        }
 
-	let allData = await getStorage(null);
-	for (key in allData) {
-		var parts = key.split('-');
-		if (parts[0] === 'ClosedTab' && !db.hasOwnProperty(parts[1])) {
-			await removeStorage([key]);
-		}
-	}
+        let allData = await getStorage(null);
+        for (key in allData) {
+            var parts = key.split('-');
+            if (parts[0] === 'ClosedTab' && !db.hasOwnProperty(parts[1])) {
+                await removeStorage([key]);
+            }
+        }
+    });
 }

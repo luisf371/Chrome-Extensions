@@ -454,18 +454,35 @@ function getElapsedTime(ms){
 }
 
 function cleanInvalidTabs(){
-	chrome.tabs.query({"url":"*://*/*"}, async function(tabs) {
-		let data = await getStorage(['TabListIndex']);
-        let tabListIndex = data.TabListIndex || [];
-        
-		if(tabListIndex.length > tabs.length){
-			var tabsToClean = tabListIndex.length-tabs.length;
-			for(var t = 0; t<tabsToClean; t++){
-                await removeStorage(["TabList-"+tabListIndex[t]]);
+	chrome.tabs.query({}, async function(tabs) {
+		await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+			let data = await getStorage(['TabListIndex']);
+			let tabListIndex = data.TabListIndex || [];
+			
+			// Create a Set of current tab IDs for faster lookup
+			let currentTabIds = new Set(tabs.map(t => t.id));
+			
+			let newTabListIndex = [];
+			let invalidTabIds = [];
+
+			for(let i = 0; i < tabListIndex.length; i++){
+				let tId = tabListIndex[i];
+				if(currentTabIds.has(tId)){
+					newTabListIndex.push(tId);
+				} else {
+					invalidTabIds.push(tId);
+				}
 			}
-			tabListIndex.splice(0,tabsToClean);
-            await setStorage({ TabListIndex: tabListIndex });
-		}
+
+			if(invalidTabIds.length > 0){
+				// Remove storage data for invalid tabs
+				let keysToRemove = invalidTabIds.map(id => "TabList-" + id);
+				await removeStorage(keysToRemove);
+				
+				// Update index
+				await setStorage({ TabListIndex: newTabListIndex });
+			}
+		});
 	});
 }
 

@@ -98,24 +98,26 @@ async function addNewTab(tab) {
 	var re = /^(http:|https:|chrome-extension:)/;
 	if (re.test(tab.url)) {
 		if (await chkNewTab(tab)) {
-			var insertThis = tab.url + "|!|";
-			insertThis += tab.title;
+			await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+				var insertThis = tab.url + "|!|";
+				insertThis += tab.title;
 
-			const listKey = "TabList-" + tab.id;
-			let data = await getStorage(["TabListIndex"]);
-			let tabListIndex = data.TabListIndex || [];
+				const listKey = "TabList-" + tab.id;
+				let data = await getStorage(["TabListIndex"]);
+				let tabListIndex = data.TabListIndex || [];
 
-			if (tabListIndex.indexOf(tab.id) == -1) {
-				tabListIndex.push(tab.id);
-				await setStorage({
-					[listKey]: insertThis,
-					"TabListIndex": tabListIndex
-				});
-			} else {
-				await setStorage({
-					[listKey]: insertThis
-				});
-			}
+				if (tabListIndex.indexOf(tab.id) == -1) {
+					tabListIndex.push(tab.id);
+					await setStorage({
+						[listKey]: insertThis,
+						"TabListIndex": tabListIndex
+					});
+				} else {
+					await setStorage({
+						[listKey]: insertThis
+					});
+				}
+			});
 		}
 	}
 }
@@ -132,17 +134,19 @@ async function chkNewTab(tab) {
 }
 
 async function removeClosedTab(id) {
-	let data = await getStorage(["ClosedTabIndex"]);
-	let closedTabIndex = data.ClosedTabIndex || [];
+	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+		let data = await getStorage(["ClosedTabIndex"]);
+		let closedTabIndex = data.ClosedTabIndex || [];
 
-	await removeStorage(["ClosedTab-" + id]);
+		await removeStorage(["ClosedTab-" + id]);
 
-	const index = closedTabIndex.indexOf(id);
-	if (index > -1) {
-		closedTabIndex.splice(index, 1);
-		await setStorage({ "ClosedTabIndex": closedTabIndex });
-	}
-	await setBadge();
+		const index = closedTabIndex.indexOf(id);
+		if (index > -1) {
+			closedTabIndex.splice(index, 1);
+			await setStorage({ "ClosedTabIndex": closedTabIndex });
+		}
+		await setBadge();
+	});
 }
 
 async function setBadge() {
