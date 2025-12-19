@@ -1,0 +1,27 @@
+{
+   "background": {
+      "scripts": [ "background.js" ]
+   },
+   "browser_action": {
+      "default_icon": "icon.png",
+      "default_popup": "popup.html"
+   },
+   "default_locale": "en",
+   "description": "__MSG_extDesc__",
+   "icons": {
+      "128": "icon128.png",
+      "16": "icon16.png",
+      "48": "icon48.png"
+   },
+   "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDN+osw4bTh1AkdwTULbJ6ENCjkDb7Hy2xzfdsUPFrkP/zGNpP9EH8CqVbOLsBVlX+GJ646faCfOmZyRhnQNnOepYChOL9kEjqq6pw7I8aASjdoGMK9UzKs98yKXRPxqsZl4uCdimFw5+ls/JNHau+Bg/NkR0NANBB/rUVbfpBtMwIDAQAB",
+   "manifest_version": 2,
+   "minimum_chrome_version": "9",
+   "name": "__MSG_extName__",
+   "omnibox": {
+      "keyword": "*"
+   },
+   "options_page": "options.html",
+   "permissions": [ "\u003Call_urls>", "chrome://favicon/", "bookmarks", "tabs" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "0.9.7.1"
+}
