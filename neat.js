@@ -51,7 +51,6 @@ function init() {
 		'edit-dialog-button': 'save'
 	}, function(msg, id){
 		var el = $(id), m = _m(msg);
-		if (el.tagName == 'COMMAND') el.label = m;
 		el.textContent = m;
 	});
 	
@@ -97,7 +96,8 @@ function init() {
 		}
 		tooltipURL = tooltipURL.htmlspecialchars();
 		var name = title.htmlspecialchars() || (httpsPattern.test(url) ? url.replace(httpsPattern, '') : _m('noTitle'));
-		return '<a href="' + u + '"' + ' title="' + tooltipURL + '" tabindex="0" ' + extras + '>'
+		var href = (/^javascript:/i.test(url)) ? '#' : u;
+		return '<a href="' + href + '"' + ' title="' + tooltipURL + '" tabindex="0" ' + extras + '>'
 			+ '<img src="' + favicon + '" width="16" height="16" alt=""><i>' + name + '</i>' + '</a>';
 	};
 	
@@ -490,7 +490,7 @@ function init() {
 			var open = function(){
 				chrome.tabs.create({
 					url: url,
-					selected: selected
+					active: selected
 				});
 			};
 			if (blankTabCheck){
@@ -522,12 +522,12 @@ function init() {
 			var open = function(){
 				chrome.tabs.create({
 					url: urls.shift(),
-					selected: selected // first tab will be selected
+					active: selected // first tab will be selected
 				});
 				for (var i = 0, l = urls.length; i < l; i++){
 					chrome.tabs.create({
 						url: urls[i],
-						selected: false
+						active: false
 					});
 				}
 			};
@@ -706,12 +706,13 @@ function init() {
 	$results.addEventListener('click', bookmarkHandler);
 	var bookmarkHandlerMiddle = function(e){
 		if (e.button != 1) return; // force middle-click
+		e.preventDefault();
 		var event = document.createEvent('MouseEvents');
 		event.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, true, false, e.shiftKey, true, 0, null);
 		e.target.dispatchEvent(event);
 	};
-	$tree.addEventListener('mouseup', bookmarkHandlerMiddle);
-	$results.addEventListener('mouseup', bookmarkHandlerMiddle);
+	$tree.addEventListener('auxclick', bookmarkHandlerMiddle);
+	$results.addEventListener('auxclick', bookmarkHandlerMiddle);
 	
 	// Disable Chrome auto-scroll feature
 	window.addEventListener('mousedown', function(e){
@@ -808,7 +809,7 @@ function init() {
 		e.stopPropagation();
 		if (!currentContext) return;
 		var el = e.target;
-		if (el.tagName != 'COMMAND') return;
+		if (!el.hasClass('command')) return;
 		var url = currentContext.href;
 		switch (el.id){
 			case 'bookmark-new-tab':
@@ -846,7 +847,7 @@ function init() {
 	var folderContextHandler = function(e){
 		if (!currentContext) return;
 		var el = e.target;
-		if (el.tagName != 'COMMAND') return;
+		if (!el.hasClass('command')) return;
 		var li = currentContext.parentNode;
 		var id = li.id.replace('neat-tree-item-', '');
 		chrome.bookmarks.getChildren(id, function(children){
@@ -1112,7 +1113,7 @@ function init() {
 				if (metaKey){ // cmd + down (Mac)
 					menu.lastElementChild.focus();
 				} else {
-					if (item.tagName == 'COMMAND'){
+					if (item.hasClass('command')){
 						var nextItem = item.nextElementSibling;
 						if (nextItem && nextItem.tagName == 'HR') nextItem = nextItem.nextElementSibling;
 						if (nextItem){
@@ -1130,7 +1131,7 @@ function init() {
 				if (metaKey){ // cmd + up (Mac)
 					menu.firstElementChild.focus();
 				} else {
-					if (item.tagName == 'COMMAND'){
+					if (item.hasClass('command')){
 						var prevItem = item.previousElementSibling;
 						if (prevItem && prevItem.tagName == 'HR') prevItem = prevItem.previousElementSibling;
 						if (prevItem){

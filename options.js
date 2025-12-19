@@ -43,9 +43,7 @@ function init() {
 
 var _m = chrome.i18n.getMessage;
 
-var __m = function(){
-	document.write(_m.apply(this, arguments));
-};
+
 
 document.addEventListener('DOMContentLoaded', function(){
 	document.title = _m('extName') + ' ' + _m('options');
