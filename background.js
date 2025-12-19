@@ -1,21 +1,12 @@
+// Service Worker for Neater Bookmarks
+
+// Error reporting - replaced with console logging for V3 compliance (no DOM access)
 var reportError = function(msg, url, line){
-	var txt = '_s=3f41da182f664057b74bd124b53958a0&_r=img'
-		+ '&Msg=' + escape(msg)
-		+ '&URL=' + escape(url)
-		+ '&Line=' + line
-		+ '&Platform=' + escape(navigator.platform)
-		+ '&UserAgent=' + escape(navigator.userAgent);
-	var i = document.createElement('img');
-	i.setAttribute('src', (('https:' == document.location.protocol) ? 'https://errorstack.appspot.com' : 'http://www.errorstack.com') + '/submit?' + txt);
-	document.body.appendChild(i);
-	i.onload = function(){
-		document.body.removeChild(i);
-	};
+    console.error('Error reported:', msg, 'URL:', url, 'Line:', line);
+    // V3: You could use fetch() here if you have a valid endpoint
 };
 
-window.onerror = reportError;
-
-chrome.extension.onRequest.addListener(function(request){
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
 	if (request.error) reportError.apply(null, request.error);
 });
 
@@ -37,7 +28,7 @@ if (chrome.omnibox){
 	resetSuggest();
 
 	var xmlEncode = function (text){
-		return text.replace(/&/g, '&amp;').replace(/\"/g, '&quot;').replace(/\'/g, '&apos;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\'/g, '&apos;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 	}
 
 	var matcher = function(text, value){
@@ -116,20 +107,31 @@ if (chrome.omnibox){
 			return;
 		}
 		var url = (text == omniboxValue) ? firstResult.url : text;
-		chrome.tabs.getSelected(null, function(tab){
-			chrome.tabs.update(tab.id, {
-				url: url,
-				selected: true
-			});
+		chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+            if (tabs && tabs.length > 0) {
+                chrome.tabs.update(tabs[0].id, {
+                    url: url,
+                    active: true
+                });
+            }
 		});
 	});
 }
 
-if (localStorage.customIcon){
-	var canvas = document.createElement('canvas');
-	var ctx = canvas.getContext('2d');
-	var customIcon = JSON.parse(localStorage.customIcon);
-	var imageData = ctx.getImageData(0, 0, 19, 19);
-	for (var key in customIcon) imageData.data[key] = customIcon[key];
-	chrome.browserAction.setIcon({imageData: imageData});
-}
+// Restore custom icon from storage
+chrome.storage.local.get('customIcon', function(result){
+    if (result.customIcon){
+        var customIcon = result.customIcon; // Assuming it's the raw pixel data array
+        
+        // Use OffscreenCanvas to create ImageData
+        var canvas = new OffscreenCanvas(19, 19);
+        var ctx = canvas.getContext('2d');
+        var imageData = ctx.createImageData(19, 19);
+        
+        for (var key in customIcon) {
+            imageData.data[key] = customIcon[key];
+        }
+        
+        chrome.action.setIcon({imageData: imageData});
+    }
+});
