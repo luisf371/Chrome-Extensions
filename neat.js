@@ -12,7 +12,6 @@ function init() {
 	var navigator = window.navigator;
 	var body = document.body;
 	var _m = chrome.i18n.getMessage;
-	// var _b = chrome.extension.getBackgroundPage().console;
 	
 	// Error alert
 	var AlertDialog = {
@@ -33,18 +32,6 @@ function init() {
 	// Platform detection
 	var os = (navigator.platform.toLowerCase().match(/mac|win|linux/i) || ['other'])[0];
 	body.addClass(os);
-	
-	// Chrome version detection
-	var version = (function(){
-		var v = {};
-		var keys = ['major', 'minor', 'build', 'patch'];
-		var matches = navigator.userAgent.match(/chrome\/([\d]+)\.([\d]+)\.([\d]+)\.([\d]+)/i);
-		if (!matches) return null;
-		matches.slice(1).forEach(function(m, i){
-			v[keys[i]] = m.toInt();
-		});
-		return v;
-	})();
 	
 	// Some i18n
 	$('search-input').placeholder = _m('searchBookmarks');
@@ -1495,9 +1482,6 @@ function init() {
 				break;
 		}
 	});
-	
-	// Fix stupid Chrome build 536 bug
-	if (version.build >= 536) body.addClass('chrome-536');
 	
 	// Fix stupid wrong offset of the page on Mac
 	if (os == 'mac'){
