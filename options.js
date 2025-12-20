@@ -10,9 +10,7 @@
         }
     };
 
-    window.addEventListener('load', init, false);
-
-    function init() {
+    const init = () => {
         // i18n of text strings
         $('extName').innerHTML = chrome.i18n.getMessage('extName');
         $('version').innerHTML = chrome.runtime.getManifest().version;
@@ -53,9 +51,7 @@
         $('optionsFooterText7').innerHTML = chrome.i18n.getMessage('optionsFooterText7', [neatGithub, linkCheeAun]);
     };
 
-    const _m = chrome.i18n.getMessage;
-
-    document.addEventListener('DOMContentLoaded', function(){
+    const setupListeners = () => {
         document.title = _m('extName') + ' ' + _m('options');
         
         const clickNewTab = $('click-new-tab');
@@ -171,7 +167,19 @@
         textareaUserstyle.addEventListener('input', function() {
             setSetting('userstyle', textareaUserstyle.value);
         });
-    });
+    };
+
+    const _m = chrome.i18n.getMessage;
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            setupListeners();
+        });
+    } else {
+        init();
+        setupListeners();
+    }
 
     onerror = function(...args){
         chrome.runtime.sendMessage({error: args});

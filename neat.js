@@ -11,12 +11,16 @@
         }
     };
 
-    window.addEventListener('load', init, false);
-
-    function init() {
+    const init = () => {
         if (settings.popupHeight) document.body.style.height = settings.popupHeight + 'px';
         if (settings.popupWidth) document.body.style.width = settings.popupWidth + 'px';
     };
+
+    if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
     const body = document.body;
     const _m = chrome.i18n.getMessage;

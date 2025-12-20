@@ -46,13 +46,14 @@ if (chrome.omnibox) {
         };
     };
 
-    chrome.omnibox.onInputChanged.addListener((value, suggest) => {
+    chrome.omnibox.onInputChanged.addListener(async (value, suggest) => {
         if (!value) {
             resetSuggest();
             return;
         }
         omniboxValue = value;
-        chrome.bookmarks.search(value, (results) => {
+        try {
+            let results = await chrome.bookmarks.search(value);
             if (!results.length) {
                 resetSuggest();
                 return;
@@ -100,7 +101,9 @@ if (chrome.omnibox) {
                 });
             }
             suggest(suggestions);
-        });
+        } catch (error) {
+            reportError(error.message, 'background.js', 'onInputChanged');
+        }
     });
 
     chrome.omnibox.onInputEntered.addListener((text) => {
