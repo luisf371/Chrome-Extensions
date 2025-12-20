@@ -7,6 +7,7 @@ body{
 	padding: 0;
 	cursor: default;
 	-webkit-user-drag: none;
+	user-select: none;
 	-webkit-user-select: none;
 	overflow: hidden;
 	width: 320px;
@@ -17,7 +18,7 @@ body.linux{
 	font-size: 12px;
 }
 body.transitional{
-	-webkit-transition-property: height;
+	transition-property: height;
 }
 body[data-zoom='90']>*:not(.context-menu),
 body[data-zoom='90'] .context-menu .command{
@@ -47,7 +48,6 @@ body[data-zoom='150'] .context-menu .command{
 	zoom: 1.5;
 }
 input{
-	-webkit-box-sizing: border-box;
 	box-sizing: border-box;
 	font: menu;
 }
@@ -55,10 +55,8 @@ body.linux input{
 	font-size: 12px;
 }
 #container{
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	display: box;
-	box-orient: vertical;
+	display: flex;
+	flex-direction: column;
 	position: absolute;
 	top: 0;
 	right: 0;
@@ -77,9 +75,8 @@ body.linux input{
 #tree{
 	outline: 0;
 	padding: 3px 0;
-	-webkit-box-shadow: inset 0 4px 4px -4px rgba(0,0,0,.1);
-	-webkit-box-flex: 1;
-	box-flex: 1;
+	box-shadow: inset 0 4px 4px -4px rgba(0,0,0,.1);
+	flex: 1;
 	text-shadow: 0 1px #f6f6f6;
 	position: relative;
     overflow-y: auto;
@@ -120,17 +117,17 @@ body.linux input{
 	border-color: transparent transparent transparent #84919f;
 	border-style: solid;
 	margin: 0 4px;
-	-webkit-transition: -webkit-transform .15s;
-	-webkit-transform: scaleX(.99);
+	transition: transform .15s;
+	transform: scaleX(.99);
 }
 .rtl #tree ul li span .twisty{
-	-webkit-transform: scaleX(-1);
+	transform: scaleX(-1);
 }
 #tree ul li.open>span .twisty{
-	-webkit-transform: rotate(90deg);
+	transform: rotate(90deg);
 }
 .rtl #tree ul li.open>span .twisty{
-	-webkit-transform: scaleX(-1) rotate(90deg);
+	transform: scaleX(-1) rotate(90deg);
 }
 #results ul li a img,
 #results ul li span img,
@@ -138,11 +135,11 @@ body.linux input{
 #tree ul li span img{
 	margin-top: -2px;
 	vertical-align: middle;
-	margin-__MSG_@@bidi_end_edge__: 4px;
+	margin-inline-end: 4px;
 }
 #results ul li a img,
 #tree ul li a img{
-	margin-__MSG_@@bidi_start_edge__: 16px;
+	margin-inline-start: 16px;
 }
 #results ul li i,
 #tree ul li i{
@@ -164,8 +161,8 @@ body.linux input{
 .context-menu .command:focus{
 	color: #fff;
 	background-color: #4687cb;
-	background-image: -webkit-gradient(linear, left top, left bottom, from(#6fa6de), to(#1e6cbb));
-	-webkit-box-shadow: 0 -1px #5594d2;
+	background-image: linear-gradient(to bottom, #6fa6de, #1e6cbb);
+	box-shadow: 0 -1px #5594d2;
 	text-shadow: 0 0 rgba(255,255,255,.5), 0 1px rgba(0,0,0,.5);
 	outline: 0;
 }
@@ -184,7 +181,7 @@ body.linux input{
 #tree .open>ul{
 	height: auto;
 }
-@-webkit-keyframes blueFade {
+@keyframes blueFade {
 	0% {
 		background-color: transparent;
 	}
@@ -197,8 +194,8 @@ body.linux input{
 }
 #tree ul li a.focus,
 #tree ul li span.focus{
-	-webkit-animation-name: blueFade;
-	-webkit-animation-duration: 3s;
+	animation-name: blueFade;
+	animation-duration: 3s;
 }
 
 #bookmark-clone{
@@ -208,18 +205,19 @@ body.linux input{
 	white-space: nowrap;
 	line-height: 1em;
 	padding: .3em;
-	padding-__MSG_@@bidi_end_edge__: .5em;
-	-webkit-mask-image: -webkit-gradient(linear, left top, 320 top, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
+	padding-inline-end: .5em;
+	-webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
 	pointer-events: none;
 	cursor: default;
 }
 .rtl #bookmark-clone{
 	margin-left: 24px;
-	-webkit-mask-image: -webkit-gradient(linear, right top, -320 top, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
+	-webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0)); /* direction change handled by RTL context usually, but keeping simple */
 }
 #bookmark-clone img{
 	vertical-align: text-top;
-	margin-__MSG_@@bidi_end_edge__: 4px;
+	margin-inline-end: 4px;
 }
 #bookmark-clone i{
 	font-style: normal;
@@ -231,11 +229,10 @@ body.linux input{
 	left: -999px;
 	pointer-events: none;
 	margin: -1px 0 0;
-	-webkit-box-sizing: border-box;
-	-box-sizing: border-box;
+	box-sizing: border-box;
 }
 #drop-overlay.bookmark{
-	margin-__MSG_@@bidi_start_edge__: -3px;
+	margin-inline-start: -3px;
 	height: 3px;
 	background-color: #000;
 	border: 1px solid #fff;
@@ -247,7 +244,7 @@ body.linux input{
 }
 
 .context-menu{
-	-webkit-transition: opacity .3s;
+	transition: opacity .3s;
 	opacity: 0;
 	margin: 0;
 	padding: 5px 0;
@@ -258,7 +255,6 @@ body.linux input{
 	border-radius: 5px;
 	background-color: rgba(255,255,255,.96);
 	box-shadow: 0 2px 6px rgba(0,0,0,.2);
-	-webkit-box-shadow: 0 2px 6px rgba(0,0,0,.2);
 	outline: 0;
 	max-width: 100%;
 }
@@ -297,7 +293,7 @@ body.linux input{
 	position: absolute;
 	width: 4px;
 	height: 100%;
-	__MSG_@@bidi_start_edge__: 0;
+	inset-inline-start: 0;
 	top: 0;
 	cursor: col-resize;
 }
@@ -312,7 +308,7 @@ body.linux input{
 	background-color: rgba(255,255,255,.5);
 }
 .transitional #cover{
-	-webkit-transition: opacity .3s;
+	transition: opacity .3s;
 }
 .needAlert #cover,
 .needConfirm #cover,
@@ -330,12 +326,11 @@ body.linux input{
 	background-color: #fff;
 	padding: 1em;
 	border-bottom: 1px solid #e0e0e0;
-	-webkit-box-shadow: 0 0 100px rgba(0,0,0,.1);
 	box-shadow: 0 0 100px rgba(0,0,0,.1);
 }
 .transitional .dialog{
-	-webkit-transition-property: opacity, top;
-	-webkit-transition-duration: .3s;
+	transition-property: opacity, top;
+	transition-duration: .3s;
 }
 .dialog-text{
 	padding: 0;
@@ -345,7 +340,7 @@ body.linux input{
 }
 .dialog .buttons{
 	margin: 1em 0 0;
-	text-align: __MSG_@@bidi_end_edge__;
+	text-align: end;
 }
 .dialog .buttons button{
 	padding: .3em 1.5em;
@@ -355,6 +350,7 @@ body.linux input{
 	margin: 0;
 	padding: 5px;
 	line-height: 1.1em;
+	user-select: text;
 	-webkit-user-select: text;
 	cursor: text;
 	background-color: #fafafa;
@@ -385,15 +381,3 @@ body.linux input{
 	top: 0;
 	opacity: 1;
 }
-
-/* current Gmail-style scrollbar */
-/*::-webkit-scrollbar {
-	width: 9px;
-	background: #eee; /* same color as the background */
-/*}
-::-webkit-scrollbar-thumb {
-	background-color: rgba(0,0,0,0.2);
-	border-top: 1px solid rgba(0,0,0,0.1);
-	border-bottom: 1px solid rgba(0,0,0,0.07);
-	border-left: 1px solid rgba(0,0,0,0.1);
-}*/

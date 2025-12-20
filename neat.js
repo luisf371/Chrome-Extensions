@@ -1,5 +1,3 @@
-
-
 (async function() {
     // Load settings first
     const settings = await chrome.storage.local.get(null);
@@ -138,14 +136,14 @@
                     if (isOpen) open = ' open';
                 }
                 html += '<li class="parent' + open + '"' + idHTML + ' role="treeitem" aria-expanded="' + isOpen + '" data-parentid="' + parentID + '">' + 
-                    '<span tabindex="0" style="-webkit-padding-start: ' + paddingStart + 'px"><b class="twisty"></b>' + 
+                    '<span tabindex="0" style="padding-inline-start: ' + paddingStart + 'px"><b class="twisty"></b>' + 
                     '<img src="folder.png" width="16" height="16" alt=""><i>' + (title || _m('noTitle')) + '</i></span>';
                 if (isOpen){
                     if (children){
                         html += generateHTML(children, level + 1);
                     } else {
                         (function(_id){
-                            chrome.bookmarks.getChildren(_id, function(children){
+                            chrome.bookmarks.getChildren(_id).then(function(children){
                                 const html = generateHTML(children, level + 1);
                                 const div = document.createElement('div');
                                 div.innerHTML = html;
@@ -158,7 +156,7 @@
                 }
             } else {
                 html += '<li class="child"' + idHTML + ' role="treeitem" data-parentid="' + parentID + '">' + 
-                    generateBookmarkHTML(title, url, 'style="-webkit-padding-start: ' + paddingStart + 'px"');
+                    generateBookmarkHTML(title, url, 'style="padding-inline-start: ' + paddingStart + 'px"');
             }
             html += '</li>';
         }
@@ -167,7 +165,7 @@
     };
 
     const $tree = $('tree');
-    chrome.bookmarks.getTree(function(tree){
+    chrome.bookmarks.getTree().then(function(tree){
         const html = generateHTML(tree[0].children);
         $tree.innerHTML = html;
 
@@ -192,8 +190,6 @@
         }
 
         setTimeout(adaptBookmarkTooltips, 100);
-
-        tree = null;
     });
 
     // Events for the tree
@@ -227,7 +223,7 @@
         const children = parent.querySelector('ul');
         if (!children){
             const id = parent.id.replace('neat-tree-item-', '');
-            chrome.bookmarks.getChildren(id, function(children){
+            chrome.bookmarks.getChildren(id).then(function(children){
                 const html = generateHTML(children, parseInt(parent.parentNode.dataset.level) + 1);
                 const div = document.createElement('div');
                 div.innerHTML = html;
@@ -282,7 +278,7 @@
         if (value == prevValue) return;
         prevValue = value;
         searchMode = true;
-        chrome.bookmarks.search(value, function(results){
+        chrome.bookmarks.search(value).then(function(results){
             const v = value.toLowerCase();
             let vPattern = new RegExp('^' + Utils.escapeRegExp(value).replace(/\s+/g, '.*'), 'ig');
             if (results.length > 1){
@@ -319,7 +315,7 @@
             const lis = $results.querySelectorAll('li');
             Array.from(lis).forEach(function(li){
                 const parentId = li.dataset.parentid;
-                chrome.bookmarks.get(parentId, function(node){
+                chrome.bookmarks.get(parentId).then(function(node){
                     if (!node || !node.length) return;
                     const a = li.querySelector('a');
                     a.title = _m('parentFolder', node[0].title) + '\n' + a.title;
@@ -328,7 +324,6 @@
 
             results = null;
             vPattern = null;
-            // lis = null;
         });
     };
     searchInput.addEventListener('input', search);
@@ -492,7 +487,7 @@
     const openBookmarksLimit = 10;
     const actions = {
         openBookmark: function(url){
-            chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+            chrome.tabs.query({active: true, currentWindow: true}).then(function(tabs){
                 const tab = tabs[0];
                 let decodedURL = url;
                 try {
@@ -515,7 +510,7 @@
                 });
             };
             if (blankTabCheck){
-                chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+                chrome.tabs.query({active: true, currentWindow: true}).then(function(tabs){
                     const tab = tabs[0];
                     if (/^chrome:\/\/newtab/i.test(tab.url)){
                         chrome.tabs.update(tab.id, {
@@ -586,7 +581,7 @@
         },
 
         editBookmarkFolder: function(id){
-            chrome.bookmarks.get(id, function(nodeList){
+            chrome.bookmarks.get(id).then(function(nodeList){
                 if (!nodeList.length) return;
                 const node = nodeList[0];
                 const url = node.url;
@@ -602,7 +597,7 @@
                         chrome.bookmarks.update(id, {
                             title: name,
                             url: isBookmark ? url : ''
-                        }, function(n){
+                        }).then(function(n){
                             const title = n.title;
                             const url = n.url;
                             let li = $('neat-tree-item-' + id);
@@ -630,7 +625,7 @@
         deleteBookmark: function(id){
             const li1 = $('neat-tree-item-' + id);
             const li2 = $('results-item-' + id);
-            chrome.bookmarks.remove(id, function(){
+            chrome.bookmarks.remove(id).then(function(){
                 if (li1){
                     const nearLi1 = li1.nextElementSibling || li1.previousElementSibling;
                     li1.remove();
@@ -662,7 +657,7 @@
                     button1: '<strong>' + _m('delete') + '</strong>',
                     button2: _m('nope'),
                     fn1: function(){
-                        chrome.bookmarks.removeTree(id, function(){
+                        chrome.bookmarks.removeTree(id).then(function(){
                             li.remove();
                         });
                         const nearLi = li.nextElementSibling || li.previousElementSibling;
@@ -673,7 +668,7 @@
                     }
                 });
             } else {
-                chrome.bookmarks.removeTree(id, function(){
+                chrome.bookmarks.removeTree(id).then(function(){
                     li.remove();
                 });
                 const nearLi = li.nextElementSibling || li.previousElementSibling;
@@ -709,7 +704,7 @@
         } else if (el.tagName == 'SPAN'){
             const li = el.parentNode;
             const id = li.id.replace('neat-tree-item-', '');
-            chrome.bookmarks.getChildren(id, function(children){
+            chrome.bookmarks.getChildren(id).then(function(children){
                 const urls = Utils.clean(Array.from(children).map(function(c){
                     return c.url;
                 }));
@@ -877,7 +872,7 @@
         if (!el.classList.contains('command')) return;
         const li = currentContext.parentNode;
         const id = li.id.replace('neat-tree-item-', '');
-        chrome.bookmarks.getChildren(id, function(children){
+        chrome.bookmarks.getChildren(id).then(function(children){
             const urls = Utils.clean(Array.from(children).map(function(c){
                 return c.url;
             }));
@@ -1132,7 +1127,7 @@
                 e.preventDefault();
                 const id = li.id.replace(/(neat\-tree|results)\-item\-/, '');
                 if (li.classList.contains('parent')){
-                    chrome.bookmarks.getChildren(id, function(children){
+                    chrome.bookmarks.getChildren(id).then(function(children){
                         const urlsLen = Utils.clean(Array.from(children).map(function(c){
                             return c.url;
                         })).length;
@@ -1307,7 +1302,7 @@
             const top = (clientY >= elRectTop + elRect.height / 2) ? elRectBottom : elRectTop;
             dropOverlay.className = 'bookmark';
             dropOverlay.style.top = top + 'px';
-            dropOverlay.style.left = rtl ? '0px' : Utils.toInt(el.style.webkitPaddingStart) + 16 + 'px';
+            dropOverlay.style.left = rtl ? '0px' : (Utils.toInt(el.style.paddingInlineStart || el.style.webkitPaddingStart) + 16) + 'px';
             dropOverlay.style.width = (Utils.toInt(window.getComputedStyle(el).width) - 12) + 'px';
             dropOverlay.style.height = null;
         } else if (el.tagName == 'SPAN'){
@@ -1336,7 +1331,7 @@
             } else {
                 dropOverlay.className = 'bookmark';
                 dropOverlay.style.top = top + 'px';
-                dropOverlay.style.left = Utils.toInt(el.style.webkitPaddingStart) + 16 + 'px';
+                dropOverlay.style.left = (Utils.toInt(el.style.paddingInlineStart || el.style.webkitPaddingStart) + 16) + 'px';
                 dropOverlay.style.width = (Utils.toInt(window.getComputedStyle(el).width) - 12) + 'px';
                 dropOverlay.style.height = null;
             }
@@ -1372,7 +1367,7 @@
             const elRect = el.getBoundingClientRect();
             const elRectTop = elRect.top + document.body.scrollTop;
             const moveBottom = (clientY >= elRectTop + elRect.height / 2);
-            chrome.bookmarks.get(id, function(node){
+            chrome.bookmarks.get(id).then(function(node){
                 if (!node || !node.length) return;
                 node = node[0];
                 let index = node.index;
@@ -1381,9 +1376,9 @@
                     chrome.bookmarks.move(draggedID, {
                         parentId: parentId,
                         index: moveBottom ? ++index : index
-                    }, function(){
+                    }).then(function(){
                         Utils.inject(draggedBookmarkParent, elParent, moveBottom ? 'after' : 'before');
-                        draggedBookmark.style.webkitPaddingStart = el.style.webkitPaddingStart;
+                        draggedBookmark.style.paddingInlineStart = el.style.paddingInlineStart || el.style.webkitPaddingStart;
                         draggedBookmark.focus();
                         onDrop();
                     });
@@ -1403,7 +1398,7 @@
             }
             if (move > 0){
                 const moveBottom = (move == 2);
-                chrome.bookmarks.get(id, function(node){
+                chrome.bookmarks.get(id).then(function(node){
                     if (!node || !node.length) return;
                     node = node[0];
                     let index = node.index;
@@ -1411,9 +1406,9 @@
                     chrome.bookmarks.move(draggedID, {
                         parentId: parentId,
                         index: moveBottom ? ++index : index
-                    }, function(){
+                    }).then(function(){
                         Utils.inject(draggedBookmarkParent, elParent, moveBottom ? 'after' : 'before');
-                        draggedBookmark.style.webkitPaddingStart = el.style.webkitPaddingStart;
+                        draggedBookmark.style.paddingInlineStart = el.style.paddingInlineStart || el.style.webkitPaddingStart;
                         draggedBookmark.focus();
                         onDrop();
                     });
@@ -1421,10 +1416,10 @@
             } else {
                 chrome.bookmarks.move(draggedID, {
                     parentId: id
-                }, function(){
+                }).then(function(){
                     const ul = elParent.querySelector('ul');
                     const level = parseInt(elParent.parentNode.dataset.level) + 1;
-                    draggedBookmark.style.webkitPaddingStart = (14 * level) + 'px';
+                    draggedBookmark.style.paddingInlineStart = (14 * level) + 'px';
                     if (ul){
                         Utils.inject(draggedBookmarkParent, ul);
                     } else {
