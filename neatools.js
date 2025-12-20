@@ -9,7 +9,7 @@ const Utils = {
     // String helpers
     widont: (str) => str.replace(/\s([^\s]+)$/i, '&nbsp;$1'),
     toInt: (str, base) => parseInt(str, base || 10),
-    htmlspecialchars: (str) => str.replace(/>/g, '&gt;').replace(/</g, '&lt;').replace(/"/g, '&quot;'),
+    htmlspecialchars: (str) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
     escapeRegExp: (str) => str.replace(/([-.*+?^${}()|[\/\\])/g, '\\$1'),
 
     // Array helpers

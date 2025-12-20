@@ -1247,7 +1247,7 @@
         e.preventDefault();
         const el = e.target;
         let clientX = e.clientX;
-        let clientY = e.clientY + document.body.scrollTop;
+        let clientY = e.clientY + (document.documentElement.scrollTop || document.body.scrollTop);
         if (el == draggedBookmark){
             bookmarkClone.style.left = '-999px';
             dropOverlay.style.left = '-999px';
@@ -1297,8 +1297,8 @@
             bookmarkClone.style.top = clientY + 'px';
             bookmarkClone.style.left = (rtl ? (clientX - bookmarkClone.offsetWidth) : clientX) + 'px';
             const elRect = el.getBoundingClientRect();
-            const elRectTop = elRect.top + document.body.scrollTop;
-            const elRectBottom = elRect.bottom + document.body.scrollTop;
+            const elRectTop = elRect.top + (document.documentElement.scrollTop || document.body.scrollTop);
+            const elRectBottom = elRect.bottom + (document.documentElement.scrollTop || document.body.scrollTop);
             const top = (clientY >= elRectTop + elRect.height / 2) ? elRectBottom : elRectTop;
             dropOverlay.className = 'bookmark';
             dropOverlay.style.top = top + 'px';
@@ -1311,9 +1311,9 @@
             bookmarkClone.style.left = clientX + 'px';
             const elRect = el.getBoundingClientRect();
             let top = null;
-            const elRectTop = elRect.top + document.body.scrollTop;
+            const elRectTop = elRect.top + (document.documentElement.scrollTop || document.body.scrollTop);
             const elRectHeight = elRect.height;
-            const elRectBottom = elRect.bottom + document.body.scrollTop;
+            const elRectBottom = elRect.bottom + (document.documentElement.scrollTop || document.body.scrollTop);
             const elParent = el.parentNode;
             if (elParent.dataset.parentid != '0'){
                 if (clientY < elRectTop + elRectHeight * .3){
@@ -1362,10 +1362,10 @@
         }
         const draggedBookmarkParent = draggedBookmark.parentNode;
         const draggedID = draggedBookmarkParent.id.replace('neat-tree-item-', '');
-        const clientY = (e.clientY + document.body.scrollTop) / zoomLevel;
+        const clientY = (e.clientY + (document.documentElement.scrollTop || document.body.scrollTop)) / zoomLevel;
         if (el.tagName == 'A'){
             const elRect = el.getBoundingClientRect();
-            const elRectTop = elRect.top + document.body.scrollTop;
+            const elRectTop = elRect.top + (document.documentElement.scrollTop || document.body.scrollTop);
             const moveBottom = (clientY >= elRectTop + elRect.height / 2);
             chrome.bookmarks.get(id).then(function(node){
                 if (!node || !node.length) return;
@@ -1533,8 +1533,11 @@
     // Fix stupid wrong offset of the page on Mac
     if (os == 'mac'){
         setTimeout(function(){
-            const top = body.scrollTop;
-            if (top != 0) body.scrollTop = 0;
+            const top = document.documentElement.scrollTop || document.body.scrollTop;
+            if (top != 0) {
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+            }
         }, 1500);
     }
 

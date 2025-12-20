@@ -168,19 +168,9 @@
         const textareaUserstyle = $('userstyle');
         if (settings.userstyle) textareaUserstyle.value = settings.userstyle;
         
-        // CodeMirror might not be loaded or accessible? Assumed global.
-        if (window.CodeMirror) {
-            CodeMirror.fromTextArea(textareaUserstyle, {
-                onChange: function(c){
-                    setSetting('userstyle', c.getValue());
-                }
-            });
-        } else {
-            // Fallback if CodeMirror fails or is removed
-            textareaUserstyle.addEventListener('input', function() {
-                setSetting('userstyle', textareaUserstyle.value);
-            });
-        }
+        textareaUserstyle.addEventListener('input', function() {
+            setSetting('userstyle', textareaUserstyle.value);
+        });
     });
 
     onerror = function(...args){
