@@ -74,13 +74,8 @@
    "customStyles": {
       "message": "Themes"
    },
-   "customStylesText": {
-      "message": "This requires some CSS skills. Hack at your own risk. Code sharing is encouraged via $linkGithubGist$.",
-      "placeholders": {
-         "linkGithubGist": {
-            "content": "$1"
-         }
-      }
+   "customStylesDesc": {
+      "message": "To customize the theme, copy the baseline code below into the text area and adjust the color values."
    },
    "delete": {
       "message": "Delete"
@@ -148,22 +143,22 @@
       "message": "Open in New Window"
    },
    "optionClickNewTab": {
-      "message": "Left-click opens bookmark in new tab."
+      "message": "Left-click opens bookmarks in a new tab."
    },
    "optionCloseUnusedFolders": {
-      "message": "Close unused folders when opening a folder."
+      "message": "Keep only one folder open at a time."
    },
    "optionConfirmOpenFolder": {
-      "message": "Display confirmation when opening a lot of bookmarks from a folder."
+      "message": "Confirmation dialog appears when opening more than 10 bookmarks."
    },
    "optionOpenNewTab": {
-      "message": "Middle-click or control-click opens bookmark in new background tab (instead of foreground)."
+      "message": "Middle-click (or Ctrl-click) opens bookmarks in a background tab."
    },
    "optionPopupStays": {
-      "message": "Popup stays open when opening (left-clicking) bookmarks."
+      "message": "Popup stays open when opening bookmarks (via left-click)."
    },
    "optionRememberPrevState": {
-      "message": "Remember previous state (scroll position and opened folders)."
+      "message": "Popup remembers the previous state (scroll position and open folders)."
    },
    "optionZoom": {
       "message": "Zoom"

@@ -6,11 +6,29 @@
 <fieldset>
 	<legend id="general"></legend>
 	<input type="checkbox" id="click-new-tab" /><label for="click-new-tab" id="optionClickNewTab"></label><br /><br />
+	<input type="checkbox" id="popup-stay-open" /><label for="popup-stay-open" id="optionPopupStays"></label><br /><br />
 	<input type="checkbox" id="open-new-tab-bg" /><label for="open-new-tab-bg" id="optionOpenNewTab"></label><br /><br />
 	<input type="checkbox" id="close-unused-folders" /><label for="close-unused-folders" id="optionCloseUnusedFolders"></label><br /><br />
-	<input type="checkbox" id="popup-stay-open" /><label for="popup-stay-open" id="optionPopupStays"></label><br /><br />
 	<input type="checkbox" id="confirm-open-folder" /><label for="confirm-open-folder" id="optionConfirmOpenFolder"></label><br /><br />
 	<input type="checkbox" id="remember-prev-state" /><label for="remember-prev-state" id="optionRememberPrevState"></label>
+</fieldset>
+<fieldset>
+	<legend id="customStyles"></legend>
+	<div style="margin-bottom: 10px;">
+		<select id="theme-select">
+			<option value="light">Light (Default)</option>
+			<option value="light-modern">Light (Modern)</option>
+			<option value="dark">Dark Mode</option>
+			<option value="neon">Neon Night</option>
+			<option value="vintage">Vintage Parchment</option>
+			<option value="custom">Custom</option>
+		</select>
+	</div>
+	<div id="custom-css-container" style="display: none;">
+		<p id="customStylesDesc"></p>
+		<pre id="css-template" style="background: #fff; padding: 10px; border: 1px solid #ccc; font-family: monospace; font-size: 11px; margin-bottom: 10px; user-select: text; -webkit-user-select: text; cursor: text;"></pre>
+		<textarea id="userstyle" placeholder="Paste your CSS here..."></textarea>
+	</div>
 </fieldset>
 <fieldset>
 	<legend id="accessibility"></legend>
@@ -29,22 +47,6 @@
 <div>
 	<span id="resetText"></span> <button type="button" id="reset-button" name="reset"><span id="reset"></span></button>
 </div>
-</fieldset>
-<fieldset>
-	<legend id="customStyles"></legend>
-	<div style="margin-bottom: 10px;">
-		<select id="theme-select">
-			<option value="light">Light (Default)</option>
-			<option value="dark">Dark Mode</option>
-			<option value="neon">Neon Night</option>
-			<option value="vintage">Vintage Parchment</option>
-			<option value="custom">Custom</option>
-		</select>
-	</div>
-	<div id="custom-css-container" style="display: none;">
-		<p><span id="customStylesText"></span></p>
-		<textarea id="userstyle"></textarea>
-	</div>
 </fieldset>
 <div id="footer">
 	<span id="optionsFooterText1"></span><br />

@@ -32,8 +32,37 @@
         $('resetText').innerHTML = chrome.i18n.getMessage('resetText', [extName]);
         $('reset').innerHTML = chrome.i18n.getMessage('reset');
         $('customStyles').innerHTML = chrome.i18n.getMessage('customStyles');
-        const linkGithubGist = '<a href="http://gist.github.com/">GitHub Gist</a>';
-        $('customStylesText').innerHTML = chrome.i18n.getMessage('customStylesText', [linkGithubGist]);
+        $('customStylesDesc').innerHTML = chrome.i18n.getMessage('customStylesDesc');
+
+        const CSS_TEMPLATE = `/* Baseline Theme Template - Copy & Paste below */
+body {
+    background-color: #ffffff; /* Main Background */
+    color: #000000;            /* Main Text */
+}
+
+/* Search Bar */
+#search {
+    background-color: #f2f2f2;
+    border-bottom: 1px solid #cccccc;
+}
+#search-input {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #cccccc;
+}
+
+/* Bookmarks & Folders */
+li.parent > span { color: #000000; } /* Folder Name */
+li.child > a     { color: #000000; } /* Bookmark Name */
+
+/* Hover Effects */
+li.parent > span:hover,
+li.child > a:hover {
+    background-color: #e6e6e6; /* Highlight Background */
+    color: #000000;            /* Highlight Text */
+}`;
+        $('css-template').textContent = CSS_TEMPLATE;
+        
         const neaterEmail = '<a href="mailto:neaterbookmarks@gmail.com?body=%0d%0dSent from Neater Bookmarks Options page">neaterbookmarks@gmail.com</a>';
         $('optionsFooterText1').innerHTML = chrome.i18n.getMessage('optionsFooterText1', [neaterEmail]);
         const neaterGithub = 'GitHub: <a href="http://goo.gl/s2kVi">http://goo.gl/s2kVi</a>';
@@ -54,6 +83,94 @@
     const setupListeners = () => {
         const THEMES = {
             light: '',
+            'light-modern': `/* Light (Modern) Theme */
+body {
+    background-color: #ffffff !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    color: #333333 !important;
+}
+
+/* Search Bar - Floating Style */
+#search {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+    padding: 8px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+}
+
+#search-input {
+    background-color: #f5f5f7 !important;
+    color: #1d1d1f !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    transition: all 0.2s ease;
+}
+
+#search-input:focus {
+    background-color: #ffffff !important;
+    border-color: #007aff !important;
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.1) !important;
+}
+
+/* Tree & Results */
+#tree, #results {
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    text-shadow: none !important;
+}
+
+/* List Items */
+li {
+    padding: 0 !important;
+}
+
+li.parent > span, li.child > a {
+    color: #333333 !important;
+    text-shadow: none !important;
+    border-radius: 4px;
+    margin: 0 2px !important;
+    padding: 2px 6px !important;
+    transition: background-color 0.1s ease;
+}
+
+/* Hover Effects */
+li.parent > span:hover, li.child > a:hover {
+    background-color: #f2f2f7 !important;
+    color: #000000 !important;
+    text-shadow: none !important;
+}
+
+/* Focused Item */
+.focus {
+    background-color: #e5f1fb !important;
+    color: #007aff !important;
+}
+
+/* Folder Icons & Text */
+li.parent > span i {
+    font-weight: 600 !important;
+    color: #444 !important;
+}
+
+/* Twisties (Arrows) */
+#tree ul li span .twisty {
+    border-color: transparent transparent transparent #8e8e93 !important;
+    opacity: 0.7;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    background-color: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #d1d1d6;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: #b0b0b5;
+}`,
             dark: `/* Dark Mode */
 body {
     background-color: #2b2b2b !important;
@@ -211,9 +328,23 @@ img {
         document.title = _m('extName') + ' ' + _m('options');
         
         const clickNewTab = $('click-new-tab');
+        const popupStayOpen = $('popup-stay-open');
+        
+        const togglePopupStayOpen = () => {
+            const label = $('optionPopupStays');
+            if (clickNewTab.checked) {
+                popupStayOpen.disabled = true;
+                label.style.opacity = '0.5';
+            } else {
+                popupStayOpen.disabled = false;
+                label.style.opacity = '1';
+            }
+        };
+
         clickNewTab.checked = !!settings.leftClickNewTab;
         clickNewTab.addEventListener('change', function(){
             setSetting('leftClickNewTab', clickNewTab.checked ? '1' : '');
+            togglePopupStayOpen();
         });
         
         const openNewTabBg = $('open-new-tab-bg');
@@ -228,11 +359,12 @@ img {
             setSetting('closeUnusedFolders', closeUnusedFolders.checked ? '1' : '');
         });
         
-        const popupStayOpen = $('popup-stay-open');
         popupStayOpen.checked = !!settings.bookmarkClickStayOpen;
         popupStayOpen.addEventListener('change', function(){
             setSetting('bookmarkClickStayOpen', popupStayOpen.checked ? '1' : '');
         });
+        
+        togglePopupStayOpen();
         
         const confirmOpenFolder = $('confirm-open-folder');
         confirmOpenFolder.checked = !settings.dontConfirmOpenFolder;
