@@ -40,7 +40,7 @@
     }, false);
 
     // Platform detection
-    const os = (navigator.platform.toLowerCase().match(/mac|win|linux/i) || ['other'])[0];
+    const os = (navigator.userAgent.toLowerCase().match(/mac|win|linux/i) || ['other'])[0];
     body.classList.add(os);
 
     // Some i18n
@@ -334,24 +334,27 @@
     searchInput.addEventListener('input', search);
 
     searchInput.addEventListener('keydown', function(e){
-        const key = e.keyCode;
+        const code = e.code;
         const focusID = settings.focusID;
-        if (key == 40 && searchInput.value.length == searchInput.selectionEnd){ // down
+        if (code === 'ArrowDown' && searchInput.value.length == searchInput.selectionEnd){ // down
             e.preventDefault();
             if (searchMode){
                 $results.querySelector('ul>li:first-child a').focus();
             } else {
                 $tree.querySelector('ul>li:first-child').querySelector('span, a').focus();
             }
-        } else if (key == 13 && searchInput.value.length){ // enter
+        } else if (code === 'Enter' && searchInput.value.length){ // enter
             const item = $results.querySelector('ul>li:first-child a');
             item.focus();
             setTimeout(function(){
-                const event = document.createEvent('MouseEvents');
-                event.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                const event = new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window
+                });
                 item.dispatchEvent(event);
             }, 30);
-        } else if (key == 9 && !searchMode){ // tab
+        } else if (code === 'Tab' && !searchMode){ // tab
             if (typeof focusID != 'undefined' && focusID != null){
                 const focusEl = $('neat-tree-item-' + focusID);
                 if (focusEl){
@@ -367,7 +370,7 @@
                 if (firstItem) firstItem.focus();
             }
         // Pressing esc shouldn't close the popup when search field has value
-        } else if (e.keyCode == 27 && searchInput.value){ // esc
+        } else if (code === 'Escape' && searchInput.value){ // esc
             e.preventDefault();
             searchInput.value = '';
             search();
@@ -397,7 +400,7 @@
             if (neatTree){
                 const fullHeight = (neatTree.offsetHeight + $tree.offsetTop + 16) * zoomLevel;
                 // Slide up faster than down
-                body.style.webkitTransitionDuration = (fullHeight < window.innerHeight) ? '.3s' : '.1s';
+                body.style.transitionDuration = (fullHeight < window.innerHeight) ? '.3s' : '.1s';
                 const maxHeight = screen.height - window.screenY - 50;
                 const height = Math.max(200, Math.min(fullHeight, maxHeight));
                 body.style.height = height + 'px';
@@ -725,8 +728,14 @@
     const bookmarkHandlerMiddle = function(e){
         if (e.button != 1) return; // force middle-click
         e.preventDefault();
-        const event = document.createEvent('MouseEvents');
-        event.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, true, false, e.shiftKey, true, 0, null);
+        const event = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            ctrlKey: true,
+            metaKey: true,
+            shiftKey: e.shiftKey
+        });
         e.target.dispatchEvent(event);
     };
     $tree.addEventListener('auxclick', bookmarkHandlerMiddle);
@@ -840,14 +849,14 @@
                 actions.openBookmarkNewWindow(url, true);
                 break;
             case 'bookmark-edit':
-                var li = currentContext.parentNode;
-                var id = li.id.replace(/(neat\-tree|results)\-item\-/, '');
+                const li = currentContext.parentNode;
+                const id = li.id.replace(/(neat\-tree|results)\-item\-/, '');
                 actions.editBookmarkFolder(id);
                 break;
             case 'bookmark-delete':
-                var li = currentContext.parentNode;
-                var id = li.id.replace(/(neat\-tree|results)\-item\-/, '');
-                actions.deleteBookmark(id);
+                const liDel = currentContext.parentNode;
+                const idDel = liDel.id.replace(/(neat\-tree|results)\-item\-/, '');
+                actions.deleteBookmark(idDel);
                 break;
         }
         clearMenu();
@@ -913,12 +922,13 @@
         let item = document.activeElement;
         if (!/^(a|span)$/i.test(item.tagName)) item = $tree.querySelector('.focus') || $tree.querySelector('li:first-child>span');
         let li = item.parentNode;
-        let keyCode = e.keyCode;
+        let code = e.code;
         const metaKey = e.metaKey;
-        if (keyCode == 40 && metaKey) keyCode = 35; // cmd + down (Mac)
-        if (keyCode == 38 && metaKey) keyCode = 36; // cmd + up (Mac)
-        switch (keyCode){
-            case 40: // down
+        if (code === 'ArrowDown' && metaKey) code = 'End'; // cmd + down (Mac)
+        if (code === 'ArrowUp' && metaKey) code = 'Home'; // cmd + up (Mac)
+        
+        switch (code){
+            case 'ArrowDown': // down
                 e.preventDefault();
                 var liChild = li.querySelector('ul>li:first-child');
                 if (li.classList.contains('open') && liChild){
@@ -928,16 +938,17 @@
                     if (nextLi){
                         nextLi.querySelector('a, span').focus();
                     } else {
+                        let lastLi = null;
                         do {
                             li = li.parentNode.parentNode;
                             if (li) nextLi = li.nextElementSibling;
-                            if (nextLi) LastLi = nextLi.querySelector('a, span');
-                            if (LastLi) LastLi.focus(); // down on the last item in tree
+                            if (nextLi) lastLi = nextLi.querySelector('a, span');
+                            if (lastLi) lastLi.focus(); // down on the last item in tree
                         } while (li && !nextLi);
                     }
                 }
                 break;
-            case 38: // up
+            case 'ArrowUp': // up
                 e.preventDefault();
                 var prevLi = li.previousElementSibling;
                 if (prevLi){
@@ -957,11 +968,14 @@
                     }
                 }
                 break;
-            case 39: // right (left for RTL)
+            case 'ArrowRight': // right (left for RTL)
                 e.preventDefault();
                 if (li.classList.contains('parent') && ((!rtl && !li.classList.contains('open')) || (rtl && li.classList.contains('open')))){
-                    const event = document.createEvent('MouseEvents');
-                    event.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                    const event = new MouseEvent('click', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window
+                    });
                     li.firstElementChild.dispatchEvent(event);
                 } else if (rtl){
                     const parentID = li.dataset.parentid;
@@ -969,11 +983,14 @@
                     $('neat-tree-item-' + parentID).querySelector('span').focus();
                 }
                 break;
-            case 37: // left (right for RTL)
+            case 'ArrowLeft': // left (right for RTL)
                 e.preventDefault();
                 if (li.classList.contains('parent') && ((!rtl && li.classList.contains('open')) || (rtl && !li.classList.contains('open')))){
-                    const event = document.createEvent('MouseEvents');
-                    event.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                    const event = new MouseEvent('click', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window
+                    });
                     li.firstElementChild.dispatchEvent(event);
                 } else if (!rtl){
                     const parentID = li.dataset.parentid;
@@ -981,14 +998,20 @@
                     $('neat-tree-item-' + parentID).querySelector('span').focus();
                 }
                 break;
-            case 32: // space
-            case 13: // enter
+            case 'Space': // space
+            case 'Enter': // enter
                 e.preventDefault();
-                var event = document.createEvent('MouseEvents');
-                event.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, e.ctrlKey, false, e.shiftKey, e.metaKey, 0, null);
+                var event = new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    ctrlKey: e.ctrlKey,
+                    shiftKey: e.shiftKey,
+                    metaKey: e.metaKey
+                });
                 li.firstElementChild.dispatchEvent(event);
                 break;
-            case 35: // end
+            case 'End': // end
                 if (searchMode){
                     this.querySelector('li:last-child a').focus();
                 } else {
@@ -999,14 +1022,14 @@
                     li.querySelector('span, a').focus();
                 }
                 break;
-            case 36: // home
+            case 'Home': // home
                 if (searchMode){
                     this.querySelector('ul>li:first-child a').focus();
                 } else {
                     this.querySelector('ul>li:first-child').querySelector('span, a').focus();
                 }
                 break;
-            case 34: // page down
+            case 'PageDown': // page down
                 var self = this;
                 var getLastItem = function(){
                     const bound = self.offsetHeight + self.scrollTop;
@@ -1025,7 +1048,7 @@
                     }, 0);
                 }
                 break;
-            case 33: // page up
+            case 'PageUp': // page up
                 var self = this;
                 var getFirstItem = function(){
                     const bound = self.scrollTop;
@@ -1044,50 +1067,52 @@
                     }, 0);
                 }
                 break;
-            case 113: // F2, not for Mac
+            case 'F2': // F2, not for Mac
                 if (os == 'mac') break;
                 var id = li.id.replace(/(neat\-tree|results)\-item\-/, '');
                 actions.editBookmarkFolder(id);
                 break;
-            case 46: // delete
+            case 'Delete': // delete
                 break; // don't run 'default'
             default:
-                const key = String.fromCharCode(keyCode).trim();
-                if (!key) return;
-                if (key != keyBuffer) keyBuffer += key;
-                clearTimeout(keyBufferTimer);
-                keyBufferTimer = setTimeout(function(){ keyBuffer = ''; }, 500);
-                const lis = this.querySelectorAll('ul>li');
-                const items = [];
-                for (let i = 0, l = lis.length; i < l; i++){
-                    const li = lis[i];
-                    if (li.parentNode.offsetHeight) items.push(li.firstElementChild);
-                }
-                const pattern = new RegExp('^' + Utils.escapeRegExp(keyBuffer), 'i');
-                const batch = [];
-                let startFind = false;
-                let found = false;
-                const activeElement = document.activeElement;
-                for (let i = 0, l = items.length; i < l; i++){
-                    const item = items[i];
-                    if (item == activeElement){
-                        startFind = true;
-                    } else if (startFind){
-                        if (pattern.test(item.textContent.trim())){
-                            found = true;
-                            item.focus();
-                            break;
-                        }
-                    } else {
-                        batch.push(item);
+                if (e.key.length === 1) {
+                    const key = e.key;
+                    if (!key) return;
+                    if (key != keyBuffer) keyBuffer += key;
+                    clearTimeout(keyBufferTimer);
+                    keyBufferTimer = setTimeout(function(){ keyBuffer = ''; }, 500);
+                    const lis = this.querySelectorAll('ul>li');
+                    const items = [];
+                    for (let i = 0, l = lis.length; i < l; i++){
+                        const li = lis[i];
+                        if (li.parentNode.offsetHeight) items.push(li.firstElementChild);
                     }
-                }
-                if (!found){
-                    for (let i = 0, l = batch.length; i < l; i++){
-                        const item = batch[i];
-                        if (pattern.test(item.textContent.trim())){
-                            item.focus();
-                            break;
+                    const pattern = new RegExp('^' + Utils.escapeRegExp(keyBuffer), 'i');
+                    const batch = [];
+                    let startFind = false;
+                    let found = false;
+                    const activeElement = document.activeElement;
+                    for (let i = 0, l = items.length; i < l; i++){
+                        const item = items[i];
+                        if (item == activeElement){
+                            startFind = true;
+                        } else if (startFind){
+                            if (pattern.test(item.textContent.trim())){
+                                found = true;
+                                item.focus();
+                                break;
+                            }
+                        } else {
+                            batch.push(item);
+                        }
+                    }
+                    if (!found){
+                        for (let i = 0, l = batch.length; i < l; i++){
+                            const item = batch[i];
+                            if (pattern.test(item.textContent.trim())){
+                                item.focus();
+                                break;
+                            }
                         }
                     }
                 }
@@ -1100,10 +1125,10 @@
         let item = document.activeElement;
         if (!/^(a|span)$/i.test(item.tagName)) item = $tree.querySelector('.focus') || $tree.querySelector('li:first-child>span');
         const li = item.parentNode;
-        switch (e.keyCode){
-            case 8: // backspace
+        switch (e.code){
+            case 'Backspace': // backspace
                 if (os != 'mac') break; // somehow delete button on mac gives backspace
-            case 46: // delete
+            case 'Delete': // delete
                 e.preventDefault();
                 const id = li.id.replace(/(neat\-tree|results)\-item\-/, '');
                 if (li.classList.contains('parent')){
@@ -1126,8 +1151,8 @@
         const menu = this;
         const item = document.activeElement;
         const metaKey = e.metaKey;
-        switch (e.keyCode){
-            case 40: // down
+        switch (e.code){
+            case 'ArrowDown': // down
                 e.preventDefault();
                 if (metaKey){ // cmd + down (Mac)
                     menu.lastElementChild.focus();
@@ -1145,7 +1170,7 @@
                     }
                 }
                 break;
-            case 38: // up
+            case 'ArrowUp': // up
                 e.preventDefault();
                 if (metaKey){ // cmd + up (Mac)
                     menu.firstElementChild.focus();
@@ -1163,14 +1188,17 @@
                     }
                 }
                 break;
-            case 32: // space
+            case 'Space': // space
                 if (os != 'mac') break;
-            case 13: // enter
+            case 'Enter': // enter
                 e.preventDefault();
-                var event = document.createEvent('MouseEvents');
-                event.initMouseEvent('mouseup', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                var event = new MouseEvent('mouseup', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window
+                });
                 item.dispatchEvent(event);
-            case 27: // esc
+            case 'Escape': // esc
                 e.preventDefault();
                 const active = body.querySelector('.active');
                 if (active) active.classList.remove('active').focus();
@@ -1446,10 +1474,10 @@
             if (body.classList.contains('needAlert')) AlertDialog.close();
     };
     document.addEventListener('keydown', function(e){
-        if (e.keyCode == 27 && (body.classList.contains('needConfirm') || body.classList.contains('needEdit') || body.classList.contains('needAlert'))){ // esc
+        if (e.code === 'Escape' && (body.classList.contains('needConfirm') || body.classList.contains('needEdit') || body.classList.contains('needAlert'))){ // esc
             e.preventDefault();
             closeDialogs();
-        } else if ((e.metaKey || e.ctrlKey) && e.keyCode == 70){ // cmd/ctrl + f
+        } else if ((e.metaKey || e.ctrlKey) && e.code === 'KeyF'){ // cmd/ctrl + f
             searchInput.focus();
             searchInput.select();
         }
@@ -1482,23 +1510,25 @@
         body.classList.remove('dummy'); // force redraw
         resetHeight();
     };
-    document.addEventListener('mousewheel', function(e){
+    document.addEventListener('wheel', function(e){
         if (!e.metaKey && !e.ctrlKey) return;
         e.preventDefault();
-        zoom(e.wheelDelta);
-    });
+        // deltaY is usually positive for scrolling down, negative for scrolling up
+        // zoom expects positive for zoom in (scrolling up)
+        zoom(-e.deltaY);
+    }, {passive: false});
     document.addEventListener('keydown', function(e){
         if (!e.metaKey && !e.ctrlKey) return;
-        switch (e.keyCode){
-            case 187: // + (plus)
+        switch (e.code){
+            case 'Equal': // + (plus)
                 e.preventDefault();
                 zoom(1);
                 break;
-            case 189: // - (minus)
+            case 'Minus': // - (minus)
                 e.preventDefault();
                 zoom(-1);
                 break;
-            case 48: // 0 (zero)
+            case 'Digit0': // 0 (zero)
                 e.preventDefault();
                 zoom(0);
                 break;
@@ -1521,6 +1551,6 @@
 
 })();
 
-onerror = function(){
-    chrome.runtime.sendMessage({error: [].slice.call(arguments)})
+onerror = function(...args){
+    chrome.runtime.sendMessage({error: args});
 };

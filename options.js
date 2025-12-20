@@ -183,7 +183,7 @@
         }
     });
 
-    onerror = function(){
-        chrome.runtime.sendMessage({error: [].slice.call(arguments)})
+    onerror = function(...args){
+        chrome.runtime.sendMessage({error: args})
     };
 })();
