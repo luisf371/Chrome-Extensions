@@ -52,6 +52,162 @@
     };
 
     const setupListeners = () => {
+        const THEMES = {
+            light: '',
+            dark: `/* Dark Mode */
+body {
+    background-color: #2b2b2b !important;
+    color: #cccccc !important;
+}
+#search {
+    background-color: #333333 !important;
+    border-bottom: 1px solid #444444 !important;
+}
+#search-input {
+    background-color: #444444 !important;
+    color: #ffffff !important;
+    border: 1px solid #555555 !important;
+}
+#tree, #results {
+    background-color: #2b2b2b !important;
+    color: #cccccc !important;
+    text-shadow: none !important;
+}
+li.parent > span, li.child > a {
+    color: #cccccc !important;
+    text-shadow: none !important;
+}
+li.parent > span:hover, li.child > a:hover {
+    background-color: #444444 !important;
+    color: #ffffff !important;
+    text-shadow: none !important;
+}
+#tree ul li span .twisty {
+    border-color: transparent transparent transparent #888888 !important;
+}
+::-webkit-scrollbar {
+    width: 10px;
+    background-color: #2b2b2b;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #555555;
+}
+`,
+            neon: `/* Neon Night - High Contrast Version */
+body {
+    background-color: #0f172a !important; 
+    font-family: 'Segoe UI', sans-serif !important;
+}
+
+/* Force ALL text to be Cyan by default and remove shadows */
+#tree, #results, a, span, i, li {
+    color: #38bdf8 !important; /* Bright Cyan */
+    text-shadow: none !important;
+}
+
+/* Folders: Bright Magenta */
+li.parent > span, 
+li.parent > span i {
+    color: #f472b6 !important; 
+    font-weight: bold !important;
+}
+
+/* Hover: White text on a lighter slate background */
+li.child > a:hover, 
+li.parent > span:hover,
+li.child > a:hover i {
+    background-color: #334155 !important;
+    color: #ffffff !important;
+}
+
+/* Search Area */
+#search {
+    background-color: #1e293b !important;
+    border-bottom: 2px solid #38bdf8 !important;
+}
+
+#search-input {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+    border: 1px solid #38bdf8 !important;
+}
+
+/* Tree Twisty (the arrow) - make it light so it's visible */
+#tree ul li span .twisty {
+    border-color: transparent transparent transparent #94a3b8 !important;
+}
+
+/* Focused/Active items */
+#tree ul li a:focus, 
+#tree ul li span:focus {
+    background-color: #38bdf8 !important;
+    color: #0f172a !important;
+}
+`,
+            vintage: `/* Vintage Parchment Theme */
+body {
+    background-color: #f5f5dc !important; /* Cream/Beige */
+    font-family: 'Georgia', 'Times New Roman', serif !important; /* Serif font for "Book" feel */
+}
+
+/* Base Text - Dark Coffee Brown & No Shadows */
+#tree, #results, a, span, i, li {
+    color: #3e2723 !important; 
+    text-shadow: none !important;
+}
+
+/* Search Area - Darker paper tone */
+#search {
+    background-color: #e8e0c5 !important;
+    border-bottom: 2px solid #8d6e63 !important;
+    padding: 8px !important;
+}
+
+#search-input {
+    background-color: #fffbf0 !important;
+    color: #3e2723 !important;
+    border: 1px solid #8d6e63 !important;
+    border-radius: 0 !important; /* Sharp corners */
+    font-family: 'Georgia', serif !important;
+    font-style: italic !important;
+}
+
+/* Folders - Dark Red "Chapter Headers" */
+li.parent > span {
+    color: #8b0000 !important; /* Deep Maroon */
+    font-weight: bold !important;
+    font-variant: small-caps !important; /* "Small Caps" style */
+    letter-spacing: 0.5px !important;
+}
+
+/* Hover Effect - Light Brown "Highlighter" */
+li.child > a:hover, 
+li.parent > span:hover {
+    background-color: #d7ccc8 !important;
+    color: #000 !important;
+}
+
+/* Twisties (Arrows) - Make them dark brown */
+#tree ul li span .twisty {
+    border-color: transparent transparent transparent #5d4037 !important;
+}
+
+/* Icons - Sepia Filter to make favicons look vintage */
+img {
+    filter: sepia(100%) contrast(1.2) !important;
+    opacity: 0.9 !important;
+}
+
+/* Scrollbar (Chrome Webkit) - Matching Brown */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background: #a1887f !important;
+}
+`
+        };
+
         document.title = _m('extName') + ' ' + _m('options');
         
         const clickNewTab = $('click-new-tab');
@@ -161,11 +317,43 @@
             alert(_m('extName') + ' has been reset.');
         }, false);
         
+        // Theme and Custom CSS Logic
+        const themeSelect = $('theme-select');
+        const customCssContainer = $('custom-css-container');
         const textareaUserstyle = $('userstyle');
-        if (settings.userstyle) textareaUserstyle.value = settings.userstyle;
+
+        // Initial State
+        const currentTheme = settings.theme || 'light';
+        const currentCustomCSS = settings.customCSS || '';
         
+        themeSelect.value = currentTheme;
+        textareaUserstyle.value = currentCustomCSS;
+        
+        if (currentTheme === 'custom') {
+            customCssContainer.style.display = 'block';
+        } else {
+            customCssContainer.style.display = 'none';
+        }
+
+        themeSelect.addEventListener('change', function() {
+            const selectedTheme = themeSelect.value;
+            setSetting('theme', selectedTheme);
+
+            if (selectedTheme === 'custom') {
+                customCssContainer.style.display = 'block';
+                setSetting('userstyle', textareaUserstyle.value);
+            } else {
+                customCssContainer.style.display = 'none';
+                setSetting('userstyle', THEMES[selectedTheme]);
+            }
+        });
+
         textareaUserstyle.addEventListener('input', function() {
-            setSetting('userstyle', textareaUserstyle.value);
+            const css = textareaUserstyle.value;
+            setSetting('customCSS', css);
+            if (themeSelect.value === 'custom') {
+                setSetting('userstyle', css);
+            }
         });
     };
 

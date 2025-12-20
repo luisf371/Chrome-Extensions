@@ -72,7 +72,7 @@
       "message": "The icon must be 19&times;19 or it will be resized."
    },
    "customStyles": {
-      "message": "Custom Styles"
+      "message": "Themes"
    },
    "customStylesText": {
       "message": "This requires some CSS skills. Hack at your own risk. Code sharing is encouraged via $linkGithubGist$.",

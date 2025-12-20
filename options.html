@@ -32,8 +32,19 @@
 </fieldset>
 <fieldset>
 	<legend id="customStyles"></legend>
-	<p><span id="customStylesText"></span></p>
-	<textarea id="userstyle"></textarea>
+	<div style="margin-bottom: 10px;">
+		<select id="theme-select">
+			<option value="light">Light (Default)</option>
+			<option value="dark">Dark Mode</option>
+			<option value="neon">Neon Night</option>
+			<option value="vintage">Vintage Parchment</option>
+			<option value="custom">Custom</option>
+		</select>
+	</div>
+	<div id="custom-css-container" style="display: none;">
+		<p><span id="customStylesText"></span></p>
+		<textarea id="userstyle"></textarea>
+	</div>
 </fieldset>
 <div id="footer">
 	<span id="optionsFooterText1"></span><br />
