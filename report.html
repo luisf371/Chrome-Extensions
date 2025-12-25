@@ -11,10 +11,18 @@
           h1 { color: var(--heading-color); }
           .section { background: var(--panel-bg); padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }      h2 { color: var(--heading-color); margin-top: 0; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
       
-      table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
-      th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-color); }
-      th { background-color: var(--th-bg); color: var(--th-text); font-weight: 600; }
-      tr:hover { background-color: var(--row-hover); }
+    table { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-color); }
+    th { 
+      background-color: var(--th-bg); 
+      color: var(--th-text); 
+      font-weight: 600; 
+      position: sticky; 
+      top: 65px; /* Height of actions-bar + padding */
+      z-index: 90; 
+      box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+    }
+    tr:hover { background-color: var(--row-hover); }
       
       .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; text-decoration: underline; white-space: nowrap; }
       .status-badge:hover { opacity: 0.8; }
@@ -24,12 +32,22 @@
       .filter-bar { background-color: #dff9fb; border: 1px solid #c7ecee; color: #30336b; padding: 8px 15px; border-radius: 4px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
       .filter-bar button { background: none; border: none; color: #e74c3c; cursor: pointer; font-weight: bold; text-decoration: underline; }
       
-      .url-col { color: #3498db; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
-      .path-col { color: var(--sub-text); font-size: 0.8rem; }
-      
-      .actions-bar { margin-top: 15px; display: flex; gap: 10px; }
-      .btn-danger { background-color: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-      .btn-danger:hover { background-color: #c0392b; }
+    .url-col { color: #3498db; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+    .path-col { color: var(--sub-text); font-size: 0.8rem; }
+    
+    .actions-bar { 
+      margin-top: 0; 
+      margin-bottom: 15px;
+      display: flex; 
+      gap: 10px; 
+      position: sticky; 
+      top: 0; 
+      z-index: 100; 
+      background-color: var(--panel-bg); 
+      padding: 15px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .btn-danger { background-color: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
       
       .empty-state { text-align: center; padding: 30px; color: var(--sub-text); font-style: italic; }
       
