@@ -7,8 +7,28 @@ const elements = {
   brokenCount: document.getElementById('broken-count'),
   duplicateCount: document.getElementById('duplicate-count'),
   btnScan: document.getElementById('btn-scan'),
-  btnReport: document.getElementById('btn-report')
+  btnReport: document.getElementById('btn-report'),
+  themeToggle: document.getElementById('theme-toggle')
 };
+
+// Theme Logic (Sync with Report)
+chrome.storage.local.get(['theme'], (result) => {
+  const savedTheme = result.theme || 'light';
+  document.body.setAttribute('data-theme', savedTheme);
+});
+
+elements.themeToggle.addEventListener('click', () => {
+  const currentTheme = document.body.getAttribute('data-theme');
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  document.body.setAttribute('data-theme', newTheme);
+  chrome.storage.local.set({ theme: newTheme });
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.theme) {
+    document.body.setAttribute('data-theme', changes.theme.newValue);
+  }
+});
 
 let pollInterval;
 

@@ -24,14 +24,25 @@ let currentFilter = null; // Filter by status code
 let selectedIds = new Set(); // Store selected IDs globally
 
 // Theme Logic
-const savedTheme = localStorage.getItem('theme') || 'light';
-document.body.setAttribute('data-theme', savedTheme);
+// 1. Load saved theme
+chrome.storage.local.get(['theme'], (result) => {
+  const savedTheme = result.theme || 'light';
+  document.body.setAttribute('data-theme', savedTheme);
+});
 
+// 2. Handle toggle
 elements.themeToggle.addEventListener('click', () => {
   const currentTheme = document.body.getAttribute('data-theme');
   const newTheme = currentTheme === 'light' ? 'dark' : 'light';
   document.body.setAttribute('data-theme', newTheme);
-  localStorage.setItem('theme', newTheme);
+  chrome.storage.local.set({ theme: newTheme });
+});
+
+// 3. Listen for changes (Sync)
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.theme) {
+    document.body.setAttribute('data-theme', changes.theme.newValue);
+  }
 });
 
 const statusDescriptions = {
