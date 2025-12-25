@@ -135,7 +135,7 @@ function renderBroken(brokenList) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input type="checkbox" class="broken-check" data-id="${item.id}" ${isChecked ? 'checked' : ''}></td>
-      <td>
+      <td class="selectable-cell">
         <strong>${escapeHtml(item.title)}</strong><br>
         <span class="path-col">${escapeHtml(item.path)}</span>
       </td>
@@ -260,6 +260,26 @@ function getSelectedIds(selector) {
 // Event Listeners
 
 // Broken Links Events
+elements.brokenTableBody.addEventListener('click', (e) => {
+  // Handle cell clicks for selection
+  const cell = e.target.closest('.selectable-cell');
+  if (cell) {
+    const tr = cell.parentElement;
+    const checkbox = tr.querySelector('.broken-check');
+    if (checkbox) {
+      checkbox.checked = !checkbox.checked;
+      // Trigger change event manually or update logic directly
+      const id = checkbox.dataset.id;
+      if (checkbox.checked) {
+        selectedIds.add(id);
+      } else {
+        selectedIds.delete(id);
+      }
+      updateBrokenButtonState();
+    }
+  }
+});
+
 elements.brokenTableBody.addEventListener('change', (e) => {
   if (e.target.classList.contains('broken-check')) {
     const id = e.target.dataset.id;

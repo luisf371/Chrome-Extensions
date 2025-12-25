@@ -231,4 +231,8 @@ button {
 
 #ignore-btn { background-color: #7f8c8d; }
 #ignore-btn:hover { background-color: #34495e; }
-#ignore-btn:disabled { background-color: #bdc3c7; }
+
+/* Clickable row area */
+.selectable-cell { cursor: pointer; }
+.selectable-cell:hover { background-color: rgba(0,0,0,0.02); }
+[data-theme="dark"] .selectable-cell:hover { background-color: rgba(255,255,255,0.05); }
