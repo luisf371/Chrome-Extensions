@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sBookmarkCleaner</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>sBookmarkCleaner</h1>
+    
+    <div id="status-container">
+      <p id="status-text">Ready to scan.</p>
+      <div class="progress-bar-bg">
+        <div id="progress-bar" class="progress-bar-fill"></div>
+      </div>
+      <p id="progress-counts">0 / 0</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box">
+        <span class="stat-label">Broken</span>
+        <span id="broken-count" class="stat-number">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Duplicates</span>
+        <span id="duplicate-count" class="stat-number">0</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="btn-scan">Start Scan & Sort</button>
+      <button id="btn-report" disabled>View Report</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

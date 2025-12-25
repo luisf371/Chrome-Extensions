@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scan Report - sBookmarkCleaner</title>
+  <link rel="stylesheet" href="styles.css">
+          <style>
+          body { width: 90%; margin: 0 auto; background-color: var(--bg-color); color: var(--text-color); }
+          .container { max-width: 100%; }
+          h1 { color: var(--heading-color); }
+          .section { background: var(--panel-bg); padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }      h2 { color: var(--heading-color); margin-top: 0; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+      
+      table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+      th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-color); }
+      th { background-color: var(--th-bg); color: var(--th-text); font-weight: 600; }
+      tr:hover { background-color: var(--row-hover); }
+      
+      .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; text-decoration: underline; white-space: nowrap; }
+      .status-badge:hover { opacity: 0.8; }
+      .status-error { background-color: #ffebee; color: #c0392b; }
+      .status-404 { background-color: #fff3e0; color: #e67e22; }
+  
+      .filter-bar { background-color: #dff9fb; border: 1px solid #c7ecee; color: #30336b; padding: 8px 15px; border-radius: 4px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+      .filter-bar button { background: none; border: none; color: #e74c3c; cursor: pointer; font-weight: bold; text-decoration: underline; }
+      
+      .url-col { color: #3498db; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+      .path-col { color: var(--sub-text); font-size: 0.8rem; }
+      
+      .actions-bar { margin-top: 15px; display: flex; gap: 10px; }
+      .btn-danger { background-color: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+      .btn-danger:hover { background-color: #c0392b; }
+      
+      .empty-state { text-align: center; padding: 30px; color: var(--sub-text); font-style: italic; }
+      
+      /* Duplicates Grouping */
+      .dup-group { border-left: 4px solid #f39c12; background-color: var(--bg-color); margin-bottom: 10px; padding: 10px; }
+      .dup-header { font-weight: bold; margin-bottom: 5px; word-break: break-all; }
+    </style>
+  </head>
+  <body data-theme="light">
+    <div class="container">
+      <header style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0;">
+        <h1>Scan Report <span id="scan-date" style="font-size: 0.8rem; font-weight: normal; color: var(--sub-text); cursor: help;"></span></h1>
+              <button id="theme-toggle" class="theme-toggle" title="Toggle Dark Mode">
+                <!-- Sun Icon -->
+                <svg class="icon-sun" viewBox="0 0 24 24">
+                   <circle cx="12" cy="12" r="5"></circle>
+                   <line x1="12" y1="1" x2="12" y2="3"></line>
+                   <line x1="12" y1="21" x2="12" y2="23"></line>
+                   <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                   <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                   <line x1="1" y1="12" x2="3" y2="12"></line>
+                   <line x1="21" y1="12" x2="23" y2="12"></line>
+                   <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                   <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <!-- Moon Icon -->
+                <svg class="icon-moon" viewBox="0 0 24 24">
+                   <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+              </button>      </header>
+    <!-- Broken Links Section -->
+    <div class="section">
+      <h2>
+        <span>Findings(<span id="broken-count">0</span>)</span>
+      </h2>
+      
+      <div id="filter-container" style="display:none;"></div>
+
+      <div class="actions-bar" style="justify-content: space-between;">
+        <button id="delete-broken-btn" class="btn-danger" disabled>Delete Selected</button>
+        <div>
+            <button id="open-btn" class="btn-secondary" disabled>Open Selected</button>
+            <button id="ignore-btn" class="btn-secondary" disabled>Ignore Selected</button>
+            <button id="recheck-btn" class="btn-secondary" disabled>Re-check Selected</button>
+        </div>
+      </div>
+      <table id="broken-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;"><input type="checkbox" id="select-all-broken"></th>
+            <th>Bookmark</th>
+            <th>URL</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows injected here -->
+        </tbody>
+      </table>
+      <div id="broken-empty" class="empty-state" style="display:none;">No broken links found.</div>
+    </div>
+
+    <!-- Duplicates Section -->
+    <div class="section">
+      <h2><span>Duplicates(<span id="dup-count">0</span> Sets)</span></h2>
+      <p style="color:#7f8c8d; font-size:0.9rem;">Select copies to delete. We recommend keeping one valid copy.</p>
+      <div class="actions-bar">
+        <button id="delete-dup-btn" class="btn-danger" disabled>Delete Selected</button>
+      </div>
+      <div id="duplicates-list">
+        <!-- Duplicate groups injected here -->
+      </div>
+      <div id="dup-empty" class="empty-state" style="display:none;">No duplicates found.</div>
+    </div>
+  </div>
+  <script src="report.js"></script>
+</body>
+</html>
