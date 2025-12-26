@@ -6,6 +6,8 @@ const elements = {
   progressCounts: document.getElementById('progress-counts'),
   brokenCount: document.getElementById('broken-count'),
   duplicateCount: document.getElementById('duplicate-count'),
+  lastScanBroken: document.getElementById('last-scan-broken'),
+  lastScanDuplicates: document.getElementById('last-scan-duplicates'),
   btnBroken: document.getElementById('btn-broken'),
   btnDuplicates: document.getElementById('btn-duplicates'),
   btnSort: document.getElementById('btn-sort'),
@@ -34,6 +36,18 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 let pollInterval;
 
+function formatTimestamp(ts) {
+  if (!ts) return 'Never scanned';
+  const date = new Date(ts);
+  const now = new Date();
+  
+  // If today, show time, else show date
+  if (date.toDateString() === now.toDateString()) {
+    return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 function updateUI(state) {
   // Calculate Progress
   const percentage = state.total > 0 ? Math.round((state.checked / state.total) * 100) : 0;
@@ -50,6 +64,10 @@ function updateUI(state) {
     });
   }
   elements.duplicateCount.textContent = dupCount;
+
+  // Update Timestamps
+  elements.lastScanBroken.textContent = formatTimestamp(state.lastScanDateBroken);
+  elements.lastScanDuplicates.textContent = formatTimestamp(state.lastScanDateDuplicates);
 
   // Determine if report should be enabled
   // Enabled if there are any results from previous scans

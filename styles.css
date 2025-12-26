@@ -26,12 +26,27 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  width: 300px; /* Default for popup */
+  width: 320px; /* Increased for better spacing */
   background-color: var(--bg-color);
   margin: 0;
-  padding: 15px;
+  padding: 18px;
   color: var(--text-color);
   transition: background-color 0.3s, color 0.3s;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  font-weight: 500;
+  transition: background-color 0.2s, opacity 0.2s, transform 0.1s;
+}
+
+button:active {
+  transform: translateY(1px);
 }
 
 .theme-toggle {
@@ -97,11 +112,11 @@ body {
 .container {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
 }
 
 h1 {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   margin: 0;
   text-align: center;
   color: var(--heading-color);
@@ -109,22 +124,22 @@ h1 {
 
 #status-container {
   background: var(--panel-bg);
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   text-align: center;
 }
 
 #status-text {
-  margin: 0 0 5px 0;
-  font-size: 0.9rem;
+  margin: 0 0 8px 0;
+  font-size: 0.95rem;
 }
 
 .progress-bar-bg {
   width: 100%;
-  height: 8px;
+  height: 10px;
   background-color: var(--border-color);
-  border-radius: 4px;
+  border-radius: 5px;
   overflow: hidden;
 }
 
@@ -136,37 +151,45 @@ h1 {
 }
 
 #progress-counts {
-  margin: 5px 0 0 0;
-  font-size: 0.8rem;
+  margin: 8px 0 0 0;
+  font-size: 0.85rem;
   color: var(--sub-text);
 }
 
 .stats {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 
 .stat-box {
   flex: 1;
   background: var(--panel-bg);
-  padding: 10px;
-  border-radius: 8px;
+  padding: 12px;
+  border-radius: 10px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .stat-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   color: #7f8c8d;
+  margin-bottom: 4px;
 }
 
 .stat-number {
   display: block;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: bold;
   color: #e74c3c; /* Red for potential issues */
+}
+
+.stat-timestamp {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--sub-text);
+  margin-top: 4px;
 }
 
 #duplicate-count {
@@ -176,9 +199,10 @@ h1 {
 .actions {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: 12px;
 }
 
+/* Specific button classes */
 .btn-action {
   background-color: #3498db;
   color: white;
@@ -205,15 +229,15 @@ h1 {
 #btn-report:disabled {
   background-color: #bdc3c7;
   cursor: not-allowed;
-  display: block; /* Ensure it overrides any default if necessary, though block is default for button usually */
+  display: block;
 }
 
 /* Report Page Specifics */
-.btn-danger { background-color: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+.btn-danger { background-color: #e74c3c; color: white; }
 .btn-danger:hover { background-color: #c0392b; }
 .btn-danger:disabled { background-color: #bdc3c7; cursor: not-allowed; opacity: 0.6; }
 
-.btn-secondary { background-color: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+.btn-secondary { background-color: #3498db; color: white; }
 .btn-secondary:hover { background-color: #2980b9; }
 .btn-secondary:disabled { background-color: #bdc3c7; cursor: not-allowed; opacity: 0.6; }
 
