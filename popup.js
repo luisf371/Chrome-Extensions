@@ -216,5 +216,13 @@ elements.btnReport.addEventListener('click', () => {
   chrome.runtime.sendMessage({ action: 'openReport' });
 });
 
+document.getElementById('btn-options').addEventListener('click', () => {
+  if (chrome.runtime.openOptionsPage) {
+    chrome.runtime.openOptionsPage();
+  } else {
+    window.open(chrome.runtime.getURL('options.html'));
+  }
+});
+
 // Initial check
 pollStatus();

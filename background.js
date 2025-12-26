@@ -95,10 +95,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // --- Core Scanning Logic ---
 
-async function startSort() {
+async function startSort(scope = 'parent') {
   try {
     const tree = await chrome.bookmarks.getTree();
-    await sortTree(tree[0]);
+    // tree[0] is the root. Its children are "Bookmarks Bar", "Other Bookmarks", etc.
+    // We usually want to sort the contents of those roots.
+    // If scope is 'recursive', we go deep.
+    // If scope is 'parent', we only sort the immediate children of the main roots (level 1).
+    
+    // Actually, tree[0] children are the roots. We iterate them.
+    if (tree[0].children) {
+      for (const root of tree[0].children) {
+        await sortTree(root, scope === 'recursive');
+      }
+    }
     return true;
   } catch (e) {
     console.error("Sort error:", e);
@@ -107,12 +117,24 @@ async function startSort() {
 }
 
 async function startScan(mode) {
-  // 1. Reset State specific to the new scan, keep the other results
+  // 1. Get Settings
+  const settings = await chrome.storage.local.get(['scanTimeout', 'autoSort', 'sortScope']);
+  const timeout = settings.scanTimeout || 5000;
+  
+  // Auto Sort if requested
+  if (settings.autoSort) {
+    await startSort(settings.sortScope || 'parent');
+  }
+
+  // 2. Reset State specific to the new scan, keep the other results
   scanState.isScanning = true;
   scanState.mode = mode;
   scanState.total = 0;
   scanState.currentIndex = 0;
   scanState.queue = [];
+  // Store timeout in scanState or just pass it? 
+  // Storing in scanState implies it persists across resumes which is good.
+  scanState.timeout = timeout; 
   
   if (mode === 'broken') {
     scanState.broken = [];
@@ -130,13 +152,13 @@ async function startScan(mode) {
   try {
     const tree = await chrome.bookmarks.getTree();
     
-    // 2. Build Queue (No sorting here anymore)
+    // 3. Build Queue
     buildQueue(tree[0]);
     
     scanState.total = scanState.queue.length;
     await chrome.storage.local.set({ scanState });
 
-    // 3. Process Queue
+    // 4. Process Queue
     processQueue();
 
   } catch (error) {
@@ -190,7 +212,9 @@ async function processQueue() {
         // 2. Check Validity (http/https only)
         if (item.url.startsWith('http')) {
            try {
-            const status = await checkUrl(item.url);
+            // Use stored timeout or default
+            const timeout = scanState.timeout || 5000;
+            const status = await checkUrl(item.url, timeout);
             if (status !== 200) {
               scanState.broken.push({
                 id: item.id,
@@ -256,13 +280,11 @@ async function completeScan() {
 }
 // --- Helpers ---
 
-async function sortTree(node) {
+async function sortTree(node, recursive = true) {
   if (node.children) {
-    if (node.id === '0') {
-      for (const child of node.children) await sortTree(child);
-      return;
-    }
-
+    // If it's the root (0), we don't sort it itself, we sort its children (processed in startSort)
+    // But here we are passed a node.
+    
     const folders = node.children.filter(child => child.children);
     const bookmarks = node.children.filter(child => !child.children);
 
@@ -275,8 +297,10 @@ async function sortTree(node) {
       if (node.id !== '0' && child.index !== i) {
          await chrome.bookmarks.move(child.id, { index: i, parentId: node.id });
       }
-      if (child.children) {
-        await sortTree(child);
+      
+      // Recurse only if requested
+      if (recursive && child.children) {
+        await sortTree(child, true);
       }
     }
   }
@@ -298,7 +322,7 @@ function buildQueue(node, path = []) {
   }
 }
 
-async function checkUrl(url) {
+async function checkUrl(url, timeout = 5000) {
   const commonHeaders = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
     'Accept-Language': 'en-US,en;q=0.9',
@@ -306,20 +330,34 @@ async function checkUrl(url) {
     'Pragma': 'no-cache'
   };
 
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
   const fetchOptions = { 
     method: 'HEAD',
     redirect: 'follow',
     credentials: 'include',
-    headers: commonHeaders
+    headers: commonHeaders,
+    signal: controller.signal
   };
 
   try {
     let response = await fetch(url, fetchOptions);
+    clearTimeout(id);
+    
     if (response.status === 403 || response.status === 405) {
-      response = await fetch(url, { ...fetchOptions, method: 'GET' });
+      // Retry with GET if HEAD fails
+      const controller2 = new AbortController();
+      const id2 = setTimeout(() => controller2.abort(), timeout);
+      response = await fetch(url, { ...fetchOptions, method: 'GET', signal: controller2.signal });
+      clearTimeout(id2);
     }
     return response.ok ? 200 : response.status;
   } catch (e) {
+    clearTimeout(id);
+    if (e.name === 'AbortError') {
+      return 'Timeout';
+    }
     return 'DNS Error';
   }
 }
