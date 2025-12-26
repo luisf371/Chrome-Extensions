@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Icon Converter</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; text-align: center; background: #f4f4f9; }
+        .card { background: white; padding: 20px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .preview-box { margin: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        canvas { border: 1px solid #ddd; background: #eee; }
+        button { 
+            padding: 10px 20px; 
+            background: #0984e3; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold;
+        }
+        button:hover { background: #0773c5; }
+        .done-msg { color: #27ae60; margin-top: 20px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>sBookmarkCleaner Icon Generator</h1>
+        <p>Click each button to download the required PNG icons.</p>
+        
+        <div style="display: flex; justify-content: center; flex-wrap: wrap;">
+            <div class="preview-box">
+                <canvas id="canvas16" width="16" height="16"></canvas>
+                <button onclick="download(16)">Download 16x16</button>
+            </div>
+            <div class="preview-box">
+                <canvas id="canvas48" width="48" height="48"></canvas>
+                <button onclick="download(48)">Download 48x48</button>
+            </div>
+            <div class="preview-box">
+                <canvas id="canvas128" width="128" height="128"></canvas>
+                <button onclick="download(128)">Download 128x128</button>
+            </div>
+        </div>
+        <p class="done-msg" id="done-msg">All icons generated! Now move them to your <b>icons/</b> folder.</p>
+    </div>
+
+    <script>
+        const svgData = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><linearGradient id="bin-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#4a9eff;stop-opacity:1" /><stop offset="100%" style="stop-color:#0984e3;stop-opacity:1" /></linearGradient><filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation="2" /><feOffset dx="0" dy="2" result="offsetblur" /><feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs><g transform="translate(64, 64) scale(1.35) translate(-64, -68)"><path d="M34 32 h60 v10 h-60 z M44 22 h40 v10 h-40 z" fill="#2c3e50" /><path d="M40 46 h48 l-6 68 h-36 z" fill="url(#bin-grad)" filter="url(#shadow)" /><path d="M54 56 v48 M64 56 v48 M74 56 v48" stroke="rgba(255,255,255,0.3)" stroke-width="4" stroke-linecap="round" /><path d="M82 46 v30 l-10 -10 l-10 10 v-30" fill="#f39c12" stroke="#2c3e50" stroke-width="2" /></g></svg>`;
+
+        const img = new Image();
+        const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+        const url = URL.createObjectURL(svgBlob);
+        
+        img.onload = () => {
+            [16, 48, 128].forEach(size => {
+                const canvas = document.getElementById(`canvas${size}`);
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, size, size);
+            });
+        };
+        img.src = url;
+
+        function download(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const link = document.createElement('a');
+            link.download = `icon${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            document.getElementById('done-msg').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

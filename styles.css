@@ -574,7 +574,7 @@ body.report-page .container {
   background-color: var(--border-color);
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -588,10 +588,18 @@ body.report-page .container {
 .theme-toggle svg {
   width: 14px;
   height: 14px;
-  fill: var(--text-secondary);
+  color: var(--text-secondary);
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
   z-index: 2;
-  transition: fill 0.3s;
+  transition: all 0.3s;
   padding: 0 2px;
+}
+
+.icon-sun circle {
+  stroke: none;
 }
 
 .theme-toggle::after {
@@ -604,14 +612,37 @@ body.report-page .container {
   height: 20px;
   background-color: var(--background-secondary);
   border-radius: 50%;
-  transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
   z-index: 1;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
+/* Light Mode Sun Styling */
+[data-theme="light"] .theme-toggle::after {
+  background-color: #f39c12;
+  transform: translateY(-50%);
+}
+
+[data-theme="light"] .icon-sun {
+  color: #ffffff;
+}
+
+[data-theme="light"] .icon-moon {
+  color: rgba(0,0,0,0.2); /* Dimmed on light bg */
+}
+
+/* Dark Mode Moon Styling */
 [data-theme="dark"] .theme-toggle::after {
   transform: translate(24px, -50%);
   background-color: var(--text-secondary);
+}
+
+[data-theme="dark"] .icon-moon {
+  color: var(--background-primary);
+}
+
+[data-theme="dark"] .icon-sun {
+  color: rgba(255,255,255,0.2); /* Dimmed on dark bg */
 }
 
 /* Status Text in Popup */
