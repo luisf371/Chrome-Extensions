@@ -174,30 +174,21 @@ h1 {
 }
 
 .actions {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 
-button {
-  border: none;
-  padding: 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-#btn-scan {
+.btn-action {
   background-color: #3498db;
   color: white;
 }
 
-#btn-scan:hover {
+.btn-action:hover {
   background-color: #2980b9;
 }
 
-#btn-scan:disabled {
+.btn-action:disabled {
   background-color: #bdc3c7;
   cursor: not-allowed;
 }
@@ -212,7 +203,9 @@ button {
 }
 
 #btn-report:disabled {
-  display: none;
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+  display: block; /* Ensure it overrides any default if necessary, though block is default for button usually */
 }
 
 /* Report Page Specifics */

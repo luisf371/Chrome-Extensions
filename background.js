@@ -2,12 +2,14 @@
 
 let scanState = {
   isScanning: false,
+  mode: null,      // 'broken' or 'duplicates'
   total: 0,
   currentIndex: 0, // Pointer for resume capability
   queue: [],       // Array of { id, title, url, path } to be checked
   broken: [],      // Array of { id, title, url, status, path }
   duplicates: {},  // Object map: url -> Array of { id, title, path }
-  lastScanDate: null
+  lastScanDateBroken: null,
+  lastScanDateDuplicates: null
 };
 
 // Runtime flag to prevent double-processing in the same SW instance
@@ -21,22 +23,11 @@ const stateReady = new Promise(resolve => stateReadyResolve = resolve);
 chrome.storage.local.get(['scanState'], (result) => {
   try {
     if (result.scanState) {
-      scanState = result.scanState;
+      // Merge saved state with defaults to ensure new fields exist
+      scanState = { ...scanState, ...result.scanState };
       
-      // Auto-Resume Logic (Commented out per user request):
-      /*
-      if (scanState.isScanning) {
-        console.log("Service Worker woke up -> Resuming Scan...");
-        processQueue();
-        
-        // Ensure alarm is active
-        chrome.alarms.get('scanKeepAlive', (alarm) => {
-            if (!alarm) {
-                chrome.alarms.create('scanKeepAlive', { periodInMinutes: 0.5 });
-            }
-        });
-      }
-      */
+      // If we were scanning, we might want to auto-resume or just reset to paused.
+      // For now, let's just load it.
     }
   } catch (e) {
     console.error("Error restoring state:", e);
@@ -60,9 +51,15 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 // Listen for messages
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'startScan') {
-    startScan();
+  if (request.action === 'startBrokenScan') {
+    startScan('broken');
     sendResponse({ started: true });
+  } else if (request.action === 'startDuplicateScan') {
+    startScan('duplicates');
+    sendResponse({ started: true });
+  } else if (request.action === 'startSort') {
+    startSort().then(() => sendResponse({ success: true }));
+    return true; // Async response
   } else if (request.action === 'resumeScan') {
     resumeScan();
     sendResponse({ resumed: true });
@@ -71,11 +68,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     stateReady.then(() => {
       const safeState = {
         isScanning: scanState.isScanning,
+        mode: scanState.mode,
         total: scanState.queue ? scanState.queue.length : 0,
         checked: scanState.currentIndex,
         broken: scanState.broken,
         duplicates: scanState.duplicates,
-        lastScanDate: scanState.lastScanDate
+        lastScanDateBroken: scanState.lastScanDateBroken,
+        lastScanDateDuplicates: scanState.lastScanDateDuplicates
       };
       sendResponse(safeState);
     });
@@ -96,17 +95,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // --- Core Scanning Logic ---
 
-async function startScan() {
-  // 1. Reset State
-  scanState = {
-    isScanning: true,
-    total: 0,
-    currentIndex: 0,
-    queue: [],
-    broken: [],
-    duplicates: {},
-    lastScanDate: null
-  };
+async function startSort() {
+  try {
+    const tree = await chrome.bookmarks.getTree();
+    await sortTree(tree[0]);
+    return true;
+  } catch (e) {
+    console.error("Sort error:", e);
+    return false;
+  }
+}
+
+async function startScan(mode) {
+  // 1. Reset State specific to the new scan, keep the other results
+  scanState.isScanning = true;
+  scanState.mode = mode;
+  scanState.total = 0;
+  scanState.currentIndex = 0;
+  scanState.queue = [];
+  
+  if (mode === 'broken') {
+    scanState.broken = [];
+    scanState.lastScanDateBroken = null;
+  } else if (mode === 'duplicates') {
+    scanState.duplicates = {};
+    scanState.lastScanDateDuplicates = null;
+  }
 
   await chrome.storage.local.set({ scanState });
 
@@ -116,8 +130,7 @@ async function startScan() {
   try {
     const tree = await chrome.bookmarks.getTree();
     
-    // 2. Sort & Build Queue
-    await sortTree(tree[0]);
+    // 2. Build Queue (No sorting here anymore)
     buildQueue(tree[0]);
     
     scanState.total = scanState.queue.length;
@@ -158,42 +171,44 @@ async function processQueue() {
 
       const item = scanState.queue[scanState.currentIndex];
       
-      // 1. Check Duplicates
-      if (scanState.duplicates[item.url]) {
-        scanState.duplicates[item.url].push({
-          id: item.id,
-          title: item.title,
-          path: item.path
-        });
-      } else {
-        scanState.duplicates[item.url] = [{
-          id: item.id,
-          title: item.title,
-          path: item.path
-        }];
-      }
-
-      // 2. Check Validity (http/https only)
-      if (item.url.startsWith('http')) {
-         try {
-          const status = await checkUrl(item.url);
-          if (status !== 200) {
+      if (scanState.mode === 'duplicates') {
+        // 1. Check Duplicates
+        if (scanState.duplicates[item.url]) {
+          scanState.duplicates[item.url].push({
+            id: item.id,
+            title: item.title,
+            path: item.path
+          });
+        } else {
+          scanState.duplicates[item.url] = [{
+            id: item.id,
+            title: item.title,
+            path: item.path
+          }];
+        }
+      } else if (scanState.mode === 'broken') {
+        // 2. Check Validity (http/https only)
+        if (item.url.startsWith('http')) {
+           try {
+            const status = await checkUrl(item.url);
+            if (status !== 200) {
+              scanState.broken.push({
+                id: item.id,
+                title: item.title,
+                url: item.url,
+                status: status,
+                path: item.path
+              });
+            }
+          } catch (err) {
             scanState.broken.push({
               id: item.id,
               title: item.title,
               url: item.url,
-              status: status,
+              status: 'DNS Error',
               path: item.path
             });
           }
-        } catch (err) {
-          scanState.broken.push({
-            id: item.id,
-            title: item.title,
-            url: item.url,
-            status: 'DNS Error',
-            path: item.path
-          });
         }
       }
 
@@ -217,27 +232,28 @@ async function processQueue() {
         // Paused manually
         chrome.alarms.clear('scanKeepAlive');
     }
-    // If loop exited but isScanning is true (e.g. error), 
-    // isProcessing=false allows the Alarm to pick it up again.
   }
 }
 
 async function completeScan() {
-  // Prune duplicates
-  for (const url in scanState.duplicates) {
-    if (scanState.duplicates[url].length <= 1) {
-      delete scanState.duplicates[url];
-    }
+  if (scanState.mode === 'duplicates') {
+      // Prune duplicates
+      for (const url in scanState.duplicates) {
+        if (scanState.duplicates[url].length <= 1) {
+          delete scanState.duplicates[url];
+        }
+      }
+      scanState.lastScanDateDuplicates = Date.now();
+  } else if (scanState.mode === 'broken') {
+      scanState.lastScanDateBroken = Date.now();
   }
 
   scanState.isScanning = false;
-  scanState.lastScanDate = Date.now();
-  // We keep the queue for now to maintain consistency until next scan
+  scanState.mode = null;
   
   await chrome.storage.local.set({ scanState });
   chrome.alarms.clear('scanKeepAlive');
 }
-
 // --- Helpers ---
 
 async function sortTree(node) {

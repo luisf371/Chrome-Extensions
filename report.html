@@ -58,9 +58,15 @@
   </head>
   <body data-theme="light">
     <div class="container">
-      <header style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0;">
-        <h1>Scan Report <span id="scan-date" style="font-size: 0.8rem; font-weight: normal; color: var(--sub-text); cursor: help;"></span></h1>
-              <button id="theme-toggle" class="theme-toggle" title="Toggle Dark Mode">
+      <header style="display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 0;">
+        <div>
+          <h1>Scan Report</h1>
+          <div style="font-size: 0.8rem; color: var(--sub-text); margin-top: 5px;">
+            <div>Broken Links Scan: <span id="broken-date">Never</span></div>
+            <div>Duplicates Scan: <span id="dup-date">Never</span></div>
+          </div>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" title="Toggle Dark Mode">
                 <!-- Sun Icon -->
                 <svg class="icon-sun" viewBox="0 0 24 24">
                    <circle cx="12" cy="12" r="5"></circle>

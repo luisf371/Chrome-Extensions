@@ -64,16 +64,20 @@ const statusDescriptions = {
 function render(state) {
   currentState = state;
   
-  // Render Date
-  const dateSpan = document.getElementById('scan-date');
-  if (state.lastScanDate) {
-    const dateObj = new Date(state.lastScanDate);
-    // Format: 10 Jan 26
-    const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
-    dateSpan.textContent = `(${dateStr})`;
-    dateSpan.title = dateObj.toLocaleString(); // Full time on hover
+  // Render Dates
+  const brokenDateSpan = document.getElementById('broken-date');
+  const dupDateSpan = document.getElementById('dup-date');
+  
+  if (state.lastScanDateBroken) {
+    brokenDateSpan.textContent = new Date(state.lastScanDateBroken).toLocaleString();
   } else {
-    dateSpan.textContent = '';
+    brokenDateSpan.textContent = 'Never';
+  }
+
+  if (state.lastScanDateDuplicates) {
+    dupDateSpan.textContent = new Date(state.lastScanDateDuplicates).toLocaleString();
+  } else {
+    dupDateSpan.textContent = 'Never';
   }
 
   renderBroken(state.broken);
