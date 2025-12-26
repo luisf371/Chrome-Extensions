@@ -16,7 +16,8 @@ const elements = {
   dupCount: document.getElementById('dup-count'),
   deleteDupBtn: document.getElementById('delete-dup-btn'),
   
-  themeToggle: document.getElementById('theme-toggle')
+  themeToggle: document.getElementById('theme-toggle'),
+  btnOptions: document.getElementById('btn-options')
 };
 
 let currentState = null;
@@ -216,7 +217,7 @@ function updateBrokenButtonState() {
   elements.deleteBrokenBtn.textContent = count > 0 ? `Delete Selected (${count})` : 'Delete Selected';
   
   elements.recheckBtn.disabled = count === 0;
-  elements.recheckBtn.textContent = count > 0 ? `Re-check Selected (${count})` : 'Re-check Selected';
+  elements.recheckBtn.textContent = count > 0 ? `Recheck Selected (${count})` : 'Recheck Selected';
 
   elements.ignoreBtn.disabled = count === 0;
   elements.ignoreBtn.textContent = count > 0 ? `Ignore Selected (${count})` : 'Ignore Selected';
@@ -386,6 +387,14 @@ elements.deleteDupBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'deleteBookmarks', ids }, () => {
       chrome.runtime.sendMessage({ action: 'getStatus' }, render);
     });
+  }
+});
+
+elements.btnOptions.addEventListener('click', () => {
+  if (chrome.runtime.openOptionsPage) {
+    chrome.runtime.openOptionsPage();
+  } else {
+    window.open(chrome.runtime.getURL('options.html'));
   }
 });
 

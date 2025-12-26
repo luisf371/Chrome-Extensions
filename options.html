@@ -1,140 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Bookmark Cleaner Options</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookmark Cleaner - Settings</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    body {
-      width: 600px;
-      padding: 30px;
-    }
-    .option-group {
-      background: var(--panel-bg);
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      margin-bottom: 20px;
-    }
-    .option-group h2 {
-      margin-top: 0;
-      font-size: 1.1rem;
-      color: var(--heading-color);
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-    }
-    .control {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-    }
-    .desc {
-      font-size: 0.85rem;
-      color: var(--sub-text);
-      margin-top: 5px;
-    }
-    input[type="number"], select {
-      padding: 8px;
-      border-radius: 4px;
-      border: 1px solid var(--border-color);
-      background: var(--input-bg);
-      color: var(--text-color);
-      width: 100%;
-      box-sizing: border-box;
-    }
-    input[type="checkbox"] {
-      margin-right: 8px;
-    }
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-    }
-    .sub-option {
-      margin-left: 25px;
-      margin-top: 10px;
-      opacity: 0.6;
-      pointer-events: none;
-      transition: opacity 0.2s;
-    }
-    .sub-option.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .radio-group label {
-      display: inline-flex;
-      align-items: center;
-      margin-right: 15px;
-      font-weight: normal;
-    }
-    .radio-group input {
-      margin-right: 5px;
-    }
-  </style>
 </head>
-<body data-theme="light">
-  <h1>Options</h1>
-
-  <div class="option-group">
-    <h2>Appearance</h2>
-    <div class="control">
-      <label for="theme-select">Theme</label>
-      <select id="theme-select">
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </select>
+<body>
+  <div class="container">
+    <!-- Actions (Save/Status) -->
+    <div class="form-actions">
+      <div id="status-msg"></div>
     </div>
+
+    <header>
+      <h1>Bookmark Cleaner Settings</h1>
+      <p class="subtitle">Configure your scanning and sorting preferences</p>
+    </header>
+
+    <main>
+      <form id="options-form" class="settings-form">
+        
+        <!-- Appearance Section -->
+        <section class="form-section">
+          <div class="section-header">
+            <span class="section-tag">General</span>
+            <div>
+              <h2>Appearance</h2>
+              <p class="section-description">Customize the extension's look and feel.</p>
+            </div>
+          </div>
+          <div class="section-grid single-column">
+            <article class="settings-card full-span">
+              <div class="form-group">
+                <label for="theme-select">Theme</label>
+                <select id="theme-select">
+                  <option value="dark" selected>Dark</option>
+                  <option value="light">Light</option>
+                </select>
+                <small class="help-text">Select your preferred color theme.</small>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Scanning Section -->
+        <section class="form-section">
+          <div class="section-header">
+            <span class="section-tag">Scanning</span>
+            <div>
+              <h2>Connection Settings</h2>
+              <p class="section-description">Adjust how the cleaner connects to websites to check their status.</p>
+            </div>
+          </div>
+          <div class="section-grid single-column">
+            <article class="settings-card full-span">
+              <div class="form-group">
+                <label for="timeout-input">Connection Timeout (seconds)</label>
+                <input type="number" id="timeout-input" min="1" max="60" step="1" placeholder="5">
+                <small class="help-text">
+                  Time to wait for a site to respond. Default: 5s.<br>
+                  Lower values scan faster but may report false positives for slow sites.<br>
+                  Recommended: 3s - 10s.
+                </small>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Sorting Section -->
+        <section class="form-section">
+          <div class="section-header">
+            <span class="section-tag">Sorting</span>
+            <div>
+              <h2>Organization</h2>
+              <p class="section-description">Manage how your bookmarks are sorted before scanning.</p>
+            </div>
+          </div>
+          <div class="section-grid single-column">
+            <article class="settings-card full-span">
+              
+              <!-- Auto Sort Toggle -->
+              <div class="form-group form-group-toggle">
+                <div class="toggle-header">
+                  <label for="sort-check">Sort automatically before scanning</label>
+                  <small class="help-text inline-help">If enabled, bookmarks will be sorted alphabetically when a scan starts.</small>
+                </div>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="sort-check">
+                  <label class="slider" for="sort-check"></label>
+                </div>
+              </div>
+
+              <!-- Sort Scope (Conditional) -->
+              <div id="sort-scope-container" class="sub-option">
+                <label>Sort Scope</label>
+                <div class="radio-group">
+                  <label>
+                    <input type="radio" name="sort-scope" value="parent" checked>
+                    Parent Folders Only
+                  </label>
+                  <label>
+                    <input type="radio" name="sort-scope" value="recursive">
+                    Folders &amp; Content (Recursive)
+                  </label>
+                </div>
+                <small class="help-text">
+                  "Parent Folders Only" sorts just the folders you see in the bar/menu structure.<br>
+                  "Recursive" sorts all folders and all bookmarks within them.
+                </small>
+              </div>
+
+            </article>
+          </div>
+        </section>
+
+      </form>
+    </main>
   </div>
-
-  <div class="option-group">
-    <h2>Scanning</h2>
-    <div class="control">
-      <label for="timeout-input">Connection Timeout (seconds)</label>
-      <input type="number" id="timeout-input" min="1" max="60" step="1">
-      <div class="desc">
-        Time to wait for a site to respond. Default: 5s.<br>
-        Lower values scan faster but may report false positives for slow sites.<br>
-        Recommended: 3s - 10s.
-      </div>
-    </div>
-  </div>
-
-  <div class="option-group">
-    <h2>Sorting</h2>
-    <div class="control">
-      <label class="checkbox-label">
-        <input type="checkbox" id="sort-check">
-        <span>Sort automatically before scanning</span>
-      </label>
-      <div class="desc">
-        If checked, bookmarks will be sorted immediately when a scan starts.
-      </div>
-    </div>
-
-    <div id="sort-scope-container" class="sub-option">
-      <label>Sort Scope:</label>
-      <div class="radio-group">
-        <label>
-          <input type="radio" name="sort-scope" value="parent" checked>
-          Parent Folders Only
-        </label>
-        <label>
-          <input type="radio" name="sort-scope" value="recursive">
-          Folders &amp; Content (Recursive)
-        </label>
-      </div>
-      <div class="desc">
-        "Parent Folders Only" sorts just the folders you see in the bar/menu structure.<br>
-        "Recursive" sorts all folders and all bookmarks within them.
-      </div>
-    </div>
-  </div>
-
-  <div id="status-msg" style="text-align: center; color: var(--sub-text); height: 20px;"></div>
 
   <script src="options.js"></script>
 </body>

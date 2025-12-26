@@ -5,130 +5,91 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Scan Report - sBookmarkCleaner</title>
   <link rel="stylesheet" href="styles.css">
-          <style>
-          body { width: 90%; margin: 0 auto; background-color: var(--bg-color); color: var(--text-color); }
-          .container { max-width: 100%; }
-          h1 { color: var(--heading-color); }
-          .section { background: var(--panel-bg); padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }      h2 { color: var(--heading-color); margin-top: 0; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-      
-    table { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.9rem; }
-    th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-color); }
-    th { 
-      background-color: var(--th-bg); 
-      color: var(--th-text); 
-      font-weight: 600; 
-      position: sticky; 
-      top: 65px; /* Height of actions-bar + padding */
-      z-index: 90; 
-      box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
-    }
-    tr:hover { background-color: var(--row-hover); }
-      
-      .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; text-decoration: underline; white-space: nowrap; }
-      .status-badge:hover { opacity: 0.8; }
-      .status-error { background-color: #ffebee; color: #c0392b; }
-      .status-404 { background-color: #fff3e0; color: #e67e22; }
-  
-      .filter-bar { background-color: #dff9fb; border: 1px solid #c7ecee; color: #30336b; padding: 8px 15px; border-radius: 4px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-      .filter-bar button { background: none; border: none; color: #e74c3c; cursor: pointer; font-weight: bold; text-decoration: underline; padding: 0; font-size: inherit; }
-      .filter-bar button:hover { background: none; opacity: 0.8; }
-      
-    .url-col { color: #3498db; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
-    .path-col { color: var(--sub-text); font-size: 0.8rem; }
-    
-    .actions-bar { 
-      margin-top: 0; 
-      margin-bottom: 15px;
-      display: flex; 
-      gap: 10px; 
-      position: sticky; 
-      top: 0; 
-      z-index: 100; 
-      background-color: var(--panel-bg); 
-      padding: 15px 0;
-      border-bottom: 1px solid var(--border-color);
-    }
-      
-      .empty-state { text-align: center; padding: 30px; color: var(--sub-text); font-style: italic; }
-      
-      /* Duplicates Grouping */
-      .dup-group { border-left: 4px solid #f39c12; background-color: var(--bg-color); margin-bottom: 10px; padding: 10px; }
-      .dup-header { font-weight: bold; margin-bottom: 5px; word-break: break-all; }
-    </style>
-  </head>
-  <body data-theme="light">
+</head>
+<body class="report-page">
     <div class="container">
-      <header style="display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 0;">
-        <div>
-          <h1>Scan Report</h1>
-          <div style="font-size: 0.8rem; color: var(--sub-text); margin-top: 5px;">
-            <div>Broken Links Scan: <span id="broken-date">Never</span></div>
-            <div>Duplicates Scan: <span id="dup-date">Never</span></div>
+      <header>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+          <div>
+            <h1>sBookmarkCleaner Scan Report</h1>
+            <div class="subtitle">
+              <div>Broken Links Scan: <span id="broken-date">Never</span></div>
+              <div>Duplicates Scan: <span id="dup-date">Never</span></div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button id="theme-toggle" class="theme-toggle" title="Toggle Dark Mode">
+              <svg class="icon-sun" viewBox="0 0 24 24">
+                 <circle cx="12" cy="12" r="5"></circle>
+                 <line x1="12" y1="1" x2="12" y2="3"></line>
+                 <line x1="12" y1="21" x2="12" y2="23"></line>
+                 <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                 <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                 <line x1="1" y1="12" x2="3" y2="12"></line>
+                 <line x1="21" y1="12" x2="23" y2="12"></line>
+                 <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg class="icon-moon" viewBox="0 0 24 24">
+                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </button>
+            <button id="btn-options" class="icon-btn" title="Settings">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+              </svg>
+            </button>
           </div>
         </div>
-        <button id="theme-toggle" class="theme-toggle" title="Toggle Dark Mode">
-                <!-- Sun Icon -->
-                <svg class="icon-sun" viewBox="0 0 24 24">
-                   <circle cx="12" cy="12" r="5"></circle>
-                   <line x1="12" y1="1" x2="12" y2="3"></line>
-                   <line x1="12" y1="21" x2="12" y2="23"></line>
-                   <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                   <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                   <line x1="1" y1="12" x2="3" y2="12"></line>
-                   <line x1="21" y1="12" x2="23" y2="12"></line>
-                   <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                   <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-                <!-- Moon Icon -->
-                <svg class="icon-moon" viewBox="0 0 24 24">
-                   <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                </svg>
-              </button>      </header>
-    <!-- Broken Links Section -->
-    <div class="section">
-      <h2>
-        <span>Findings(<span id="broken-count">0</span>)</span>
-      </h2>
+      </header>
       
-      <div id="filter-container" style="display:none;"></div>
+      <main>
+        <!-- Broken Links Section -->
+        <div class="section">
+          <h2>
+            <span>Broken Links (<span id="broken-count">0</span>)</span>
+          </h2>
+          
+          <div id="filter-container" style="display:none;"></div>
 
-      <div class="actions-bar" style="justify-content: space-between;">
-        <button id="delete-broken-btn" class="btn-danger" disabled>Delete Selected</button>
-        <div>
-            <button id="open-btn" class="btn-secondary" disabled>Open Selected</button>
-            <button id="ignore-btn" class="btn-secondary" disabled>Ignore Selected</button>
-            <button id="recheck-btn" class="btn-secondary" disabled>Re-check Selected</button>
+          <div class="actions-bar" style="justify-content: space-between;">
+            <button id="delete-broken-btn" class="btn-danger" disabled>Delete Selected</button>
+            <div style="display: flex; gap: 8px;">
+                <button id="open-btn" class="btn-secondary" disabled>Open Selected</button>
+                <button id="ignore-btn" class="btn-secondary" disabled>Ignore Selected</button>
+                <button id="recheck-btn" class="btn-secondary" disabled>Recheck Selected</button>
+            </div>
+          </div>
+          <table id="broken-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;"><input type="checkbox" id="select-all-broken"></th>
+                <th>Bookmark</th>
+                <th>URL</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Rows injected here -->
+            </tbody>
+          </table>
+          <div id="broken-empty" class="empty-state" style="display:none;">No broken links found.</div>
         </div>
-      </div>
-      <table id="broken-table">
-        <thead>
-          <tr>
-            <th style="width: 40px;"><input type="checkbox" id="select-all-broken"></th>
-            <th>Bookmark</th>
-            <th>URL</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Rows injected here -->
-        </tbody>
-      </table>
-      <div id="broken-empty" class="empty-state" style="display:none;">No broken links found.</div>
-    </div>
 
-    <!-- Duplicates Section -->
-    <div class="section">
-      <h2><span>Duplicates(<span id="dup-count">0</span> Sets)</span></h2>
-      <p style="color:#7f8c8d; font-size:0.9rem;">Select copies to delete. We recommend keeping one valid copy.</p>
-      <div class="actions-bar">
-        <button id="delete-dup-btn" class="btn-danger" disabled>Delete Selected</button>
-      </div>
-      <div id="duplicates-list">
-        <!-- Duplicate groups injected here -->
-      </div>
-      <div id="dup-empty" class="empty-state" style="display:none;">No duplicates found.</div>
+        <!-- Duplicates Section -->
+        <div class="section">
+          <h2><span>Duplicate Links (<span id="dup-count">0</span> Sets)</span></h2>
+          <p class="subtitle" style="margin-bottom: 15px;">Select copies to delete. We recommend keeping one valid copy.</p>
+          <div class="actions-bar">
+            <button id="delete-dup-btn" class="btn-danger" disabled>Delete Selected</button>
+          </div>
+          <div id="duplicates-list">
+            <!-- Duplicate groups injected here -->
+          </div>
+          <div id="dup-empty" class="empty-state" style="display:none;">No duplicates found.</div>
+        </div>
+      </main>
     </div>
-  </div>
   <script src="report.js"></script>
 </body>
 </html>
