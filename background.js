@@ -63,6 +63,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === 'resumeScan') {
     resumeScan();
     sendResponse({ resumed: true });
+  } else if (request.action === 'pauseScan') {
+    scanState.isScanning = false;
+    chrome.storage.local.set({ scanState }).then(() => {
+      sendResponse({ paused: true });
+    });
+    return true; // Keep channel open
+  } else if (request.action === 'cancelScan') {
+    cancelScan().then(() => sendResponse({ cancelled: true }));
+    return true;
+  } else if (request.action === 'clearReport') {
+    clearReport().then(() => sendResponse({ cleared: true }));
+    return true;
   } else if (request.action === 'getStatus') {
     // Wait for init to complete before replying
     stateReady.then(() => {
@@ -257,6 +269,35 @@ async function processQueue() {
         chrome.alarms.clear('scanKeepAlive');
     }
   }
+}
+
+async function cancelScan() {
+  scanState.isScanning = false;
+  scanState.queue = [];
+  scanState.total = 0;
+  scanState.currentIndex = 0;
+  scanState.mode = null;
+  // We do NOT clear the results found so far, so the user can see them.
+  // But we might want to clear them if "Cancel" implies "Abort and discard".
+  // However, usually in scanners you want to keep what you found.
+  // The 'clearReport' function handles clearing data.
+  
+  await chrome.storage.local.set({ scanState });
+  chrome.alarms.clear('scanKeepAlive');
+}
+
+async function clearReport() {
+  scanState.broken = [];
+  scanState.duplicates = {};
+  scanState.lastScanDateBroken = null;
+  scanState.lastScanDateDuplicates = null;
+  
+  // If scanning, we should probably stop?
+  if (scanState.isScanning) {
+    await cancelScan();
+  }
+  
+  await chrome.storage.local.set({ scanState });
 }
 
 async function completeScan() {

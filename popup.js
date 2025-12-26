@@ -12,7 +12,10 @@ const elements = {
   btnDuplicates: document.getElementById('btn-duplicates'),
   btnSort: document.getElementById('btn-sort'),
   btnReport: document.getElementById('btn-report'),
-  themeToggle: document.getElementById('theme-toggle')
+  themeToggle: document.getElementById('theme-toggle'),
+  scanControls: document.getElementById('scan-controls'),
+  btnPause: document.getElementById('btn-pause'),
+  btnCancel: document.getElementById('btn-cancel')
 };
 
 // Theme Logic (Sync with Report)
@@ -70,68 +73,40 @@ function updateUI(state) {
   elements.lastScanDuplicates.textContent = formatTimestamp(state.lastScanDateDuplicates);
 
   // Determine if report should be enabled
-  // Enabled if there are any results from previous scans
   const hasResults = (state.broken && state.broken.length > 0) || dupCount > 0;
   const hasHistory = state.lastScanDateBroken || state.lastScanDateDuplicates;
   elements.btnReport.disabled = !(hasResults || hasHistory);
 
-  // State Logic
-  if (state.isScanning) {
-    // Scanning
+  // Scan Logic (Active or Paused)
+  if (state.mode) {
+    // In a scan session
     disableAllActions();
+    elements.scanControls.style.display = 'flex';
     
-    // Resume/Pause button logic is tricky with 3 buttons.
-    // We will transform the active button into a "Pause/Scanning" indicator or just global status.
-    // For simplicity, we disable all and show status.
-    
-    let modeText = 'Scanning...';
-    if (state.mode === 'broken') modeText = 'Scanning for Broken Links...';
-    if (state.mode === 'duplicates') modeText = 'Scanning for Duplicates...';
-    
-    elements.statusText.textContent = `${modeText} (${Math.round(percentage)}%)`;
-    
-    // Maybe turn the active button into "Stop/Pause"?
-    // The prompt didn't strictly require pause for the split buttons, but it's good UX.
-    // Let's keep it simple: "Scanning..." and if they close popup, it continues. 
-    // If they re-open, they see progress.
-    // If we want to allow Pause, we need a Pause button.
-    // Existing logic had a toggle.
-    // Let's add a "Pause" button or just change the active one? 
-    // It's cleaner to just have a global "Stop/Pause" if running, but we don't have that UI space easily.
-    // We'll leave the buttons disabled.
-    
-    // Actually, let's allow "Pause" by clicking the SAME button if we can?
-    // But we disabled them.
-    // Let's just update text for now.
-    
-  } else {
-    // Not Scanning
-    enableAllActions();
-    
-    // Check if Paused (started but not finished)
-    if (state.total > 0 && state.checked < state.total && state.mode) {
-       // Paused State
-       elements.statusText.textContent = 'Scan Paused.';
-       
-       // Highlight the button that was paused to allow Resume
-       if (state.mode === 'broken') {
-         elements.btnBroken.textContent = 'Resume Broken Scan';
-         elements.btnDuplicates.disabled = true;
-         elements.btnSort.disabled = true;
-       } else if (state.mode === 'duplicates') {
-         elements.btnDuplicates.textContent = 'Resume Duplicate Scan';
-         elements.btnBroken.disabled = true;
-         elements.btnSort.disabled = true;
-       }
+    if (state.isScanning) {
+      // Running
+      elements.btnPause.title = 'Pause';
+      elements.btnPause.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+      
+      let modeText = 'Scanning...';
+      if (state.mode === 'broken') modeText = 'Scanning for Broken Links...';
+      if (state.mode === 'duplicates') modeText = 'Scanning for Duplicates...';
+      elements.statusText.textContent = `${modeText} (${Math.round(percentage)}%)`;
     } else {
-       // Idle / Finished
-       resetButtonLabels();
-       
-       if (state.lastScanDateBroken || state.lastScanDateDuplicates) {
-         elements.statusText.textContent = 'Ready.';
-       } else {
-         elements.statusText.textContent = 'Ready to scan.';
-       }
+      // Paused
+      elements.btnPause.title = 'Resume';
+      elements.btnPause.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+      elements.statusText.textContent = 'Scan Paused.';
+    }
+  } else {
+    // Idle - Ensure buttons are enabled immediately
+    enableAllActions();
+    elements.scanControls.style.display = 'none';
+    
+    if (state.lastScanDateBroken || state.lastScanDateDuplicates) {
+      elements.statusText.textContent = 'Ready.';
+    } else {
+      elements.statusText.textContent = 'Ready to scan.';
     }
   }
 }
@@ -171,32 +146,39 @@ function pollStatus() {
 
 // Event Listeners
 
-elements.btnBroken.addEventListener('click', () => {
-  if (elements.btnBroken.textContent.includes('Resume')) {
-    chrome.runtime.sendMessage({ action: 'resumeScan' }, () => {
-       elements.statusText.textContent = 'Resuming...';
-       pollStatus();
+elements.btnPause.addEventListener('click', () => {
+  if (elements.btnPause.title === 'Pause') {
+    chrome.runtime.sendMessage({ action: 'pauseScan' }, () => {
+      elements.statusText.textContent = 'Pausing...';
+      pollStatus();
     });
   } else {
-    chrome.runtime.sendMessage({ action: 'startBrokenScan' }, () => {
-      elements.statusText.textContent = 'Starting Broken Link Scan...';
+    chrome.runtime.sendMessage({ action: 'resumeScan' }, () => {
+      elements.statusText.textContent = 'Resuming...';
       pollStatus();
     });
   }
 });
 
+elements.btnCancel.addEventListener('click', () => {
+  chrome.runtime.sendMessage({ action: 'cancelScan' }, () => {
+    elements.statusText.textContent = 'Cancelling...';
+    pollStatus();
+  });
+});
+
+elements.btnBroken.addEventListener('click', () => {
+  chrome.runtime.sendMessage({ action: 'startBrokenScan' }, () => {
+    elements.statusText.textContent = 'Starting Broken Link Scan...';
+    pollStatus();
+  });
+});
+
 elements.btnDuplicates.addEventListener('click', () => {
-  if (elements.btnDuplicates.textContent.includes('Resume')) {
-     chrome.runtime.sendMessage({ action: 'resumeScan' }, () => {
-       elements.statusText.textContent = 'Resuming...';
-       pollStatus();
-    });
-  } else {
-    chrome.runtime.sendMessage({ action: 'startDuplicateScan' }, () => {
-      elements.statusText.textContent = 'Starting Duplicate Scan...';
-      pollStatus();
-    });
-  }
+  chrome.runtime.sendMessage({ action: 'startDuplicateScan' }, () => {
+    elements.statusText.textContent = 'Starting Duplicate Scan...';
+    pollStatus();
+  });
 });
 
 elements.btnSort.addEventListener('click', () => {

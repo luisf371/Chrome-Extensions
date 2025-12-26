@@ -65,7 +65,7 @@ body.popup {
   width: 360px; /* Fixed width for popup */
   padding: 0; /* No body padding for popup */
   height: auto;
-  min-height: 400px;
+  min-height: 350px;
 }
 
 body.popup .container {
@@ -640,6 +640,46 @@ body.popup #status-container {
     margin-top: 5px;
 }
 
+.scan-control-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-top: 8px;
+  min-height: 28px;
+}
+
+.scan-control-btn-container {
+    grid-column: 3;
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.scan-control-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+
+.scan-control-btn:hover {
+  background-color: var(--button-inactive-bg);
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+.scan-control-btn.danger:hover {
+    color: var(--error-color);
+    background-color: rgba(255, 107, 107, 0.1);
+}
+
 
 /* -----------------------
    REPORT PAGE STYLES
@@ -665,18 +705,20 @@ body.popup #status-container {
     align-items: center;
     font-size: 1.25rem;
     background: var(--background-secondary);
+    border-radius: 12px 12px 0 0;
 }
 
 /* Actions Bar - Sticky */
 .actions-bar {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     position: sticky;
     top: 0;
     z-index: 100;
     background-color: var(--background-secondary);
     padding: 15px 20px;
     border-bottom: 1px solid var(--border-color);
+    align-items: center;
 }
 
 /* Tables */
@@ -692,6 +734,12 @@ th, td {
     padding: 12px 20px;
     border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
+    line-height: 1.5;
+}
+
+/* Fix for nested tables in duplicates */
+.dup-group table td {
+    padding: 10px 12px;
 }
 
 th {

@@ -15,6 +15,8 @@ const elements = {
   dupEmpty: document.getElementById('dup-empty'),
   dupCount: document.getElementById('dup-count'),
   deleteDupBtn: document.getElementById('delete-dup-btn'),
+  dupActions: document.getElementById('dup-actions'),
+  clearReportBtn: document.getElementById('clear-report-btn'),
   
   themeToggle: document.getElementById('theme-toggle'),
   btnOptions: document.getElementById('btn-options')
@@ -172,10 +174,12 @@ function renderDuplicates(duplicatesMap) {
   if (dupGroups.length === 0) {
     elements.dupEmpty.style.display = 'block';
     elements.deleteDupBtn.disabled = true;
+    elements.dupActions.style.display = 'none';
     return;
   }
 
   elements.dupEmpty.style.display = 'none';
+  elements.dupActions.style.display = 'flex';
 
   dupGroups.forEach(([url, items]) => {
     const group = document.createElement('div');
@@ -395,6 +399,14 @@ elements.btnOptions.addEventListener('click', () => {
     chrome.runtime.openOptionsPage();
   } else {
     window.open(chrome.runtime.getURL('options.html'));
+  }
+});
+
+elements.clearReportBtn.addEventListener('click', () => {
+  if (confirm('Are you sure you want to clear all scan reports? This action cannot be undone.')) {
+    chrome.runtime.sendMessage({ action: 'clearReport' }, () => {
+       chrome.runtime.sendMessage({ action: 'getStatus' }, render);
+    });
   }
 });
 
