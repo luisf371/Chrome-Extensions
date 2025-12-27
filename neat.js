@@ -4,7 +4,7 @@
     const setSetting = (key, value) => {
         if (value === null || value === undefined) {
             delete settings[key];
-            chrome.storage.local.remove(key);
+            chrome.storage.local.remove([key]);
         } else {
             settings[key] = value;
             chrome.storage.local.set({ [key]: value });
@@ -155,7 +155,7 @@
                                 const ul = div.querySelector('ul');
                                 Utils.inject(ul, $('neat-tree-item-' + _id));
                                 div.remove();
-                            });
+                            }).catch(console.error);
                         })(_id);
                     }
                 }
@@ -195,7 +195,7 @@
         }
 
         setTimeout(adaptBookmarkTooltips, 100);
-    });
+    }).catch(console.error);
 
     // Events for the tree
     $tree.addEventListener('scroll', function(){
@@ -368,7 +368,7 @@
 
             results = null;
             vPattern = null;
-        });
+        }).catch(console.error);
     };
     searchInput.addEventListener('input', search);
 
@@ -533,14 +533,8 @@
         openBookmark: function(url){
             chrome.tabs.query({active: true, currentWindow: true}).then(function(tabs){
                 const tab = tabs[0];
-                let decodedURL = url;
-                try {
-                    decodedURL = decodeURIComponent(url);
-                } catch (e) {
-                    // return; 
-                }
                 chrome.tabs.update(tab.id, {
-                    url: decodedURL
+                    url: url
                 });
                 if (!bookmarkClickStayOpen) setTimeout(window.close, 200);
             });
@@ -636,7 +630,7 @@
                     dialog: dialog,
                     type: type,
                     name: node.title,
-                    url: decodeURIComponent(url),
+                    url: url,
                     fn: function(name, url){
                         chrome.bookmarks.update(id, {
                             title: name,

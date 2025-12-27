@@ -3,7 +3,7 @@
     const setSetting = (key, value) => {
         if (value === null || value === undefined) {
             delete settings[key];
-            chrome.storage.local.remove(key);
+            chrome.storage.local.remove([key]);
         } else {
             settings[key] = value;
             chrome.storage.local.set({ [key]: value });
@@ -65,16 +65,16 @@ li.child > a:hover {
         
         const neaterEmail = '<a href="mailto:neaterbookmarks@gmail.com?body=%0d%0dSent from Neater Bookmarks Options page">neaterbookmarks@gmail.com</a>';
         $('optionsFooterText1').innerHTML = chrome.i18n.getMessage('optionsFooterText1', [neaterEmail]);
-        const neaterGithub = 'GitHub: <a href="http://goo.gl/s2kVi">http://goo.gl/s2kVi</a>';
+        const neaterGithub = 'GitHub: <a href="https://github.com/cheeaun/neat-bookmarks">https://github.com/cheeaun/neat-bookmarks</a>';
         $('optionsFooterText2').innerHTML = chrome.i18n.getMessage('optionsFooterText2', [extName, neaterGithub]);
-        const neaterFaq = '<a href="http://goo.gl/DDMqE">http://goo.gl/DDMqE</a>';
-        $('optionsFooterText3').innerHTML = chrome.i18n.getMessage('optionsFooterText3', [neaterFaq]);
-        const neaterIssues = '<a href="http://goo.gl/Ct39y">http://goo.gl/Ct39y</a>';
+        const neaterFaq = '';
+        $('optionsFooterText3').innerHTML = ''; // FAQ link was broken
+        const neaterIssues = '<a href="https://github.com/cheeaun/neat-bookmarks/issues">https://github.com/cheeaun/neat-bookmarks/issues</a>';
         $('optionsFooterText4').innerHTML = chrome.i18n.getMessage('optionsFooterText4', [neaterIssues]);
-        const neaterIcons = '<a href="http://goo.gl/0xQNp">http://goo.gl/0xQNp</a>';
-        $('optionsFooterText5').innerHTML = chrome.i18n.getMessage('optionsFooterText5', [neaterIcons]);
-        const neaterTranslate = 'WebTranslateIt: <a href="http://goo.gl/oDXMm">http://goo.gl/oDXMm</a>';
-        $('optionsFooterText6').innerHTML = chrome.i18n.getMessage('optionsFooterText6', [extName, neaterTranslate]);
+        const neaterIcons = '';
+        $('optionsFooterText5').innerHTML = ''; // Icons link broken
+        const neaterTranslate = '';
+        $('optionsFooterText6').innerHTML = ''; // Translation link broken
         const neatGithub = '<a href="http://github.com/cheeaun/neat-bookmarks">Neat Bookmarks</a>';
         const linkCheeAun = '<a href="http://twitter.com/cheeaun">Lim Chee Aun</a>';
         $('optionsFooterText7').innerHTML = chrome.i18n.getMessage('optionsFooterText7', [neatGithub, linkCheeAun]);
@@ -424,9 +424,10 @@ img {
         });
         
         const zoom = $('zoom-input');
-        setInterval(function(){
+        const zoomInterval = setInterval(function(){
             zoom.value = settings.zoom || 100;
         }, 1000);
+        window.addEventListener('beforeunload', () => clearInterval(zoomInterval));
         zoom.addEventListener('input', function(){
             const val = Utils.toInt(zoom.value);
             if (val == 100){

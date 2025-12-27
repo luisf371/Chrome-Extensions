@@ -84,6 +84,7 @@ if (chrome.omnibox) {
             }
             
             firstResult = results.shift();
+            if (firstResult) firstResult._query = value;
             const firstTitle = matcher(xmlEncode(firstResult.title), v);
             let firstURL = { text: xmlEncode(firstResult.url) };
             if (!firstTitle.matched) firstURL = matcher(firstURL.text, v);
@@ -111,7 +112,7 @@ if (chrome.omnibox) {
             resetSuggest();
             return;
         }
-        const url = (text == omniboxValue) ? firstResult.url : text;
+        const url = (text == omniboxValue && firstResult._query === text) ? firstResult.url : text;
         chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
             if (tabs && tabs.length > 0) {
                 chrome.tabs.update(tabs[0].id, {
