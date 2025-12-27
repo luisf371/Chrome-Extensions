@@ -93,21 +93,24 @@ body.linux input{
 #results ul li a,
 #tree ul li a,
 #tree ul li span{
-	display: block;
+	display: flex;
+	align-items: center;
 	line-height: 1.67em;
 	padding: 0 4px;
 	text-decoration: none;
 	color: #000;
 	outline: 0;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	overflow: hidden;
 }
 #results ul li a *,
 #tree ul li a *,
 #tree ul li span *{
 	pointer-events: none;
 }
+/* Re-enable pointer events for the button */
+#tree ul li span .add-bookmark-btn {
+    pointer-events: auto;
+}
+
 #tree ul li span .twisty{
 	display: inline-block;
 	position: relative;
@@ -144,6 +147,10 @@ body.linux input{
 #results ul li i,
 #tree ul li i{
 	font-style: normal;
+	flex: 0 1 auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 #results ul li a:hover i,
 #tree ul li a:hover i{
@@ -380,4 +387,82 @@ body.linux input{
 .needEdit #edit-dialog{
 	top: 0;
 	opacity: 1;
+}
+
+/* Add Bookmark Button Styles */
+.add-bookmark-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-weight: bold;
+    color: #888;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-family: sans-serif;
+    font-size: 16px;
+    margin-inline-start: 4px;
+    flex-shrink: 0;
+    text-shadow: none;
+}
+
+#tree ul li span:hover .add-bookmark-btn,
+.add-bookmark-btn:focus {
+    opacity: 1;
+}
+
+.add-bookmark-btn:hover {
+    color: #444;
+    background-color: rgba(0,0,0,0.05);
+}
+
+/* Ensure button color is readable when row is selected/active */
+#tree ul li span:active .add-bookmark-btn,
+#tree ul li span.active .add-bookmark-btn {
+    color: #eee;
+}
+#tree ul li span:active .add-bookmark-btn:hover,
+#tree ul li span.active .add-bookmark-btn:hover {
+    background-color: rgba(255,255,255,0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+    .add-bookmark-btn {
+        color: #aaa;
+    }
+    .add-bookmark-btn:hover {
+        color: #fff;
+        background-color: rgba(255,255,255,0.1);
+    }
+    .dialog {
+        background-color: #2b2b2b;
+        color: #ccc;
+        border-bottom-color: #444;
+        box-shadow: 0 0 100px rgba(0,0,0,0.5);
+    }
+    .dialog-text {
+        color: #ccc;
+    }
+    .dialog input {
+        background-color: #333;
+        color: #fff;
+        border: 1px solid #444;
+    }
+    .dialog button {
+        background-color: #444;
+        color: #fff;
+        border: 1px solid #555;
+    }
+    .dialog button:hover {
+        background-color: #555;
+    }
+    #confirm-dialog-button-1, #edit-dialog-button {
+        background-color: #4687cb;
+        background-image: linear-gradient(to bottom, #6fa6de, #1e6cbb);
+        border-color: #1e6cbb;
+    }
 }

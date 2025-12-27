@@ -220,6 +220,33 @@ li.parent > span:hover, li.child > a:hover {
 .context-menu hr {
     background-color: #444444 !important;
 }
+.dialog {
+    background-color: #2b2b2b !important;
+    color: #cccccc !important;
+    border-bottom: 1px solid #444444 !important;
+    box-shadow: 0 0 100px rgba(0,0,0,0.5) !important;
+}
+.dialog-text {
+    color: #cccccc !important;
+}
+.dialog input {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+    border: 1px solid #444444 !important;
+}
+.dialog button {
+    background-color: #444444 !important;
+    color: #ffffff !important;
+    border: 1px solid #555555 !important;
+}
+.dialog button:hover {
+    background-color: #555555 !important;
+}
+#confirm-dialog-button-1, #edit-dialog-button {
+    background-color: #4687cb !important;
+    background-image: linear-gradient(to bottom, #6fa6de, #1e6cbb) !important;
+    border-color: #1e6cbb !important;
+}
 ::-webkit-scrollbar {
     width: 10px;
     background-color: #2b2b2b;

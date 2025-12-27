@@ -141,7 +141,8 @@
                 }
                 html += '<li class="parent' + open + '"' + idHTML + ' role="treeitem" aria-expanded="' + isOpen + '" data-parentid="' + parentID + '">' + 
                     '<span tabindex="0" style="padding-inline-start: ' + paddingStart + 'px"><b class="twisty"></b>' + 
-                    '<img src="folder.png" width="16" height="16" alt=""><i>' + (title || _m('noTitle')) + '</i></span>';
+                    '<img src="folder.png" width="16" height="16" alt=""><i>' + (title || _m('noTitle')) + '</i>' +
+                    '<button class="add-bookmark-btn" title="' + _m('addBookmark') + '" data-id="' + id + '">+</button></span>';
                 if (isOpen){
                     if (children){
                         html += generateHTML(children, level + 1);
@@ -252,6 +253,45 @@
             return li.id.replace('neat-tree-item-', '');
         });
         setSetting('opens', JSON.stringify(opens));
+    });
+
+    $tree.addEventListener('click', function(e) {
+        if (!e.target.classList.contains('add-bookmark-btn')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = e.target;
+        const folderId = btn.dataset.id;
+        const li = btn.closest('li.parent');
+
+        chrome.tabs.query({active: true, currentWindow: true}).then(function(tabs){
+             const tab = tabs[0];
+             chrome.bookmarks.create({
+                 parentId: folderId,
+                 title: tab.title,
+                 url: tab.url
+             }).then(function(createdNode) {
+                 // Update UI if folder is open
+                 if (li && li.classList.contains('open')) {
+                     const ul = li.querySelector('ul');
+                     if (ul) {
+                         const level = parseInt(ul.dataset.level);
+                         const paddingStart = 14 * level;
+                         const newLi = document.createElement('li');
+                         newLi.className = 'child';
+                         newLi.id = 'neat-tree-item-' + createdNode.id;
+                         newLi.setAttribute('role', 'treeitem');
+                         newLi.dataset.parentid = folderId;
+                         newLi.innerHTML = generateBookmarkHTML(createdNode.title, createdNode.url, 'style="padding-inline-start: ' + paddingStart + 'px"');
+                         ul.appendChild(newLi);
+                     }
+                 }
+
+                 btn.textContent = '✓';
+                 setTimeout(() => {
+                     btn.textContent = '+';
+                 }, 1500);
+             });
+        });
     });
     
     // Force middle clicks to trigger the focus event
