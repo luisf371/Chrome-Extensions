@@ -130,7 +130,6 @@ li.parent > span, li.child > a {
     text-shadow: none !important;
     border-radius: 4px;
     margin: 0 2px !important;
-    padding: 2px 6px !important;
     transition: background-color 0.1s ease;
 }
 
@@ -201,6 +200,25 @@ li.parent > span:hover, li.child > a:hover {
 }
 #tree ul li span .twisty {
     border-color: transparent transparent transparent #888888 !important;
+}
+/* Context Menu */
+.context-menu {
+    background-color: #333333 !important;
+    border: 1px solid #444444 !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5) !important;
+}
+.context-menu .command {
+    color: #cccccc !important;
+    text-shadow: none !important;
+}
+.context-menu .command:hover, .context-menu .command:focus {
+    background-color: #444444 !important;
+    color: #ffffff !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+.context-menu hr {
+    background-color: #444444 !important;
 }
 ::-webkit-scrollbar {
     width: 10px;
