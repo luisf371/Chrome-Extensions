@@ -61,25 +61,17 @@
         console.error("sGesture: Extension context invalidated. Cannot execute function.");
         return;
       }
-      // Ping the background script to ensure it's responsive
-      chrome.runtime.sendMessage({ msg: "ping" }, (response) => {
-        if (chrome.runtime.lastError || !response || response.resp !== "pong") {
-          console.error("sGesture: Background script is not responsive.", chrome.runtime.lastError?.message || "");
+      
+      const gesturesToGet = state.move.split('').filter((v, i, a) => a.indexOf(v) === i);
+      chrome.storage.local.get(gesturesToGet, (gests) => {
+        if (chrome.runtime.lastError) {
+          console.error("sGesture: Error getting gestures from storage:", chrome.runtime.lastError.message);
           return;
         }
-
-        // Background is responsive, proceed with getting gestures
-        const gesturesToGet = state.move.split('').filter((v, i, a) => a.indexOf(v) === i);
-        chrome.storage.local.get(gesturesToGet, (gests) => {
-          if (chrome.runtime.lastError) {
-            console.error("sGesture: Error getting gestures from storage:", chrome.runtime.lastError.message);
-            return;
-          }
-          const action = gests[state.move];
-          if (action) {
-            handleAction(action);
-          }
-        });
+        const action = gests[state.move];
+        if (action) {
+          handleAction(action);
+        }
       });
     } catch (e) {
       console.error("sGesture: Error executing function: ", e);
@@ -95,6 +87,11 @@
           sendChromeMessage("newtab");
         }
         else {
+          // Security: Prevent execution of javascript: URLs
+          if (state.link.trim().toLowerCase().startsWith('javascript:')) {
+            console.warn("sGesture: Blocked attempt to open javascript: URL");
+            return;
+          }
           window.open(state.link);
         }
       },
@@ -119,27 +116,16 @@
     }
   }
 
-  function sendChromeMessage(msg, retries = 3) {
+  function sendChromeMessage(msg) {
     if (!chrome.runtime || !chrome.runtime.id) {
       console.error("sGesture: Extension context invalidated.");
       return;
     }
 
-    chrome.runtime.sendMessage({ msg: "ping" }, (response) => {
-      if (chrome.runtime.lastError || !response || response.resp !== "pong") {
-        if (retries > 0) {
-          setTimeout(() => sendChromeMessage(msg, retries - 1), 100);
-        } else {
-          console.error("sGesture: Failed to connect to background script after multiple retries.");
-        }
-        return;
+    chrome.runtime.sendMessage({ msg: msg }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.error('sGesture: Error in sendChromeMessage:', chrome.runtime.lastError.message);
       }
-
-      chrome.runtime.sendMessage({ msg: msg }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.error('sGesture: Error in sendChromeMessage:', chrome.runtime.lastError.message);
-        }
-      });
     });
   }
 

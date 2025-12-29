@@ -38,58 +38,45 @@ const colorCodes = {
     "Re-open Last Closed Tab": "lasttab"
   };
   
-  function invertHash(hash) {
-    const inv = {};
-    for (const key in hash) {
-      inv[hash[key]] = key;
-    }
-    return inv;
-  }
-  
   function save_options() {
-    // Save color
+    // Gather all settings
+    const settings = {};
+
+    // Color
     let colorSelect = document.getElementById("color");
     let colorValue = colorSelect.value;
-    let colorCode = colorCodes[colorValue];
-    chrome.storage.local.set({ "colorCode": colorCode }, () => {
-      console.log("Saved color:", colorValue, "Code:", colorCode); // Debug log
-    });
-  
-    // Save width
+    settings.colorCode = colorCodes[colorValue];
+
+    // Width
     let widthSelect = document.getElementById("width");
-    let widthValue = widthSelect.value;
-    chrome.storage.local.set({ "width": widthValue }, () => {
-      console.log("Saved width:", widthValue); // Debug log
-    });
-  
-    // Save rocker setting
+    settings.width = widthSelect.value;
+
+    // Rocker
     const rocker = document.getElementById('rocker');
-    chrome.storage.local.set({ "rocker": rocker.checked }, () => {
-      console.log("Saved rocker:", rocker.checked); // Debug log
-    });
-  
-    // Save trail setting
+    settings.rocker = rocker.checked;
+
+    // Trail
     const trail = document.getElementById('trail');
-    chrome.storage.local.set({ "trail": trail.checked }, () => {
-      console.log("Saved trail:", trail.checked); // Debug log
-    });
-  
-    // Save gestures
+    settings.trail = trail.checked;
+
+    // Gestures
     const gestures = ["U", "D", "L", "R"];
     gestures.forEach(gesture => {
       const select = document.getElementById(`gesture-${gesture}`);
-      const action = select.value;
-      chrome.storage.local.set({ [gesture]: action }, () => {
-        console.log(`Saved gesture ${gesture}:`, action); // Debug log
-      });
+      settings[gesture] = select.value;
     });
-  
-    // Update status to user
-    const status = document.getElementById("status");
-    status.innerHTML = "Configuration Saved";
-    setTimeout(() => {
-      status.innerHTML = "";
-    }, 750);
+
+    // Save all at once
+    chrome.storage.local.set(settings, () => {
+      console.log("Settings saved:", settings);
+      
+      // Update status to user
+      const status = document.getElementById("status");
+      status.innerHTML = "Configuration Saved";
+      setTimeout(() => {
+        status.innerHTML = "";
+      }, 750);
+    });
   }
   
   function restore_options() {
