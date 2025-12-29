@@ -101,7 +101,7 @@ async function createTabWindow(id, wId) {
 async function addNewTab(tab) {
 	// console.log("ADD NEW "+tab.url+"|!|"+tab.title+"|!|"+tab.status);
 	// var re = /^(http:|https:|ftp:|file:)/;
-	var re = /^(http:|https:|chrome-extension:)/;
+	var re = /^(http:|https:|chrome-extension:|file:)/;
 	if (re.test(tab.url)) {
 		if (await chkNewTab(tab)) {
 			await navigator.locks.request('simpleUndoClose_data', async (lock) => {

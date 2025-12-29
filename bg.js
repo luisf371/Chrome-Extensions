@@ -59,6 +59,44 @@ chrome.tabs.onRemoved.addListener(function(tabId, info)  {
 	addClosedTab(tabId,0);
 });
 
+chrome.tabs.onReplaced.addListener(async function(addedTabId, removedTabId) {
+	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+		const oldKey = "TabList-" + removedTabId;
+		const newKey = "TabList-" + addedTabId;
+		
+		let data = await getStorage([oldKey, newKey, 'TabListIndex']);
+		
+		// Update Index
+		let tabListIndex = data.TabListIndex || [];
+		let oldIdx = tabListIndex.indexOf(removedTabId);
+		let newIdx = tabListIndex.indexOf(addedTabId);
+		
+		let indexChanged = false;
+		if (oldIdx !== -1) {
+			tabListIndex.splice(oldIdx, 1);
+			indexChanged = true;
+		}
+		if (newIdx === -1) {
+			tabListIndex.push(addedTabId);
+			indexChanged = true;
+		}
+		
+		let storageUpdate = {};
+		if(indexChanged) storageUpdate.TabListIndex = tabListIndex;
+
+		// Move Data if new key doesn't exist yet
+		if (data[oldKey]) {
+			if (!data[newKey]) {
+				storageUpdate[newKey] = data[oldKey];
+			}
+			await setStorage(storageUpdate);
+			await removeStorage([oldKey]);
+		} else if (indexChanged) {
+			await setStorage(storageUpdate);
+		}
+	});
+});
+
 chrome.commands.onCommand.addListener(function(command) {
 	if(command==="undo-latest") getLatestCTab();
 });
@@ -152,16 +190,21 @@ async function addClosedTab(tabId, mode){
 async function addClosedTabInternal(tabId, mode){
 	// console.log("REMOVED: "+tabId+"==="+(localStorage["TabList-"+tabId]!=undefined));
 	const key = "TabList-" + tabId;
-	let data = await getStorage([key, 'settings', 'ClosedTabIndex']);
+	// Fetch all necessary data at once
+	let data = await getStorage([key, 'settings', 'ClosedTabIndex', 'TabListIndex']);
 
 	if(data[key] != undefined){
 		var settings = data.settings || defaultSettings;
 		var closedTabIndex = data.ClosedTabIndex || [];
 		
+		let storageUpdates = {};
+		let keysToRemove = [key]; // Always remove the TabList entry
+
 		// Should we record this tab?
 		var splitValue = data[key].split("|!|");
 		var url = splitValue[0];
-		var re = /^(http:|https:|chrome-extension:)/;
+		var re = /^(http:|https:|chrome-extension:|file:)/;
+		
 		//if url is valid?
 		if (url && re.test(url)) {
 			var exists = -1;
@@ -184,43 +227,54 @@ async function addClosedTabInternal(tabId, mode){
 			}
 
 			var createStr = Date.now() + "|!|" + data[key];
-			//if new removed exists in saved closed tabs, remove it first
+			//if new removed exists in saved closed tabs, mark for removal
 			if (exists!=-1){
-				await removeStorage(["ClosedTab-"+exists]);
+				keysToRemove.push("ClosedTab-"+exists);
 				closedTabIndex.splice(closedTabIndex.indexOf(exists),1);
 			}
 
 			var rId = crypto.randomUUID();
-			await setStorage({ ["ClosedTab-"+rId]: createStr });
+			storageUpdates["ClosedTab-"+rId] = createStr;
 			closedTabIndex.push(rId);
 
 			// Code for managing overflow
 			if (closedTabIndex.length > settings.numLimit){
-			// console.log("OVERFLOW - "+closedTabIndex.length+">"+settings.numLimit);
+				// console.log("OVERFLOW - "+closedTabIndex.length+">"+settings.numLimit);
+				// We need to fetch data for the item we might delete to ensure we don't leave garbage? 
+				// Actually we can just assume the first index is the oldest.
+				// But original logic checked for existence. We already fetched closedTabsData.
+				
 				for(var i = 0; i<closedTabIndex.length; i++){
 					let cTabKey = "ClosedTab-" + closedTabIndex[i];
-					let cData = await getStorage([cTabKey]);
-					let closedTab = cData[cTabKey];
-					if (closedTab){
-					// console.log("CLOSE TAB - delete and lower bound to "+i);
-						await removeStorage([cTabKey]);
+					let closedTab = closedTabsData[cTabKey]; // Use cached data
+					// If it wasn't in cache, maybe we should fetch? 
+					// But we fetched all keys based on closedTabIndex at start.
+					
+					if (closedTab || closedTabsData[cTabKey] === undefined){ 
+						// Original logic: if(closedTab). If it's in index but not data, we should probably just remove index.
+						// Here we trust the index for overflow logic.
+						
+						keysToRemove.push(cTabKey);
 						closedTabIndex.splice(closedTabIndex.indexOf(closedTabIndex[i]),1);
 						break;
 					}
 				}
 			}
-			await setStorage({ ClosedTabIndex: closedTabIndex });
-			await setBadge();
+			storageUpdates.ClosedTabIndex = closedTabIndex;
 		}
-		await removeStorage([key]);
 		
-		let idxData = await getStorage(['TabListIndex']);
-		var tabListIndex = idxData.TabListIndex || [];
+		// Remove from TabListIndex
+		var tabListIndex = data.TabListIndex || [];
 		const tIdx = tabListIndex.indexOf(tabId);
 		if (tIdx > -1) {
 			tabListIndex.splice(tIdx, 1);
-			await setStorage({ TabListIndex: tabListIndex });
+			storageUpdates.TabListIndex = tabListIndex;
 		}
+
+		// Perform Atomic Updates
+		await setStorage(storageUpdates);
+		await removeStorage(keysToRemove);
+		await setBadge();
 	}
 }
 
