@@ -1,8 +1,11 @@
-var settings = {};
+let settings = {};
 
 async function save() {
-	if(!document.getElementById('showTime').checked) {document.getElementById('sexyBack').style.display = "none";}
-	else {document.getElementById('sexyBack').style.display = "block";}
+	if(!document.getElementById('showTime').checked) {
+        document.getElementById('sexyBack').style.display = "none";
+    } else {
+        document.getElementById('sexyBack').style.display = "block";
+    }
 
 	settings.showClear = document.getElementById('showClear').checked;
 	settings.showBadge = document.getElementById('showBadge').checked;
@@ -22,25 +25,23 @@ async function save() {
 	settings.lpDelay = document.getElementById("lpdValue").value;
 	settings.mClickClose = document.getElementById('mClickClose').checked;
 	
-	settings.wPop = parseInt(document.getElementById('wPop-value').textContent,10);
-	settings.numLimit = parseInt(document.getElementById('numLimit-value').textContent,10);
+	settings.wPop = parseInt(document.getElementById('wPop-value').textContent, 10);
+	settings.numLimit = parseInt(document.getElementById('numLimit-value').textContent, 10);
 	settings.numItems = document.getElementById("numItems").value;
-	settings.numLines = parseInt(document.getElementById("numLines").value,10);
+	settings.numLines = parseInt(document.getElementById("numLines").value, 10);
 	
 	await setStorage({ settings: settings });
 
 	let data = await getStorage(['ClosedTabIndex']);
 	let closedTabIndex = data.ClosedTabIndex || [];
 
-	if (closedTabIndex.length>settings.numLimit){
+	if (closedTabIndex.length > settings.numLimit){
 	  await trimTabs(settings.numLimit);
 	}
 	await setBadge();
 	await updateIcon();
 }
 
-// Make sure the options gets properly initialized from the
-// saved preference.
 document.addEventListener('DOMContentLoaded', async function () {
 	let data = await getStorage(['settings']);
 	settings = data.settings;
@@ -93,32 +94,42 @@ document.addEventListener('DOMContentLoaded', async function () {
 	document.getElementById('mClickClose').addEventListener('click', save);
 	
 	document.getElementById('theme'+settings.theme).checked = true;
-	document.getElementById('theme1').addEventListener('click', async function(){await save();location.reload();});
-	document.getElementById('theme2').addEventListener('click', async function(){await save();location.reload();});
-	document.getElementById('theme3').addEventListener('click', async function(){await save();location.reload();});
+	document.getElementById('theme1').addEventListener('click', async function(){ await save(); location.reload(); });
+	document.getElementById('theme2').addEventListener('click', async function(){ await save(); location.reload(); });
+	document.getElementById('theme3').addEventListener('click', async function(){ await save(); location.reload(); });
 	
-	var popWidth = document.getElementById('wPop');
-	var popWidthValue = document.getElementById('wPop-value');
-	popWidth.value = popWidthValue.textContent = parseInt(settings.wPop,10);
-	popWidth.addEventListener('input', function(event) { popWidthValue.textContent = event.target.value;save();}, false);
+	const popWidth = document.getElementById('wPop');
+	const popWidthValue = document.getElementById('wPop-value');
+	popWidth.value = popWidthValue.textContent = parseInt(settings.wPop, 10);
+	popWidth.addEventListener('input', function(event) { popWidthValue.textContent = event.target.value; save();}, false);
 
 	await updateIcon();
 
-	var limitValue = document.getElementById('numLimit-value');
-	document.getElementById('numLimit').value = parseInt(Math.pow((((settings.numLimit-5)*Math.pow(600,5))/99994),0.2),10);
+	const limitValue = document.getElementById('numLimit-value');
+	document.getElementById('numLimit').value = parseInt(Math.pow((((settings.numLimit-5)*Math.pow(600,5))/99994),0.2), 10);
 	limitValue.textContent = settings.numLimit;
-	document.getElementById('numLimit').addEventListener('input', function(event) {limitValue.textContent = 5+  parseInt((Math.pow(event.target.value,5)/Math.pow(600,5)) * 99994,10);save();}, false);
+	document.getElementById('numLimit').addEventListener('input', function(event) {
+        limitValue.textContent = 5 + parseInt((Math.pow(event.target.value,5)/Math.pow(600,5)) * 99994, 10);
+        save();
+    }, false);
 
-	var widthValue = document.getElementById('numItems-value');
+	const widthValue = document.getElementById('numItems-value');
 	document.getElementById('numItems').value = widthValue.textContent = settings.numItems;
-	document.getElementById('numItems').addEventListener('input', function(event) {widthValue.textContent = event.target.value;save();}, false);
+	document.getElementById('numItems').addEventListener('input', function(event) {
+        widthValue.textContent = event.target.value;
+        save();
+    }, false);
 
-	var lines = document.getElementById('numLines');
-	var linesValue = document.getElementById('numLines-value');
-	lines.value = linesValue.textContent = parseInt(settings.numLines,10);
+	const lines = document.getElementById('numLines');
+	const linesValue = document.getElementById('numLines-value');
+	lines.value = linesValue.textContent = parseInt(settings.numLines, 10);
 
-	if (lines.value==0) linesValue.textContent="No Limit";
-	lines.addEventListener('input', function(event) { if (event.target.value==0) linesValue.textContent="No Limit"; else linesValue.textContent = event.target.value;save();}, false);
+	if (lines.value == 0) linesValue.textContent = "No Limit";
+	lines.addEventListener('input', function(event) { 
+        if (event.target.value == 0) linesValue.textContent = "No Limit"; 
+        else linesValue.textContent = event.target.value;
+        save();
+    }, false);
 
 	document.getElementById('resetButton').addEventListener('click', clearMemory);
 
@@ -130,24 +141,22 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 async function trimTabs(tablimit){
-	// Trim off the excess saved closed tabs
 	let data = await getStorage(['ClosedTabIndex']);
 	let closedTabIndex = data.ClosedTabIndex || [];
 
-	var noToDelete = closedTabIndex.length - tablimit;
-	// Ensure we don't try to delete more tabs than available
+	const noToDelete = closedTabIndex.length - tablimit;
+	
 	if (noToDelete <= 0) {
 		return;
 	}
 
 	let keysToRemove = [];
-	for(var i = 0; i < noToDelete; i++){
-		// Add the key of the oldest tab to the list to remove
-		if (closedTabIndex.length > 0) { // Safety check
+	for(let i = 0; i < noToDelete; i++){
+		if (closedTabIndex.length > 0) { 
 			keysToRemove.push("ClosedTab-" + closedTabIndex[0]);
-			closedTabIndex.shift(); // Remove the oldest tab ID from the index array
+			closedTabIndex.shift();
 		} else {
-			break; // No more tabs to remove
+			break; 
 		}
 	}
 
@@ -158,26 +167,20 @@ async function trimTabs(tablimit){
 }
 
 function informHotkeyChange(){
-	// Removed or needs update if used. Not called in original code effectively.
+	// Placeholder
 }
 
 function getRadioValue(radioGroup){
-	var rGrp = document.getElementsByName(radioGroup);
-    for(var i = 0, j = rGrp.length; i < j; i++){
+	const rGrp = document.getElementsByName(radioGroup);
+    for(let i = 0; i < rGrp.length; i++){
         if (rGrp[i].checked){
 			return rGrp[i].value;
         }
     }
 }
 
-function selectItemByValue(elmnt, value){
-	for(var i=0; i < elmnt.options.length; i++){
-	  if(elmnt.options[i].value == value) elmnt.selectedIndex = i;
-	}
-}
-
 function openKBshortConfig() { 
-	if(window.navigator.vendor === "Opera Software ASA"||(window.navigator.userAgent).indexOf("OPR/")!=-1){
+	if(window.navigator.vendor === "Opera Software ASA" || (window.navigator.userAgent).indexOf("OPR/") != -1){
 		chrome.tabs.create({url: 'chrome://settings/configureCommands'});
 	}else{
 		chrome.tabs.create({url: 'chrome://extensions/configureCommands'});
@@ -185,10 +188,13 @@ function openKBshortConfig() {
 }
 
 function chkLPval(){
-	if (document.getElementById('lpdValue').value === "") {document.getElementById('lpdValue').value = "1";save();}
+	if (document.getElementById('lpdValue').value === "") {
+        document.getElementById('lpdValue').value = "1";
+        save();
+    }
 }
 
 function clearMemory(){
-	var sure=confirm(chrome.i18n.getMessage("opt_resetbtn_popupMsg"));
-	if (sure==true) resetData();
+	const sure = confirm(chrome.i18n.getMessage("opt_resetbtn_popupMsg"));
+	if (sure === true) resetData();
 }

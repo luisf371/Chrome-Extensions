@@ -1,82 +1,133 @@
 // Helper for storage
-const getStorage = (keys) => {
-    return new Promise((resolve) => {
-        // If keys is null, get everything from both sources
-        if (keys === null) {
-            Promise.all([
-                new Promise(r => chrome.storage.local.get(null, r)),
-                new Promise(r => chrome.storage.sync.get(null, r))
-            ]).then(([local, sync]) => {
-                resolve({...local, ...sync});
-            });
-            return;
+const getStorage = async (keys) => {
+    if (keys === null) {
+        const [local, sync] = await Promise.all([
+            chrome.storage.local.get(null),
+            chrome.storage.sync.get(null)
+        ]);
+        return { ...local, ...sync };
+    }
+
+    const keysArray = Array.isArray(keys) ? keys : [keys];
+    const syncKeys = keysArray.filter(k => k === 'settings');
+    const localKeys = keysArray.filter(k => k !== 'settings');
+
+    const promises = [];
+    if (syncKeys.length > 0) promises.push(chrome.storage.sync.get(syncKeys));
+    if (localKeys.length > 0) promises.push(chrome.storage.local.get(localKeys));
+
+    const results = await Promise.all(promises);
+    return Object.assign({}, ...results);
+};
+
+const setStorage = async (items) => {
+    const syncItems = {};
+    const localItems = {};
+    let hasSync = false;
+    let hasLocal = false;
+
+    for (const key in items) {
+        if (key === 'settings') {
+            syncItems[key] = items[key];
+            hasSync = true;
+        } else {
+            localItems[key] = items[key];
+            hasLocal = true;
         }
+    }
 
-        let keysArray = Array.isArray(keys) ? keys : [keys];
-        let syncKeys = keysArray.filter(k => k === 'settings');
-        let localKeys = keysArray.filter(k => k !== 'settings');
-        
-        let promises = [];
-        if (syncKeys.length > 0) promises.push(new Promise(r => chrome.storage.sync.get(syncKeys, r)));
-        if (localKeys.length > 0) promises.push(new Promise(r => chrome.storage.local.get(localKeys, r)));
-        
-        Promise.all(promises).then(results => {
-            let combined = Object.assign({}, ...results);
-            resolve(combined);
-        });
-    });
+    const promises = [];
+    if (hasSync) promises.push(chrome.storage.sync.set(syncItems));
+    if (hasLocal) promises.push(chrome.storage.local.set(localItems));
+
+    await Promise.all(promises);
 };
 
-const setStorage = (items) => {
-    return new Promise((resolve) => {
-        let syncItems = {};
-        let localItems = {};
-        let hasSync = false;
-        let hasLocal = false;
+const removeStorage = async (keys) => {
+    const keysArray = Array.isArray(keys) ? keys : [keys];
+    const syncKeys = keysArray.filter(k => k === 'settings');
+    const localKeys = keysArray.filter(k => k !== 'settings');
 
-        for (let key in items) {
-            if (key === 'settings') {
-                syncItems[key] = items[key];
-                hasSync = true;
-            } else {
-                localItems[key] = items[key];
-                hasLocal = true;
-            }
+    const promises = [];
+    if (syncKeys.length > 0) promises.push(chrome.storage.sync.remove(syncKeys));
+    if (localKeys.length > 0) promises.push(chrome.storage.local.remove(localKeys));
+
+    await Promise.all(promises);
+};
+
+// Robust HTML escaping
+function encodeHtml(str) {
+    if (!str) return "";
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function stripVowelAccent(str) {
+    const rExps = [ /[\u00C0-\u00C2]/g, /[\u00E0-\u00E2]/g,
+        /[\u00C8-\u00CA]/g, /[\u00E8-\u00EB]/g,
+        /[\u00CC-\u00CE]/g, /[\u00EC-\u00EE]/g,
+        /[\u00D2-\u00D4]/g, /[\u00F2-\u00F4]/g,
+        /[\u00D9-\u00DB]/g, /[\u00F9-\u00FB]/g ];
+
+    const repChar = ['A','a','E','e','I','i','O','o','U','u'];
+
+    for(let i=0; i<rExps.length; i++) {
+        str = str.replace(rExps[i], repChar[i]);
+    }
+    return str;
+}
+
+function multiFind(str, strings, settings) {
+    let target = stripVowelAccent(str).toLowerCase();
+    
+    if (settings && settings.searchMode !== 3 && str.includes("|!|")) {
+        const splitStr = target.split("|!|");
+        if (settings.searchMode === 1 && splitStr[2]) target = splitStr[2];
+        if (settings.searchMode === 2 && splitStr[1]) target = splitStr[1];
+    }
+
+    let foundAmount = 0;
+    for (const s of strings) {
+        if (target.indexOf(s) !== -1) foundAmount++;
+    }
+    return (foundAmount === strings.length);
+}
+
+function multiReplace(strReal, strings) {
+    let str;
+    const startTag = "\uE000";
+    const endTag = "\uE001";
+    let workingStr = strReal;
+
+    for(let i = 0; i < strings.length; i++ ) {
+        str = stripVowelAccent(workingStr).toLowerCase();
+        const position = str.indexOf(strings[i]);
+        if (position !== -1) {
+            workingStr = workingStr.substr(0, position) + startTag + workingStr.substr(position, strings[i].length) + endTag + workingStr.substr(position + strings[i].length); 
         }
+    }
+    
+    let encoded = encodeHtml(workingStr);
+    encoded = encoded.split(startTag).join("<u>").split(endTag).join("</u>");
+    return encoded;
+}
 
-        let promises = [];
-        if (hasSync) promises.push(new Promise(r => chrome.storage.sync.set(syncItems, r)));
-        if (hasLocal) promises.push(new Promise(r => chrome.storage.local.set(localItems, r)));
-        
-        Promise.all(promises).then(() => resolve());
-    });
-};
+// --- Business Logic Functions ---
 
-const removeStorage = (keys) => {
-     return new Promise((resolve) => {
-        let keysArray = Array.isArray(keys) ? keys : [keys];
-        let syncKeys = keysArray.filter(k => k === 'settings');
-        let localKeys = keysArray.filter(k => k !== 'settings');
-        
-        let promises = [];
-        if (syncKeys.length > 0) promises.push(new Promise(r => chrome.storage.sync.remove(syncKeys, r)));
-        if (localKeys.length > 0) promises.push(new Promise(r => chrome.storage.local.remove(localKeys, r)));
-        
-        Promise.all(promises).then(() => resolve());
-    });
-};
-
-// Show |url| in a new tab.
 async function createTab(id, selected) {
 	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
 		const data = await getStorage(["ClosedTab-" + id]);
 		if (!data["ClosedTab-" + id]) return;
 
-		var url = data["ClosedTab-" + id].split("|!|")[1];
+		const url = data["ClosedTab-" + id].split("|!|")[1];
 		
 		await removeClosedTabInternal(id);
 
-		if (selected == true) {
+		if (selected === true) {
 			chrome.tabs.create({ "url": url, "active": true });
 			if (typeof window !== 'undefined' && window.close) window.close();
 		} else {
@@ -90,7 +141,7 @@ async function createTabWindow(id, wId) {
 		const data = await getStorage(["ClosedTab-" + id]);
 		if (!data["ClosedTab-" + id]) return;
 
-		var url = data["ClosedTab-" + id].split("|!|")[1];
+		const url = data["ClosedTab-" + id].split("|!|")[1];
 		
 		await removeClosedTabInternal(id);
 
@@ -99,20 +150,18 @@ async function createTabWindow(id, wId) {
 }
 
 async function addNewTab(tab) {
-	// console.log("ADD NEW "+tab.url+"|!|"+tab.title+"|!|"+tab.status);
-	// var re = /^(http:|https:|ftp:|file:)/;
-	var re = /^(http:|https:|chrome-extension:|file:)/;
+	const re = /^(http:|https:|chrome-extension:|file:)/;
 	if (re.test(tab.url)) {
 		if (await chkNewTab(tab)) {
 			await navigator.locks.request('simpleUndoClose_data', async (lock) => {
-				var insertThis = tab.url + "|!|";
+				let insertThis = tab.url + "|!|";
 				insertThis += tab.title.replace(/\|\!\|/g, " ");
 
 				const listKey = "TabList-" + tab.id;
 				let data = await getStorage(["TabListIndex"]);
 				let tabListIndex = data.TabListIndex || [];
 
-				if (tabListIndex.indexOf(tab.id) == -1) {
+				if (!tabListIndex.includes(tab.id)) {
 					tabListIndex.push(tab.id);
 					await setStorage({
 						[listKey]: insertThis,
@@ -128,12 +177,11 @@ async function addNewTab(tab) {
 	}
 }
 
-//check if url same, not same than pass
 async function chkNewTab(tab) {
-	var pass = false;
+	let pass = false;
 	const key = "TabList-" + tab.id;
 	const data = await getStorage([key]);
-	var inList = data[key];
+	const inList = data[key];
 
 	if (inList === undefined || (inList && (inList.split("|!|")[0] !== tab.url || (inList.split("|!|")[0] === tab.url && inList.split("|!|")[1] !== tab.title)))) pass = true;
 	return pass;
@@ -184,7 +232,7 @@ async function setBadge() {
 
 	if (settings.showBadge) {
 		let closedTabIndex = data.ClosedTabIndex || [];
-		var n = closedTabIndex.length;
+		const n = closedTabIndex.length;
 		if (n > 0) {
 			chrome.action.setBadgeBackgroundColor({ color: [15, 161, 211, 255] });
 			chrome.action.setBadgeText({ text: n.toString() });
@@ -197,7 +245,6 @@ async function setBadge() {
 }
 
 async function resetData() {
-	//console.log("RESET");
 	let data = await getStorage(["settings", "updatedTill"]);
 	let settings = data.settings;
 	let oldUpdTill = data.updatedTill;
@@ -211,9 +258,7 @@ async function resetData() {
 		"ClosedTabIndex": []
 	});
 
-	// localStorage.lastCloseTime = 0;
-
-	regExistingTabs();
+	await regExistingTabs();
 	await setBadge();
 }
 
@@ -225,50 +270,69 @@ async function updateIcon() {
 		chrome.action.setIcon({ path: { "19": "icon-19-1.png", "38": "icon-38-1.png" } });
 	} else {
 		let isDark = false;
-		
-		// Check explicit theme setting first
 		if (settings.theme == "3") {
 			isDark = true;
 		} else if (settings.theme == "2") {
 			isDark = false;
 		} else {
-			// System default (Theme "1") or undefined
-			// Check if window is available (popup/options) to detect system preference
 			if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
 				isDark = true;
 			}
 		}
 
-		if (isDark) { // If dark mode is determined, use icon-xx-2.png
+		if (isDark) { 
 			chrome.action.setIcon({
 				path: {
 					"19": "icon-19-2.png",
 					"38": "icon-38-2.png"
 				}
 			});
-		} else { // If light mode is determined, use icon-xx-1.png
+		} else { 
 			chrome.action.setIcon({
 				path: {
-					"19": "icon-19-1.png", // Changed to icon-19-1.png for light theme
-					"38": "icon-38-1.png"  // Changed to icon-38-1.png for light theme
+					"19": "icon-19-1.png", 
+					"38": "icon-38-1.png"  
 				}
 			});
 		}
 	}
 }
 
-function regExistingTabs() {
-	chrome.tabs.query({ "url": "*://*/*" }, function (tabs) {
-		// console.log(tabs.length+" tabs");
-		for (var t = 0; t < tabs.length; t++) {
-			// console.log("add tab "+t);
-			addNewTab(tabs[t]);
-		}
-	});
+async function regExistingTabs() {
+    const tabs = await chrome.tabs.query({ "url": "*://*/*" });
+    if (tabs.length === 0) return;
+
+    await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+        const data = await getStorage(["TabListIndex"]);
+        let tabListIndex = data.TabListIndex || [];
+        let updates = {};
+        let changed = false;
+        
+        const re = /^(http:|https:|chrome-extension:|file:)/;
+        
+        for (const tab of tabs) {
+             if (re.test(tab.url)) {
+                 const listKey = "TabList-" + tab.id;
+                 let insertThis = tab.url + "|!|";
+                 insertThis += tab.title.replace(/\|\!\|/g, " ");
+                 
+                 updates[listKey] = insertThis;
+                 changed = true;
+                 
+                 if (!tabListIndex.includes(tab.id)) {
+                     tabListIndex.push(tab.id);
+                 }
+             }
+        }
+        
+        if (changed) {
+            updates["TabListIndex"] = tabListIndex;
+            await setStorage(updates);
+        }
+    });
 }
 
 async function getLatestCTab() {
-	// console.log("LAST CLOSED TAB");
 	let data = await getStorage(["ClosedTabIndex"]);
 	let closedTabIndex = data.ClosedTabIndex || [];
 	if (closedTabIndex.length > 0) await createTab(closedTabIndex[closedTabIndex.length - 1], true);

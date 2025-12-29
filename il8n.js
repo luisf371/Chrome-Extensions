@@ -1,21 +1,28 @@
 document.addEventListener('DOMContentLoaded', function () {
 	
 	//translates tooptips of the 3 top buttons
-	document.getElementById('topbtn1').title = chrome.i18n.getMessage("html_topbtn_tooltip1");
-	document.getElementById('topbtn2').title = chrome.i18n.getMessage("html_topbtn_tooltip2");
-    document.getElementById('topbtn3').title = chrome.i18n.getMessage("html_topbtn_tooltip3");
-	document.getElementById('blogbtn').title = chrome.i18n.getMessage("opt_blogbtn_tooltip");
+    const setTooltip = (id, msg) => {
+        const el = document.getElementById(id);
+        if(el) el.title = chrome.i18n.getMessage(msg);
+    };
+
+	setTooltip('topbtn1', "html_topbtn_tooltip1");
+	setTooltip('topbtn2', "html_topbtn_tooltip2");
+    setTooltip('topbtn3', "html_topbtn_tooltip3");
+	setTooltip('blogbtn', "opt_blogbtn_tooltip");
 	
 	// auto-translate all elements with i18n attributes
-	// this part is from the HTTPS-Everywhere extension
-	var all = document.getElementsByTagName("*");
-	for(var i=0, max=all.length; i < max; i++) {
-		var label = all[i].getAttribute('i18n');
-		if(label) {
-		  all[i].innerHTML = chrome.i18n.getMessage(label);
-		}
-	}
+	const elements = document.querySelectorAll('[i18n]');
+    for (const el of elements) {
+        const label = el.getAttribute('i18n');
+        if (label) {
+            el.textContent = chrome.i18n.getMessage(label);
+        }
+    }
 	
-	if(window.navigator.vendor === "Opera Software ASA"){document.getElementById('disableDClickLbl').innerHTML = chrome.i18n.getMessage("opt_func_opt6b");}
+	if(window.navigator.vendor === "Opera Software ASA"){
+        const el = document.getElementById('disableDClickLbl');
+        if(el) el.textContent = chrome.i18n.getMessage("opt_func_opt6b");
+    }
 
 });

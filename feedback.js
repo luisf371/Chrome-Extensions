@@ -1,24 +1,26 @@
 function linkSwitcher(link) {
-	var extIDc = "emhohdghchmjepmigjojkehidlielknj";
-	var extIDo = "simpleundoclose";
+	const extIDc = "emhohdghchmjepmigjojkehidlielknj";
+	const extIDo = "simpleundoclose";
 	
-	var chr = "https://chrome.google.com/webstore/detail/"+extIDo+"/"+extIDc+"/support";
-	var opr = "https://addons.opera.com/";
-	var locale = window.navigator.language;
-	var vendor = navigator.userAgent;
-	var linkRef = link.href;
+	const chr = "https://chrome.google.com/webstore/detail/"+extIDo+"/"+extIDc+"/support";
+	const opr = "https://addons.opera.com/";
+	let locale = window.navigator.language;
+	const vendor = navigator.userAgent;
 	
-	if (vendor.indexOf("OPR") == -1) {
+	if (vendor.indexOf("OPR") === -1) {
 		link.href = chr + "?hl=" + locale;
 	}
 	if (vendor.indexOf("OPR") > -1) {
-		if (locale.substr(0, 2) == "en")
+		if (locale.substr(0, 2) === "en")
 			locale = "en";
 		link.href = opr + locale.toLowerCase() + "/extensions/details/" + extIDo +"/?display="+ locale.toLowerCase() +"&reports#feedback-container";
 	}
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-	document.getElementById('feedbkLnk').innerHTML = chrome.i18n.getMessage("feed_text2");
-	linkSwitcher(document.getElementById('feedbkLnk'));
+	const el = document.getElementById('feedbkLnk');
+    if (el) {
+        el.textContent = chrome.i18n.getMessage("feed_text2");
+	    linkSwitcher(el);
+    }
 });

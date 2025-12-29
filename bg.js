@@ -1,6 +1,6 @@
 importScripts('common.js');
 
-var defaultSettings = {
+const defaultSettings = {
 	"showClear" : true,
 	"showBadge" : false,
 	"showTime" : true,
@@ -33,30 +33,29 @@ chrome.runtime.onStartup.addListener(async function() {
 		await tabListProcessing();
 		await cleanClosedTabs();
 		await setBadge();
-		regExistingTabs();
+		await regExistingTabs();
 		await updateIcon();
 	}
 });
 
 chrome.runtime.onInstalled.addListener(async function(runInfo) {
-	if (runInfo.reason=="install") {
+	if (runInfo.reason === "install") {
 		await initialize();
 	}
-	if (runInfo.reason=="update") {
+	if (runInfo.reason === "update") {
 		await setStorage({ dcTime: Date.now() });
 		await settingsUpdate();
-		// resetData(); 
 	}
 	await setBadge();
 	await updateIcon();
 });
 
-chrome.tabs.onUpdated.addListener(function(tabId,changeInfo,tab){
-	if(tab.url){addNewTab(tab);}
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
+	if(tab.url){ addNewTab(tab); }
 });
 
-chrome.tabs.onRemoved.addListener(function(tabId, info)  {
-	addClosedTab(tabId,0);
+chrome.tabs.onRemoved.addListener(function(tabId, info) {
+	addClosedTab(tabId, 0);
 });
 
 chrome.tabs.onReplaced.addListener(async function(addedTabId, removedTabId) {
@@ -98,7 +97,7 @@ chrome.tabs.onReplaced.addListener(async function(addedTabId, removedTabId) {
 });
 
 chrome.commands.onCommand.addListener(function(command) {
-	if(command==="undo-latest") getLatestCTab();
+	if(command === "undo-latest") getLatestCTab();
 });
 
 async function initialize(){
@@ -110,7 +109,7 @@ async function initialize(){
         TabListIndex: [],
         ClosedTabIndex: []
     });
-	regExistingTabs();
+	await regExistingTabs();
 }
 
 async function settingsUpdate(){
@@ -121,33 +120,26 @@ async function settingsUpdate(){
 
 		const manifest = chrome.runtime.getManifest();
 		if(data.settings && (!data.updatedTill || needUpdateOrNot(data.updatedTill, "1.3.11"))){
-			// console.log("Updating...");
-			
 			let settings = data.settings;
-			var localKeys = Object.keys(settings).sort();
-			var currDefKeys = Object.keys(defaultSettings).sort();
+			const localKeys = Object.keys(settings).sort();
+			const currDefKeys = Object.keys(defaultSettings).sort();
 			
 			if(localKeys.length != currDefKeys.length){
-				
 				if(localKeys.length < currDefKeys.length){
-					// console.log("Updating settings...type 1");
-					for(var i=0; i < currDefKeys.length; i++){
+					for(let i=0; i < currDefKeys.length; i++){
 						if (!settings.hasOwnProperty(currDefKeys[i])) {
 							settings[currDefKeys[i]] = defaultSettings[currDefKeys[i]];
 						}
 					}
-					
-				}else{
-					// console.log("Updating settings...type 2");
-					for(var i=0; i < localKeys.length; i++){
-						var found = false;
-						for(var j=0; j < currDefKeys.length; j++){
+				} else {
+					for(let i=0; i < localKeys.length; i++){
+						let found = false;
+						for(let j=0; j < currDefKeys.length; j++){
 							if(localKeys[i] === currDefKeys[j]) {found = true; break;}
 						}
 						if(!found) {delete settings[localKeys[i]];}
 					}
 				}
-				
 				await setStorage({ settings: settings });
 			}
 			
@@ -155,23 +147,20 @@ async function settingsUpdate(){
 			if(!checks.TabListIndex){ await setStorage({ TabListIndex: [] }); }
 			if(!checks.ClosedTabIndex){ await setStorage({ ClosedTabIndex: [] }); }
 			
-			//updateCTabs();
-			
 			await setStorage({ updatedTill: manifest.version });
 		}
 	});
 }
 
-//compare updatedTill with specified version, if greater true
 function needUpdateOrNot(localVersion, specVer){
-	var need = false;
+	let need = false;
 	if(localVersion === undefined){need = true;}
 	else if(localVersion !== undefined && specVer !== "skip"){
 		if(localVersion !== specVer){
-			var spcVer = specVer.split(".").map(Number);
-			var tillVer = localVersion.split(".").map(Number);
-			var len = Math.max(spcVer.length, tillVer.length);
-			for(var i = 0; i<len; i++){
+			const spcVer = specVer.split(".").map(Number);
+			const tillVer = localVersion.split(".").map(Number);
+			const len = Math.max(spcVer.length, tillVer.length);
+			for(let i = 0; i<len; i++){
 				if(spcVer[i]===undefined){spcVer[i]=0;}
 				if(tillVer[i]===undefined){tillVer[i]=0;}
 				if(spcVer[i]>tillVer[i]){need = true; break;} 
@@ -188,37 +177,29 @@ async function addClosedTab(tabId, mode){
 }
 
 async function addClosedTabInternal(tabId, mode){
-	// console.log("REMOVED: "+tabId+"==="+(localStorage["TabList-"+tabId]!=undefined));
 	const key = "TabList-" + tabId;
-	// Fetch all necessary data at once
 	let data = await getStorage([key, 'settings', 'ClosedTabIndex', 'TabListIndex']);
 
 	if(data[key] != undefined){
-		var settings = data.settings || defaultSettings;
-		var closedTabIndex = data.ClosedTabIndex || [];
+		const settings = data.settings || defaultSettings;
+		const closedTabIndex = data.ClosedTabIndex || [];
 		
 		let storageUpdates = {};
-		let keysToRemove = [key]; // Always remove the TabList entry
+		let keysToRemove = [key];
 
-		// Should we record this tab?
-		var splitValue = data[key].split("|!|");
-		var url = splitValue[0];
-		var re = /^(http:|https:|chrome-extension:|file:)/;
+		const splitValue = data[key].split("|!|");
+		const url = splitValue[0];
+		const re = /^(http:|https:|chrome-extension:|file:)/;
 		
-		//if url is valid?
 		if (url && re.test(url)) {
-			var exists = -1;
-			
-			// Batch get all closed tabs to check existence
-			let closedTabKeys = closedTabIndex.map(id => "ClosedTab-" + id);
-			let closedTabsData = await getStorage(closedTabKeys);
+			let exists = -1;
+			const closedTabKeys = closedTabIndex.map(id => "ClosedTab-" + id);
+			const closedTabsData = await getStorage(closedTabKeys);
 
-			//go through all saved closed tabs
-			for(var i = closedTabIndex.length-1; i>=0; i--){
-				var closedTab = closedTabsData["ClosedTab-" + closedTabIndex[i]];
+			for(let i = closedTabIndex.length-1; i>=0; i--){
+				const closedTab = closedTabsData["ClosedTab-" + closedTabIndex[i]];
 				if (closedTab){
-					var split = closedTab.split("|!|");
-					//if new removed exists in saved closed tabs
+					const split = closedTab.split("|!|");
 					if (split[1]===url){
 						exists=closedTabIndex[i];
 						break;
@@ -226,34 +207,22 @@ async function addClosedTabInternal(tabId, mode){
 				}
 			}
 
-			var createStr = Date.now() + "|!|" + data[key];
-			//if new removed exists in saved closed tabs, mark for removal
+			const createStr = Date.now() + "|!|" + data[key];
 			if (exists!=-1){
 				keysToRemove.push("ClosedTab-"+exists);
 				closedTabIndex.splice(closedTabIndex.indexOf(exists),1);
 			}
 
-			var rId = crypto.randomUUID();
+			const rId = crypto.randomUUID();
 			storageUpdates["ClosedTab-"+rId] = createStr;
 			closedTabIndex.push(rId);
 
-			// Code for managing overflow
 			if (closedTabIndex.length > settings.numLimit){
-				// console.log("OVERFLOW - "+closedTabIndex.length+">"+settings.numLimit);
-				// We need to fetch data for the item we might delete to ensure we don't leave garbage? 
-				// Actually we can just assume the first index is the oldest.
-				// But original logic checked for existence. We already fetched closedTabsData.
-				
-				for(var i = 0; i<closedTabIndex.length; i++){
-					let cTabKey = "ClosedTab-" + closedTabIndex[i];
-					let closedTab = closedTabsData[cTabKey]; // Use cached data
-					// If it wasn't in cache, maybe we should fetch? 
-					// But we fetched all keys based on closedTabIndex at start.
+				for(let i = 0; i<closedTabIndex.length; i++){
+					const cTabKey = "ClosedTab-" + closedTabIndex[i];
+					const closedTab = closedTabsData[cTabKey]; 
 					
 					if (closedTab || closedTabsData[cTabKey] === undefined){ 
-						// Original logic: if(closedTab). If it's in index but not data, we should probably just remove index.
-						// Here we trust the index for overflow logic.
-						
 						keysToRemove.push(cTabKey);
 						closedTabIndex.splice(closedTabIndex.indexOf(closedTabIndex[i]),1);
 						break;
@@ -263,31 +232,27 @@ async function addClosedTabInternal(tabId, mode){
 			storageUpdates.ClosedTabIndex = closedTabIndex;
 		}
 		
-		// Remove from TabListIndex
-		var tabListIndex = data.TabListIndex || [];
+		const tabListIndex = data.TabListIndex || [];
 		const tIdx = tabListIndex.indexOf(tabId);
 		if (tIdx > -1) {
 			tabListIndex.splice(tIdx, 1);
 			storageUpdates.TabListIndex = tabListIndex;
 		}
 
-		// Perform Atomic Updates
 		await setStorage(storageUpdates);
 		await removeStorage(keysToRemove);
 		await setBadge();
 	}
 }
 
-//check for open tabs of previous browser close and make them closed tabs
 async function tabListProcessing() {
     await navigator.locks.request('simpleUndoClose_data', async (lock) => {
         let allData = await getStorage(null);
         let tabListIndex = allData.TabListIndex || [];
         
         for (const key in allData) {
-        // console.log("TLC"+i+" of "+storageSize+": "+localStorage.key(i));
             if(key.indexOf("TabList-")!=-1) {
-                var tabListId = parseInt(key.substr(8));
+                const tabListId = parseInt(key.substr(8));
                 if(tabListIndex.indexOf(tabListId)!=-1){
                     await addClosedTabInternal(tabListId,1);
                 }else{
@@ -298,27 +263,24 @@ async function tabListProcessing() {
     });
 }
 
-//thanks to Ehsan Kia, deletes orphaned ClosedTab entries
 async function cleanClosedTabs() {
     await navigator.locks.request('simpleUndoClose_data', async (lock) => {
         let data = await getStorage(['ClosedTabIndex']);
-        var indexList = data.ClosedTabIndex || [];
-        var db = {};
-        for (var i = 0; i < indexList.length; i++) {
+        const indexList = data.ClosedTabIndex || [];
+        const db = {};
+        for (let i = 0; i < indexList.length; i++) {
             db[indexList[i]] = true;
         }
 
         let allData = await getStorage(null);
         
-        // Remove orphaned data (Data exists, Index missing)
         for (let key in allData) {
-            var parts = key.split('-');
+            const parts = key.split('-');
             if (parts[0] === 'ClosedTab' && !db.hasOwnProperty(parts[1])) {
                 await removeStorage([key]);
             }
         }
 
-        // Remove orphaned index (Index exists, Data missing)
         let newIndexList = [];
         let indexChanged = false;
         for (let i = 0; i < indexList.length; i++) {
