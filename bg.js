@@ -255,11 +255,28 @@ async function cleanClosedTabs() {
         }
 
         let allData = await getStorage(null);
-        for (key in allData) {
+        
+        // Remove orphaned data (Data exists, Index missing)
+        for (let key in allData) {
             var parts = key.split('-');
             if (parts[0] === 'ClosedTab' && !db.hasOwnProperty(parts[1])) {
                 await removeStorage([key]);
             }
+        }
+
+        // Remove orphaned index (Index exists, Data missing)
+        let newIndexList = [];
+        let indexChanged = false;
+        for (let i = 0; i < indexList.length; i++) {
+            if (allData["ClosedTab-" + indexList[i]]) {
+                newIndexList.push(indexList[i]);
+            } else {
+                indexChanged = true;
+            }
+        }
+
+        if (indexChanged) {
+            await setStorage({ ClosedTabIndex: newIndexList });
         }
     });
 }

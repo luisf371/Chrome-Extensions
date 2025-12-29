@@ -182,6 +182,24 @@ async function populate(){
 		let allKeys = closedTabIndex.map(id => "ClosedTab-" + id);
 		let closedTabsMap = await getStorage(allKeys);
 
+		let missingIds = [];
+		for(let id of closedTabIndex){
+			if(!closedTabsMap["ClosedTab-"+id]){
+				missingIds.push(id);
+			}
+		}
+
+		if(missingIds.length > 0){
+			await removeClosedTabBatch(missingIds);
+			closedTabIndex = closedTabIndex.filter(id => !missingIds.includes(id));
+			if (closedTabIndex.length == 0){
+				content.innerHTML=chrome.i18n.getMessage("popup_noTabsMsg");
+				document.getElementById("controls").style.display="none";
+				noTabs = true;
+				return;
+			}
+		}
+
 		var i = closedTabIndex.length - 1;
 		for(var j = 0; i>=0 && j<pageNo*disp_per_pg; i--){ if (closedTabsMap["ClosedTab-"+closedTabIndex[i]]) j++;}
 
