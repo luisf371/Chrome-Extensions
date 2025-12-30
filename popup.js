@@ -108,12 +108,48 @@ async function populate(){
 		if (filterStrings != null) disp_per_pg = 1000;
 
 		currentTime = Date.now(); 
-		
-		let allKeys = closedTabIndex.map(id => "ClosedTab-" + id);
-		let closedTabsMap = await getStorage(allKeys);
 
+        // Pagination Logic: Slice the ID list FIRST
+        const startIndex = pageNo * disp_per_pg;
+        // The list is reversed in display logic (i starts at length-1) 
+        // But closedTabIndex is [oldest, ..., newest] usually.
+        // Let's look at the loop: i = closedTabIndex.length - 1. 
+        // It iterates backwards.
+        
+        // We want the newest items first.
+        // Index N-1 is the newest.
+        // Page 0: Indices [N-1, N-2, ... N-10]
+        
+        const totalItems = closedTabIndex.length;
+        const pageStart = totalItems - 1 - (pageNo * disp_per_pg);
+        let pageEnd = pageStart - disp_per_pg + 1;
+        if (pageEnd < 0) pageEnd = 0;
+        
+        // If we are filtering, we need ALL data unfortunately, 
+        // unless we index the search terms (too complex for now).
+        // So if filtering, we still fetch all.
+        
+        let keysToFetch = [];
+        let itemsToProcess = [];
+
+        if (filterStrings != null) {
+            keysToFetch = closedTabIndex.map(id => "ClosedTab-" + id);
+        } else {
+            // Fetch only current page
+            for(let i = pageStart; i >= pageEnd; i--){
+                keysToFetch.push("ClosedTab-" + closedTabIndex[i]);
+                itemsToProcess.push(closedTabIndex[i]);
+            }
+        }
+		
+		let closedTabsMap = await getStorage(keysToFetch);
+
+        // Check for missing items (only in the fetched set)
 		let missingIds = [];
-		for(let id of closedTabIndex){
+        // If filtering, we check all. If paging, check page.
+        const checkList = (filterStrings != null) ? closedTabIndex : itemsToProcess;
+        
+		for(let id of checkList){
 			if(!closedTabsMap["ClosedTab-"+id]){
 				missingIds.push(id);
 			}
@@ -121,38 +157,43 @@ async function populate(){
 
 		if(missingIds.length > 0){
 			await removeClosedTabBatch(missingIds);
+            // Re-fetch or recursive call? Simplest is return and let user reload or recursive call.
+            // But removing modifies storage.
+            // Let's just remove from our local list and continue if possible, or reload.
+            // Reloading populate is safer.
 			closedTabIndex = closedTabIndex.filter(id => !missingIds.includes(id));
-			if (closedTabIndex.length === 0){
-				const msg = chrome.i18n.getMessage("popup_noTabsMsg");
-				const div = document.createElement('div');
-				div.style.textAlign = 'center';
-				div.innerHTML = msg;
-				content.appendChild(div);
-
-				document.getElementById("controls").style.display = "none";
-				noTabs = true;
-				return;
-			}
+            await populate(); 
+            return;
 		}
 
-		let i = closedTabIndex.length - 1;
 		let j = 0;
-        // Skip pages
-		for(; i>=0 && j<pageNo*disp_per_pg; i--){ 
-            if (closedTabsMap["ClosedTab-"+closedTabIndex[i]]) j++;
+        
+        if (filterStrings != null) {
+             // Filter logic (iterating backwards)
+             for(let i = closedTabIndex.length - 1; i>=0; i--){
+                let key = "ClosedTab-"+closedTabIndex[i];
+                let closedTab = closedTabsMap[key];
+                if (closedTab && multiFind(closedTab, filterStrings, settings)){
+                    createEntry(closedTabIndex[i], closedTab);
+                    j++;
+                }
+             }
+        } else {
+            // Paged logic
+            // itemsToProcess has the IDs for this page (in reverse order already? No, pushed in reverse loop)
+            // Wait, I pushed: for(let i = pageStart; i >= pageEnd; i--) -> pushed [N-1, N-2...]
+            // So itemsToProcess is [Newest, 2nd Newest...]
+            
+            for(let i = 0; i < itemsToProcess.length; i++){
+                let id = itemsToProcess[i];
+                let key = "ClosedTab-"+id;
+                let closedTab = closedTabsMap[key];
+                if (closedTab){
+                    createEntry(id, closedTab);
+                    j++;
+                }
+            }
         }
-
-        j = 0;
-		for(; i>=0 && j<disp_per_pg; i--){
-			let key = "ClosedTab-"+closedTabIndex[i];
-			let closedTab = closedTabsMap[key];
-			if (closedTab){
-				if (filterStrings == null || (filterStrings != null && multiFind(closedTab, filterStrings, settings))){
-					createEntry(closedTabIndex[i], closedTab);
-					j++;
-				}
-			}
-		}
 
 		if (filterStrings == null) {
 			document.getElementById("tailenders").className = "tailendersHide";
@@ -178,10 +219,11 @@ async function populate(){
 
 function createEntry(i, closedTab) {
 
-	const split = closedTab.split("|!|");
-	const tabTime = split[0];
-	const tabUrl = split[1];
-	let tabTitle = split[2];
+	const tabData = closedTab;
+	const tabTime = tabData.time; 
+    
+	const tabUrl = tabData.url;
+	let tabTitle = tabData.title;
 
 	const text_link = createLink(i, tabUrl, tabTitle);
 
@@ -201,15 +243,29 @@ function createEntry(i, closedTab) {
     }
 
 	if (filterStrings != null) {
-        // Use multiReplace from common.js which returns safe HTML with <u> tags
-        titleDiv.innerHTML = multiReplace(tabTitle, filterStrings); 
+        // multiReplace returns string with markers \uE000 and \uE001.
+        // We need to parse this into nodes.
+        const markedTitle = multiReplace(tabTitle, filterStrings); 
+        // format: "some text \uE000match\uE001 some text"
+        
+        const parts = markedTitle.split(/(\uE000.*?\uE001)/);
+        parts.forEach(part => {
+             if (part.startsWith('\uE000') && part.endsWith('\uE001')) {
+                 const matchText = part.substring(1, part.length - 1);
+                 const u = document.createElement('u');
+                 u.textContent = matchText;
+                 titleDiv.appendChild(u);
+             } else {
+                 if (part) titleDiv.appendChild(document.createTextNode(part));
+             }
+        });
     } else {
 	    titleDiv.textContent = tabTitle; // Safe assignment
     }
 	
-	if(longpress && delType != 2 && !settings.sexy) {
+	if(longpress && delType != 2 && !settings.enhancedStyling) {
 		tWidth3 = tWidth - 28;
-	} else if((longpress || delType == 2) && settings.sexy) {
+	} else if((longpress || delType == 2) && settings.enhancedStyling) {
 		tWidth3 = tWidth - 28;
 	} else {
         tWidth3 = tWidth;
@@ -220,7 +276,7 @@ function createEntry(i, closedTab) {
 	if(settings.showTime){ 
 		timeSpan = document.createElement('span');
         timeSpan.className = "nxtLine";
-		if(settings.sexy) {
+		if(settings.enhancedStyling) {
             timeSpan.className = "nxtLine smeLine delTxt";
         }
 		timeSpan.innerHTML = getElapsedTime(currentTime - tabTime); // getElapsedTime returns bold tags
@@ -540,7 +596,7 @@ function handleGlobalMouseDown(e) {
             longpress = false;
             longTarget = link;
             
-            const animate = "longpress " + settings.lpDelay + "s";
+            const animate = "longpress " + settings.longPressDelay + "s";
             link.style.animation = animate;
 
             presstimer = setTimeout(function() {
@@ -615,13 +671,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (!settings) return;
 
     delType = settings.style;
-    lpdVal = settings.lpDelay * 1000;
+    lpdVal = settings.longPressDelay * 1000;
 
-    document.body.style.width = settings.wPop+'px';
-    tWidth = settings.wPop - 30-5;
-    if(settings.sexy) tWidth -= 91;
-    if(!settings.sexy && delType == 2) tWidth -= 28;
-    tWidth2 = settings.wPop - 28;
+    document.body.style.width = settings.popupWidth+'px';
+    tWidth = settings.popupWidth - 30-5;
+    if(settings.enhancedStyling) tWidth -= 91;
+    if(!settings.enhancedStyling && delType == 2) tWidth -= 28;
+    tWidth2 = settings.popupWidth - 28;
 
     chkArray = [];
 

@@ -81,14 +81,16 @@ function stripVowelAccent(str) {
     return str;
 }
 
-function multiFind(str, strings, settings) {
-    let target = stripVowelAccent(str).toLowerCase();
+function multiFind(data, strings, settings) {
+    let target = "";
     
-    if (settings && settings.searchMode !== 3 && str.includes("|!|")) {
-        const splitStr = target.split("|!|");
-        if (settings.searchMode === 1 && splitStr[2]) target = splitStr[2];
-        if (settings.searchMode === 2 && splitStr[1]) target = splitStr[1];
+    if (data) {
+        if (settings.searchMode === 1) target = data.title;
+        else if (settings.searchMode === 2) target = data.url;
+        else target = data.url + " " + data.title;
     }
+
+    target = stripVowelAccent(target).toLowerCase();
 
     let foundAmount = 0;
     for (const s of strings) {
@@ -121,9 +123,11 @@ function multiReplace(strReal, strings) {
 async function createTab(id, selected) {
 	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
 		const data = await getStorage(["ClosedTab-" + id]);
-		if (!data["ClosedTab-" + id]) return;
+		const entry = data["ClosedTab-" + id];
+        
+		if (!entry) return;
 
-		const url = data["ClosedTab-" + id].split("|!|")[1];
+		const url = entry.url;
 		
 		await removeClosedTabInternal(id);
 
@@ -139,9 +143,11 @@ async function createTab(id, selected) {
 async function createTabWindow(id, wId) {
 	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
 		const data = await getStorage(["ClosedTab-" + id]);
-		if (!data["ClosedTab-" + id]) return;
+		const entry = data["ClosedTab-" + id];
+        
+		if (!entry) return;
 
-		const url = data["ClosedTab-" + id].split("|!|")[1];
+		const url = entry.url;
 		
 		await removeClosedTabInternal(id);
 
@@ -154,8 +160,7 @@ async function addNewTab(tab) {
 	if (re.test(tab.url)) {
 		if (await chkNewTab(tab)) {
 			await navigator.locks.request('simpleUndoClose_data', async (lock) => {
-				let insertThis = tab.url + "|!|";
-				insertThis += tab.title.replace(/\|\!\|/g, " ");
+				let insertThis = { url: tab.url, title: tab.title };
 
 				const listKey = "TabList-" + tab.id;
 				let data = await getStorage(["TabListIndex"]);
@@ -183,7 +188,11 @@ async function chkNewTab(tab) {
 	const data = await getStorage([key]);
 	const inList = data[key];
 
-	if (inList === undefined || (inList && (inList.split("|!|")[0] !== tab.url || (inList.split("|!|")[0] === tab.url && inList.split("|!|")[1] !== tab.title)))) pass = true;
+	if (inList === undefined) {
+        pass = true;
+    } else {
+        if (inList.url !== tab.url || inList.title !== tab.title) pass = true;
+    }
 	return pass;
 }
 
@@ -245,15 +254,13 @@ async function setBadge() {
 }
 
 async function resetData() {
-	let data = await getStorage(["settings", "updatedTill"]);
+	let data = await getStorage(["settings"]);
 	let settings = data.settings;
-	let oldUpdTill = data.updatedTill;
 
 	await chrome.storage.local.clear();
 
 	await setStorage({
 		"settings": settings,
-		"updatedTill": oldUpdTill,
 		"TabListIndex": [],
 		"ClosedTabIndex": []
 	});
@@ -266,7 +273,7 @@ async function updateIcon() {
 	let data = await getStorage(["settings"]);
 	let settings = data.settings || {};
 
-	if (settings.altBut) {
+	if (settings.useAlternateIcon) {
 		chrome.action.setIcon({ path: { "19": "icon-19-1.png", "38": "icon-38-1.png" } });
 	} else {
 		let isDark = false;
@@ -313,8 +320,7 @@ async function regExistingTabs() {
         for (const tab of tabs) {
              if (re.test(tab.url)) {
                  const listKey = "TabList-" + tab.id;
-                 let insertThis = tab.url + "|!|";
-                 insertThis += tab.title.replace(/\|\!\|/g, " ");
+                 let insertThis = { url: tab.url, title: tab.title };
                  
                  updates[listKey] = insertThis;
                  changed = true;

@@ -14,11 +14,11 @@ const defaultSettings = {
 	"numLimit" : 10,
 	"numItems" : 10,
 	"numLines" : 1,
-	"altBut" : false,
-	"wPop" : 300,
-	"sexy" : false,
+	"useAlternateIcon" : false,
+	"popupWidth" : 300,
+	"enhancedStyling" : false,
 	"style" : 1,
-	"lpDelay" : 3,
+	"longPressDelay" : 3,
 	"mClickClose" : false,
 	"theme" : "1"
 };
@@ -26,6 +26,13 @@ const defaultSettings = {
 chrome.runtime.onStartup.addListener(async function() {
 	let data = await getStorage(['settings']);
 	let settings = data.settings;
+
+    if (!settings) {
+        await initialize();
+        data = await getStorage(['settings']);
+        settings = data.settings;
+    }
+
 	if (settings && !settings.saveHistory) {
 		await resetData(); 
 	}
@@ -43,7 +50,6 @@ chrome.runtime.onInstalled.addListener(async function(runInfo) {
 		await initialize();
 	}
 	if (runInfo.reason === "update") {
-		await setStorage({ dcTime: Date.now() });
 		await settingsUpdate();
 	}
 	await setBadge();
@@ -101,11 +107,8 @@ chrome.commands.onCommand.addListener(function(command) {
 });
 
 async function initialize(){
-	const manifest = chrome.runtime.getManifest();
 	await setStorage({
         settings: defaultSettings,
-        dcTime: Date.now(),
-        updatedTill: manifest.version,
         TabListIndex: [],
         ClosedTabIndex: []
     });
@@ -113,61 +116,50 @@ async function initialize(){
 }
 
 async function settingsUpdate(){
+    let needsInit = false;
 	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
-		let data = await getStorage(['settings', 'updatedTill']);
+		let data = await getStorage(['settings']);
 		
-		if(!data.settings){ await initialize(); return; }
+		if(!data.settings){ 
+            needsInit = true;
+            return; 
+        }
 
-		const manifest = chrome.runtime.getManifest();
-		if(data.settings && (!data.updatedTill || needUpdateOrNot(data.updatedTill, "1.3.11"))){
-			let settings = data.settings;
-			const localKeys = Object.keys(settings).sort();
-			const currDefKeys = Object.keys(defaultSettings).sort();
-			
-			if(localKeys.length != currDefKeys.length){
-				if(localKeys.length < currDefKeys.length){
-					for(let i=0; i < currDefKeys.length; i++){
-						if (!settings.hasOwnProperty(currDefKeys[i])) {
-							settings[currDefKeys[i]] = defaultSettings[currDefKeys[i]];
-						}
-					}
-				} else {
-					for(let i=0; i < localKeys.length; i++){
-						let found = false;
-						for(let j=0; j < currDefKeys.length; j++){
-							if(localKeys[i] === currDefKeys[j]) {found = true; break;}
-						}
-						if(!found) {delete settings[localKeys[i]];}
-					}
-				}
-				await setStorage({ settings: settings });
-			}
-			
-			let checks = await getStorage(['TabListIndex', 'ClosedTabIndex']);
-			if(!checks.TabListIndex){ await setStorage({ TabListIndex: [] }); }
-			if(!checks.ClosedTabIndex){ await setStorage({ ClosedTabIndex: [] }); }
-			
-			await setStorage({ updatedTill: manifest.version });
-		}
+        let settings = data.settings;
+        const currDefKeys = Object.keys(defaultSettings);
+        let settingsChanged = false;
+        
+        // Sync Keys: Add missing defaults
+        for(let i=0; i < currDefKeys.length; i++){
+            if (!settings.hasOwnProperty(currDefKeys[i])) {
+                settings[currDefKeys[i]] = defaultSettings[currDefKeys[i]];
+                settingsChanged = true;
+            }
+        }
+        
+        // Note: We do not remove extra keys to preserve user's potential future/other settings 
+        // unless strictly required. The original code did remove extras, but preserving is safer for forward compatibility.
+        // However, to match strict cleanup:
+        const localKeys = Object.keys(settings);
+        for(let i=0; i < localKeys.length; i++){
+            if (!defaultSettings.hasOwnProperty(localKeys[i])) {
+                delete settings[localKeys[i]];
+                settingsChanged = true;
+            }
+        }
+
+        if (settingsChanged) {
+            await setStorage({ settings: settings });
+        }
+        
+        let checks = await getStorage(['TabListIndex', 'ClosedTabIndex']);
+        if(!checks.TabListIndex){ await setStorage({ TabListIndex: [] }); }
+        if(!checks.ClosedTabIndex){ await setStorage({ ClosedTabIndex: [] }); }
 	});
-}
 
-function needUpdateOrNot(localVersion, specVer){
-	let need = false;
-	if(localVersion === undefined){need = true;}
-	else if(localVersion !== undefined && specVer !== "skip"){
-		if(localVersion !== specVer){
-			const spcVer = specVer.split(".").map(Number);
-			const tillVer = localVersion.split(".").map(Number);
-			const len = Math.max(spcVer.length, tillVer.length);
-			for(let i = 0; i<len; i++){
-				if(spcVer[i]===undefined){spcVer[i]=0;}
-				if(tillVer[i]===undefined){tillVer[i]=0;}
-				if(spcVer[i]>tillVer[i]){need = true; break;} 
-			}
-		}	
-	}
-	return need;
+    if (needsInit) {
+        await initialize();
+    }
 }
 
 async function addClosedTab(tabId, mode){
@@ -187,8 +179,8 @@ async function addClosedTabInternal(tabId, mode){
 		let storageUpdates = {};
 		let keysToRemove = [key];
 
-		const splitValue = data[key].split("|!|");
-		const url = splitValue[0];
+        const tabData = data[key];
+		const url = tabData.url;
 		const re = /^(http:|https:|chrome-extension:|file:)/;
 		
 		if (url && re.test(url)) {
@@ -199,22 +191,27 @@ async function addClosedTabInternal(tabId, mode){
 			for(let i = closedTabIndex.length-1; i>=0; i--){
 				const closedTab = closedTabsData["ClosedTab-" + closedTabIndex[i]];
 				if (closedTab){
-					const split = closedTab.split("|!|");
-					if (split[1]===url){
+                    const cTab = closedTab;
+					if (cTab.url === url){
 						exists=closedTabIndex[i];
 						break;
 					}
 				}
 			}
 
-			const createStr = Date.now() + "|!|" + data[key];
+            const createObj = {
+                time: Date.now(),
+                url: tabData.url,
+                title: tabData.title
+            };
+
 			if (exists!=-1){
 				keysToRemove.push("ClosedTab-"+exists);
 				closedTabIndex.splice(closedTabIndex.indexOf(exists),1);
 			}
 
 			const rId = crypto.randomUUID();
-			storageUpdates["ClosedTab-"+rId] = createStr;
+			storageUpdates["ClosedTab-"+rId] = createObj;
 			closedTabIndex.push(rId);
 
 			if (closedTabIndex.length > settings.numLimit){

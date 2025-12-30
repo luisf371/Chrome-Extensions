@@ -2,30 +2,30 @@ let settings = {};
 
 async function save() {
 	if(!document.getElementById('showTime').checked) {
-        document.getElementById('sexyBack').style.display = "none";
+        document.getElementById('enhancedStylingContainer').style.display = "none";
     } else {
-        document.getElementById('sexyBack').style.display = "block";
+        document.getElementById('enhancedStylingContainer').style.display = "block";
     }
 
 	settings.showClear = document.getElementById('showClear').checked;
 	settings.showBadge = document.getElementById('showBadge').checked;
 	settings.showTime = document.getElementById('showTime').checked;
-	settings.sexy = document.getElementById('sexy').checked;
+	settings.enhancedStyling = document.getElementById('enhancedStyling').checked;
 	settings.showSearch = document.getElementById('showSearch').checked;
 	settings.boldFont = document.getElementById('bold').checked;
 	settings.saveHistory = document.getElementById('saveHistory').checked;
 	settings.menuTop = document.getElementById('menuTop').checked;
 	settings.tooltipText = document.getElementById('tooltipText').checked;
-	settings.altBut = document.getElementById('altBut').checked;
+	settings.useAlternateIcon = document.getElementById('useAlternateIcon').checked;
 	
 	settings.searchMode = getRadioValue('searchIn');
 	settings.style = getRadioValue('styleIn');
 	settings.theme = getRadioValue('theme');
 	
-	settings.lpDelay = document.getElementById("lpdValue").value;
+	settings.longPressDelay = document.getElementById("longPressDelay").value;
 	settings.mClickClose = document.getElementById('mClickClose').checked;
 	
-	settings.wPop = parseInt(document.getElementById('wPop-value').textContent, 10);
+	settings.popupWidth = parseInt(document.getElementById('popupWidth-value').textContent, 10);
 	settings.numLimit = parseInt(document.getElementById('numLimit-value').textContent, 10);
 	settings.numItems = document.getElementById("numItems").value;
 	settings.numLines = parseInt(document.getElementById("numLines").value, 10);
@@ -55,10 +55,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 	document.getElementById('showTime').checked = settings.showTime;
 	document.getElementById('showTime').addEventListener('click', save);
-	if(!settings.showTime) document.getElementById('sexyBack').style.display = "none";
+	if(!settings.showTime) document.getElementById('enhancedStylingContainer').style.display = "none";
 	
-	document.getElementById('sexy').checked = settings.sexy;
-	document.getElementById('sexy').addEventListener('click', save);
+	document.getElementById('enhancedStyling').checked = settings.enhancedStyling;
+	document.getElementById('enhancedStyling').addEventListener('click', save);
 
 	document.getElementById('showSearch').checked = settings.showSearch;
 	document.getElementById('showSearch').addEventListener('click', save);
@@ -75,8 +75,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 	document.getElementById('tooltipText').checked = settings.tooltipText;
 	document.getElementById('tooltipText').addEventListener('click', save);
 	
-	document.getElementById('altBut').checked = settings.altBut;
-	document.getElementById('altBut').addEventListener('click', save);
+	document.getElementById('useAlternateIcon').checked = settings.useAlternateIcon;
+	document.getElementById('useAlternateIcon').addEventListener('click', save);
 	
 	document.getElementById('searchIn'+settings.searchMode).checked = true;
 	document.getElementById('searchIn1').addEventListener('click', save);
@@ -88,8 +88,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 	document.getElementById('style2').addEventListener('click', save);
 	document.getElementById('style3').addEventListener('click', save);
 	
-	document.getElementById('lpdValue').value = settings.lpDelay; chkLPval();
-	document.getElementById('lpdValue').addEventListener('input', save);
+	document.getElementById('longPressDelay').value = settings.longPressDelay; chkLPval();
+	document.getElementById('longPressDelay').addEventListener('change', save);
 	document.getElementById('mClickClose').checked = settings.mClickClose;
 	document.getElementById('mClickClose').addEventListener('click', save);
 	
@@ -98,27 +98,28 @@ document.addEventListener('DOMContentLoaded', async function () {
 	document.getElementById('theme2').addEventListener('click', async function(){ await save(); location.reload(); });
 	document.getElementById('theme3').addEventListener('click', async function(){ await save(); location.reload(); });
 	
-	const popWidth = document.getElementById('wPop');
-	const popWidthValue = document.getElementById('wPop-value');
-	popWidth.value = popWidthValue.textContent = parseInt(settings.wPop, 10);
-	popWidth.addEventListener('input', function(event) { popWidthValue.textContent = event.target.value; save();}, false);
+	const popWidth = document.getElementById('popupWidth');
+	const popWidthValue = document.getElementById('popupWidth-value');
+	popWidth.value = popWidthValue.textContent = parseInt(settings.popupWidth, 10);
+	popWidth.addEventListener('input', function(event) { popWidthValue.textContent = event.target.value; }, false);
+	popWidth.addEventListener('change', save, false);
 
 	await updateIcon();
 
 	const limitValue = document.getElementById('numLimit-value');
-	document.getElementById('numLimit').value = parseInt(Math.pow((((settings.numLimit-5)*Math.pow(600,5))/99994),0.2), 10);
+	document.getElementById('numLimit').value = settings.numLimit;
 	limitValue.textContent = settings.numLimit;
 	document.getElementById('numLimit').addEventListener('input', function(event) {
-        limitValue.textContent = 5 + parseInt((Math.pow(event.target.value,5)/Math.pow(600,5)) * 99994, 10);
-        save();
+        limitValue.textContent = event.target.value;
     }, false);
+	document.getElementById('numLimit').addEventListener('change', save, false);
 
 	const widthValue = document.getElementById('numItems-value');
 	document.getElementById('numItems').value = widthValue.textContent = settings.numItems;
 	document.getElementById('numItems').addEventListener('input', function(event) {
         widthValue.textContent = event.target.value;
-        save();
     }, false);
+	document.getElementById('numItems').addEventListener('change', save, false);
 
 	const lines = document.getElementById('numLines');
 	const linesValue = document.getElementById('numLines-value');
@@ -128,8 +129,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 	lines.addEventListener('input', function(event) { 
         if (event.target.value == 0) linesValue.textContent = "No Limit"; 
         else linesValue.textContent = event.target.value;
-        save();
     }, false);
+	lines.addEventListener('change', save, false);
 
 	document.getElementById('resetButton').addEventListener('click', clearMemory);
 
@@ -137,7 +138,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	document.getElementById('ctrlzOpt').title = chrome.i18n.getMessage("opt_func_opt5_tooltip");
 	
 	document.getElementById('openKBshort').addEventListener('click', openKBshortConfig);
-	document.getElementById('lpdValue').addEventListener('blur', chkLPval);
+	document.getElementById('longPressDelay').addEventListener('blur', chkLPval);
 });
 
 async function trimTabs(tablimit){
@@ -188,8 +189,8 @@ function openKBshortConfig() {
 }
 
 function chkLPval(){
-	if (document.getElementById('lpdValue').value === "") {
-        document.getElementById('lpdValue').value = "1";
+	if (document.getElementById('longPressDelay').value === "") {
+        document.getElementById('longPressDelay').value = "1";
         save();
     }
 }
