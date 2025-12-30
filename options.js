@@ -1,12 +1,67 @@
+import { getStorage, setStorage, removeStorage, setBadge, updateIcon } from './common.js';
+
 let settings = {};
 
+// Sidebar Toggle Logic
+function setupSidebarToggle() {
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.sidebar');
+    
+    // Load state
+    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isCollapsed) {
+        sidebar.classList.add('collapsed');
+    }
+
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    });
+}
+
+// Navigation Logic
+function setupNavigation() {
+    const navButtons = document.querySelectorAll('.nav-item');
+    const sections = document.querySelectorAll('.content-section');
+
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-section');
+            
+            // Update buttons
+            navButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update sections
+            sections.forEach(s => {
+                s.classList.remove('active');
+                if (s.id === targetId) {
+                    s.classList.add('active');
+                }
+            });
+        });
+    });
+}
+
+// Theme Logic
+function applyTheme(themeValue) {
+    document.body.classList.remove('theme-light', 'theme-dark');
+    if (themeValue === "2") {
+        document.body.classList.add('theme-light');
+    } else if (themeValue === "3") {
+        document.body.classList.add('theme-dark');
+    }
+}
+
 async function save() {
+    // Visibility toggles
 	if(!document.getElementById('showTime').checked) {
         document.getElementById('enhancedStylingContainer').style.display = "none";
     } else {
         document.getElementById('enhancedStylingContainer').style.display = "block";
     }
 
+    // Capture values
 	settings.showClear = document.getElementById('showClear').checked;
 	settings.showBadge = document.getElementById('showBadge').checked;
 	settings.showTime = document.getElementById('showTime').checked;
@@ -32,6 +87,10 @@ async function save() {
 	
 	await setStorage({ settings: settings });
 
+    // Apply theme immediately
+    applyTheme(settings.theme);
+
+    // Update background/badge state
 	let data = await getStorage(['ClosedTabIndex']);
 	let closedTabIndex = data.ClosedTabIndex || [];
 
@@ -43,102 +102,91 @@ async function save() {
 }
 
 document.addEventListener('DOMContentLoaded', async function () {
+    setupNavigation();
+    setupSidebarToggle();
+
 	let data = await getStorage(['settings']);
-	settings = data.settings;
-	if (!settings) return;
+	settings = data.settings || {};
 	
-	document.getElementById('showClear').checked = settings.showClear;
-	document.getElementById('showClear').addEventListener('click', save);
+    // Initialize Inputs
+	const setChecked = (id, val) => {
+        const el = document.getElementById(id);
+        if(el) {
+            el.checked = val;
+            el.addEventListener('change', save); // Changed from 'click' to 'change' for consistency
+        }
+    };
 
-	document.getElementById('showBadge').checked = settings.showBadge;
-	document.getElementById('showBadge').addEventListener('click', save);
+    setChecked('showClear', settings.showClear);
+    setChecked('showBadge', settings.showBadge);
+    setChecked('showTime', settings.showTime);
+    setChecked('enhancedStyling', settings.enhancedStyling);
+    setChecked('showSearch', settings.showSearch);
+    setChecked('bold', settings.boldFont);
+    setChecked('saveHistory', settings.saveHistory);
+    setChecked('menuTop', settings.menuTop);
+    setChecked('tooltipText', settings.tooltipText);
+    setChecked('useAlternateIcon', settings.useAlternateIcon);
+    setChecked('mClickClose', settings.mClickClose);
 
-	document.getElementById('showTime').checked = settings.showTime;
-	document.getElementById('showTime').addEventListener('click', save);
-	if(!settings.showTime) document.getElementById('enhancedStylingContainer').style.display = "none";
-	
-	document.getElementById('enhancedStyling').checked = settings.enhancedStyling;
-	document.getElementById('enhancedStyling').addEventListener('click', save);
+    // Handle conditional display immediately
+	if(!settings.showTime && document.getElementById('enhancedStylingContainer')) {
+        document.getElementById('enhancedStylingContainer').style.display = "none";
+    }
 
-	document.getElementById('showSearch').checked = settings.showSearch;
-	document.getElementById('showSearch').addEventListener('click', save);
+    // Radio Groups
+    const setRadio = (name, val) => {
+        if(val) {
+            const el = document.getElementById(name + val);
+            if(el) el.checked = true;
+        }
+        document.getElementsByName(name).forEach(r => r.addEventListener('change', save));
+    };
 
-	document.getElementById('bold').checked = settings.boldFont;
-	document.getElementById('bold').addEventListener('click', save);
+    setRadio('searchIn', settings.searchMode);
+    setRadio('styleIn', settings.style);
+    setRadio('theme', settings.theme); // Logic simplified, no reload needed now
 
-	document.getElementById('saveHistory').checked = settings.saveHistory;
-	document.getElementById('saveHistory').addEventListener('click', save);
+    // Theme Initial Apply
+    applyTheme(settings.theme);
 
-	document.getElementById('menuTop').checked = settings.menuTop;
-	document.getElementById('menuTop').addEventListener('click', save);
+    // Inputs with Logic
+	const lpDelay = document.getElementById('longPressDelay');
+    if(lpDelay) {
+        lpDelay.value = settings.longPressDelay;
+        lpDelay.addEventListener('change', () => { chkLPval(); save(); });
+        lpDelay.addEventListener('blur', chkLPval);
+    }
+
+    // Sliders
+    const setupSlider = (id, val, suffix = "") => {
+        const input = document.getElementById(id);
+        const display = document.getElementById(id + '-value');
+        if(input && display) {
+            input.value = val;
+            display.textContent = val === 0 && id === 'numLines' ? "No Limit" : val + suffix;
+            
+            input.addEventListener('input', (e) => {
+                const v = e.target.value;
+                display.textContent = (v == 0 && id === 'numLines') ? "No Limit" : v + suffix;
+            });
+            input.addEventListener('change', save);
+        }
+    };
+
+    setupSlider('popupWidth', parseInt(settings.popupWidth, 10));
+    setupSlider('numLimit', settings.numLimit);
+    setupSlider('numItems', settings.numItems);
+    setupSlider('numLines', parseInt(settings.numLines, 10));
+
+
+    // Buttons
+	document.getElementById('resetButton').addEventListener('click', clearMemory);
 	
-	document.getElementById('tooltipText').checked = settings.tooltipText;
-	document.getElementById('tooltipText').addEventListener('click', save);
-	
-	document.getElementById('useAlternateIcon').checked = settings.useAlternateIcon;
-	document.getElementById('useAlternateIcon').addEventListener('click', save);
-	
-	document.getElementById('searchIn'+settings.searchMode).checked = true;
-	document.getElementById('searchIn1').addEventListener('click', save);
-	document.getElementById('searchIn2').addEventListener('click', save);
-	document.getElementById('searchIn3').addEventListener('click', save);
-	
-	document.getElementById('style'+settings.style).checked = true;
-	document.getElementById('style1').addEventListener('click', save);
-	document.getElementById('style2').addEventListener('click', save);
-	document.getElementById('style3').addEventListener('click', save);
-	
-	document.getElementById('longPressDelay').value = settings.longPressDelay; chkLPval();
-	document.getElementById('longPressDelay').addEventListener('change', save);
-	document.getElementById('mClickClose').checked = settings.mClickClose;
-	document.getElementById('mClickClose').addEventListener('click', save);
-	
-	document.getElementById('theme'+settings.theme).checked = true;
-	document.getElementById('theme1').addEventListener('click', async function(){ await save(); location.reload(); });
-	document.getElementById('theme2').addEventListener('click', async function(){ await save(); location.reload(); });
-	document.getElementById('theme3').addEventListener('click', async function(){ await save(); location.reload(); });
-	
-	const popWidth = document.getElementById('popupWidth');
-	const popWidthValue = document.getElementById('popupWidth-value');
-	popWidth.value = popWidthValue.textContent = parseInt(settings.popupWidth, 10);
-	popWidth.addEventListener('input', function(event) { popWidthValue.textContent = event.target.value; }, false);
-	popWidth.addEventListener('change', save, false);
+    const kbBtn = document.getElementById('openKBshort');
+    if(kbBtn) kbBtn.addEventListener('click', openKBshortConfig);
 
 	await updateIcon();
-
-	const limitValue = document.getElementById('numLimit-value');
-	document.getElementById('numLimit').value = settings.numLimit;
-	limitValue.textContent = settings.numLimit;
-	document.getElementById('numLimit').addEventListener('input', function(event) {
-        limitValue.textContent = event.target.value;
-    }, false);
-	document.getElementById('numLimit').addEventListener('change', save, false);
-
-	const widthValue = document.getElementById('numItems-value');
-	document.getElementById('numItems').value = widthValue.textContent = settings.numItems;
-	document.getElementById('numItems').addEventListener('input', function(event) {
-        widthValue.textContent = event.target.value;
-    }, false);
-	document.getElementById('numItems').addEventListener('change', save, false);
-
-	const lines = document.getElementById('numLines');
-	const linesValue = document.getElementById('numLines-value');
-	lines.value = linesValue.textContent = parseInt(settings.numLines, 10);
-
-	if (lines.value == 0) linesValue.textContent = "No Limit";
-	lines.addEventListener('input', function(event) { 
-        if (event.target.value == 0) linesValue.textContent = "No Limit"; 
-        else linesValue.textContent = event.target.value;
-    }, false);
-	lines.addEventListener('change', save, false);
-
-	document.getElementById('resetButton').addEventListener('click', clearMemory);
-
-	document.getElementById('searchOpt').title = chrome.i18n.getMessage("opt_func_opt1_tooltip");
-	document.getElementById('ctrlzOpt').title = chrome.i18n.getMessage("opt_func_opt5_tooltip");
-	
-	document.getElementById('openKBshort').addEventListener('click', openKBshortConfig);
-	document.getElementById('longPressDelay').addEventListener('blur', chkLPval);
 });
 
 async function trimTabs(tablimit){
@@ -167,10 +215,6 @@ async function trimTabs(tablimit){
 	await setStorage({ ClosedTabIndex: closedTabIndex });
 }
 
-function informHotkeyChange(){
-	// Placeholder
-}
-
 function getRadioValue(radioGroup){
 	const rGrp = document.getElementsByName(radioGroup);
     for(let i = 0; i < rGrp.length; i++){
@@ -189,9 +233,9 @@ function openKBshortConfig() {
 }
 
 function chkLPval(){
-	if (document.getElementById('longPressDelay').value === "") {
-        document.getElementById('longPressDelay').value = "1";
-        save();
+    const el = document.getElementById('longPressDelay');
+	if (el.value === "" || parseInt(el.value) < 1) {
+        el.value = "1";
     }
 }
 

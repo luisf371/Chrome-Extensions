@@ -1,5 +1,5 @@
 // Helper for storage
-const getStorage = async (keys) => {
+export const getStorage = async (keys) => {
     if (keys === null) {
         const [local, sync] = await Promise.all([
             chrome.storage.local.get(null),
@@ -20,7 +20,7 @@ const getStorage = async (keys) => {
     return Object.assign({}, ...results);
 };
 
-const setStorage = async (items) => {
+export const setStorage = async (items) => {
     const syncItems = {};
     const localItems = {};
     let hasSync = false;
@@ -43,7 +43,7 @@ const setStorage = async (items) => {
     await Promise.all(promises);
 };
 
-const removeStorage = async (keys) => {
+export const removeStorage = async (keys) => {
     const keysArray = Array.isArray(keys) ? keys : [keys];
     const syncKeys = keysArray.filter(k => k === 'settings');
     const localKeys = keysArray.filter(k => k !== 'settings');
@@ -56,7 +56,7 @@ const removeStorage = async (keys) => {
 };
 
 // Robust HTML escaping
-function encodeHtml(str) {
+export function encodeHtml(str) {
     if (!str) return "";
     return str
         .replace(/&/g, '&amp;')
@@ -66,12 +66,12 @@ function encodeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
-function stripVowelAccent(str) {
+export function stripVowelAccent(str) {
     if (!str) return "";
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function multiFind(data, strings, settings) {
+export function multiFind(data, strings, settings) {
     let target = "";
     
     if (data) {
@@ -89,7 +89,7 @@ function multiFind(data, strings, settings) {
     return (foundAmount === strings.length);
 }
 
-function multiReplace(strReal, strings) {
+export function multiReplace(strReal, strings) {
     let str;
     const startTag = "\uE000";
     const endTag = "\uE001";
@@ -108,7 +108,7 @@ function multiReplace(strReal, strings) {
 
 // --- Business Logic Functions ---
 
-async function createTab(id, selected) {
+export async function createTab(id, selected) {
 	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
 		const data = await getStorage(["ClosedTab-" + id]);
 		const entry = data["ClosedTab-" + id];
@@ -128,7 +128,7 @@ async function createTab(id, selected) {
 	});
 }
 
-async function createTabWindow(id, wId) {
+export async function createTabWindow(id, wId) {
 	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
 		const data = await getStorage(["ClosedTab-" + id]);
 		const entry = data["ClosedTab-" + id];
@@ -143,7 +143,7 @@ async function createTabWindow(id, wId) {
 	});
 }
 
-async function addNewTab(tab) {
+export async function addNewTab(tab) {
 	const re = /^(http:|https:|chrome-extension:|file:)/;
 	if (re.test(tab.url)) {
 		await navigator.locks.request('simpleUndoClose_data', async (lock) => {
@@ -170,7 +170,7 @@ async function addNewTab(tab) {
 	}
 }
 
-async function chkNewTab(tab) {
+export async function chkNewTab(tab) {
 	let pass = false;
 	const key = "TabList-" + tab.id;
 	const data = await getStorage([key]);
@@ -184,13 +184,13 @@ async function chkNewTab(tab) {
 	return pass;
 }
 
-async function removeClosedTab(id) {
+export async function removeClosedTab(id) {
 	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
 		await removeClosedTabInternal(id);
 	});
 }
 
-async function removeClosedTabInternal(id) {
+export async function removeClosedTabInternal(id) {
 	let data = await getStorage(["ClosedTabIndex"]);
 	let closedTabIndex = data.ClosedTabIndex || [];
 
@@ -207,7 +207,7 @@ async function removeClosedTabInternal(id) {
 	await setBadge();
 }
 
-async function removeClosedTabBatch(ids) {
+export async function removeClosedTabBatch(ids) {
 	if (!ids || ids.length === 0) return;
 	
 	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
@@ -229,7 +229,7 @@ async function removeClosedTabBatch(ids) {
 	await setBadge();
 }
 
-async function setBadge() {
+export async function setBadge() {
 	let data = await getStorage(["settings", "ClosedTabIndex"]);
 	let settings = data.settings || {};
 
@@ -247,7 +247,7 @@ async function setBadge() {
 	}
 }
 
-async function resetData() {
+export async function resetData() {
 	let data = await getStorage(["settings"]);
 	let settings = data.settings;
 
@@ -266,7 +266,7 @@ async function resetData() {
 
 // ... (Rest of existing functions)
 
-async function updateSearchIndex(id, title, url) {
+export async function updateSearchIndex(id, title, url) {
     // Note: Called inside lock usually
     let data = await getStorage(['SearchIndex']);
     let index = data.SearchIndex || [];
@@ -276,7 +276,7 @@ async function updateSearchIndex(id, title, url) {
     await setStorage({ SearchIndex: index });
 }
 
-async function removeFromSearchIndex(ids) {
+export async function removeFromSearchIndex(ids) {
     if (!ids || ids.length === 0) return;
     let data = await getStorage(['SearchIndex']);
     let index = data.SearchIndex || [];
@@ -292,7 +292,7 @@ async function removeFromSearchIndex(ids) {
 }
 
 
-async function updateIcon() {
+export async function updateIcon() {
 	let data = await getStorage(["settings"]);
 	let settings = data.settings || {};
 
@@ -328,7 +328,7 @@ async function updateIcon() {
 	}
 }
 
-async function regExistingTabs() {
+export async function regExistingTabs() {
     const tabs = await chrome.tabs.query({ "url": "*://*/*" });
     if (tabs.length === 0) return;
 
@@ -361,7 +361,7 @@ async function regExistingTabs() {
     });
 }
 
-async function getLatestCTab() {
+export async function getLatestCTab() {
 	let data = await getStorage(["ClosedTabIndex"]);
 	let closedTabIndex = data.ClosedTabIndex || [];
 	if (closedTabIndex.length > 0) await createTab(closedTabIndex[closedTabIndex.length - 1], true);

@@ -9,7 +9,8 @@
       "default_title": "__MSG_manifest_toolbarbtn_tooltip__"
    },
    "background": {
-      "service_worker": "bg.js"
+      "service_worker": "bg.js",
+      "type": "module"
    },
    "commands": {
       "undo-latest": {

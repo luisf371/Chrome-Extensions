@@ -16,7 +16,8 @@ document.addEventListener('DOMContentLoaded', function () {
     for (const el of elements) {
         const label = el.getAttribute('i18n');
         if (label) {
-            el.textContent = chrome.i18n.getMessage(label);
+            const msg = chrome.i18n.getMessage(label);
+            if (msg) el.innerHTML = msg;
         }
     }
 	

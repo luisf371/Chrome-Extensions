@@ -54,37 +54,37 @@
       "message": "Visit blogsite"
    },
    "opt_func_opt1": {
-      "message": "Look for search keyword in :"
+      "message": "Search in:"
    },
    "opt_func_opt10": {
-      "message": "Amount of lines of text to display for each tab :"
+      "message": "Lines per item:"
    },
    "opt_func_opt11": {
-      "message": "Long click duration"
+      "message": "Long click duration (s):"
    },
    "opt_func_opt12": {
-      "message": "Close popup after middle click"
+      "message": "Close popup on middle-click"
    },
    "opt_func_opt1_tooltip": {
-      "message": "Affects the result of the search via the search bar in the popup."
+      "message": "Determines which fields are searched in the popup."
    },
    "opt_func_opt2": {
-      "message": "tab title only"
+      "message": "Title"
    },
    "opt_func_opt3": {
-      "message": "tab URL only"
+      "message": "URL"
    },
    "opt_func_opt4": {
-      "message": "both tab title and URL"
+      "message": "Title & URL"
    },
    "opt_func_opt5": {
-      "message": "Edit custom undo hotkey"
+      "message": "Shortcuts"
    },
    "opt_func_opt5_tooltip": {
-      "message": "Works only when you use the hotkey on a normal webpage, not a browser settings page, New Tab page or Chrome Web Store page."
+      "message": "Manage extension shortcuts in Chrome settings."
    },
    "opt_func_opt5a": {
-      "message": "Edit"
+      "message": "Configure"
    },
    "opt_func_opt6": {
       "message": "Disable double click feature"
@@ -93,40 +93,40 @@
       "message": "Disable triple click feature"
    },
    "opt_func_opt7": {
-      "message": "Save closed tabs on browser close"
+      "message": "Keep history after closing browser"
    },
    "opt_func_opt8": {
-      "message": "Amount of closed tabs to save :"
+      "message": "History size:"
    },
    "opt_func_opt9": {
-      "message": "Amount of closed tabs to display per page :"
+      "message": "Items per page:"
    },
    "opt_func_title": {
-      "message": "Function"
+      "message": "Behavior"
    },
    "opt_looks_opt1": {
-      "message": "Show badge with number of closed tabs on toolbar icon"
+      "message": "Show count badge on icon"
    },
    "opt_looks_opt10": {
-      "message": "Width of popup :"
+      "message": "Popup width:"
    },
    "opt_looks_opt11": {
-      "message": "Select a style :"
+      "message": "List Style:"
    },
    "opt_looks_opt12": {
-      "message": "Theme :"
+      "message": "Theme:"
    },
    "opt_looks_opt13": {
-      "message": "system default"
+      "message": "System Default"
    },
    "opt_looks_opt14": {
-      "message": "light"
+      "message": "Light"
    },
    "opt_looks_opt15": {
-      "message": "dark"
+      "message": "Dark"
    },
    "opt_looks_opt2": {
-      "message": "Search bar &amp; buttons on top"
+      "message": "Controls at top"
    },
    "opt_looks_opt3": {
       "message": "Show search bar"
@@ -135,28 +135,28 @@
       "message": "Show 'Clear' button"
    },
    "opt_looks_opt5": {
-      "message": "Show time"
+      "message": "Show timestamp"
    },
    "opt_looks_opt6": {
-      "message": "Bold text"
+      "message": "Use bold font"
    },
    "opt_looks_opt7": {
-      "message": "Show page title instead of URL in tooltips"
+      "message": "Tooltips show title instead of URL"
    },
    "opt_looks_opt8": {
-      "message": "Use alternate toolbar button"
+      "message": "Use alternate icon"
    },
    "opt_looks_opt9": {
-      "message": "Move time to right end"
+      "message": "Align timestamp right"
    },
    "opt_looks_title": {
-      "message": "Looks"
+      "message": "Appearance"
    },
    "opt_resetbtn": {
-      "message": "Clear saved tabs?"
+      "message": "Clear History"
    },
    "opt_resetbtn_popupMsg": {
-      "message": "Clear saved tabs?"
+      "message": "Are you sure you want to clear the history?"
    },
    "other_text1": {
       "message": "Do drop by my DeviantArt page to see more of my works!"

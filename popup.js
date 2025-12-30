@@ -1,3 +1,17 @@
+import { 
+    getStorage, 
+    setStorage, 
+    removeStorage, 
+    removeClosedTab, 
+    removeClosedTabBatch, 
+    createTab, 
+    createTabWindow, 
+    resetData, 
+    multiFind, 
+    multiReplace, 
+    stripVowelAccent 
+} from './common.js';
+
 let settings = {};
 
 let pageNo = 0;

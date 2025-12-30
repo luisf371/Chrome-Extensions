@@ -1,4 +1,16 @@
-importScripts('common.js');
+import { 
+    getStorage, 
+    setStorage, 
+    removeStorage, 
+    getLatestCTab, 
+    addNewTab, 
+    regExistingTabs,
+    setBadge,
+    updateIcon,
+    resetData,
+    updateSearchIndex,
+    removeFromSearchIndex
+} from './common.js';
 
 const defaultSettings = {
 	"showClear" : true,

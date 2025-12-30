@@ -1,3 +1,5 @@
+import { getStorage } from './common.js';
+
 document.addEventListener('DOMContentLoaded', async function () {
 	let data = await getStorage(['settings']);
 	let settings = data.settings;
