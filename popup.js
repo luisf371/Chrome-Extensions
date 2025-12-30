@@ -84,8 +84,9 @@ async function setup(){
 
 async function populate(){
 	
-	let data = await getStorage(['ClosedTabIndex']);
+	let data = await getStorage(['ClosedTabIndex', 'SearchIndex']);
 	let closedTabIndex = data.ClosedTabIndex || [];
+    let searchIndex = data.SearchIndex;
 
 	// Clear existing content safely
     while (content.firstChild) {
@@ -94,9 +95,8 @@ async function populate(){
 
 	if (closedTabIndex.length === 0){
 		const msg = chrome.i18n.getMessage("popup_noTabsMsg");
-		const div = document.createElement('div');
-		div.style.textAlign = 'center';
-		div.innerHTML = msg;
+		const div = document.createElement('center');
+		div.textContent = msg.replace(/<[^>]*>?/gm, '');
 		content.appendChild(div);
 
 		document.getElementById("controls").style.display = "none";
@@ -111,29 +111,31 @@ async function populate(){
 
         // Pagination Logic: Slice the ID list FIRST
         const startIndex = pageNo * disp_per_pg;
-        // The list is reversed in display logic (i starts at length-1) 
-        // But closedTabIndex is [oldest, ..., newest] usually.
-        // Let's look at the loop: i = closedTabIndex.length - 1. 
-        // It iterates backwards.
-        
-        // We want the newest items first.
-        // Index N-1 is the newest.
-        // Page 0: Indices [N-1, N-2, ... N-10]
         
         const totalItems = closedTabIndex.length;
         const pageStart = totalItems - 1 - (pageNo * disp_per_pg);
         let pageEnd = pageStart - disp_per_pg + 1;
         if (pageEnd < 0) pageEnd = 0;
         
-        // If we are filtering, we need ALL data unfortunately, 
-        // unless we index the search terms (too complex for now).
-        // So if filtering, we still fetch all.
-        
         let keysToFetch = [];
         let itemsToProcess = [];
 
         if (filterStrings != null) {
-            keysToFetch = closedTabIndex.map(id => "ClosedTab-" + id);
+            // OPTIMIZED SEARCH
+            if (searchIndex) {
+                 for(let i = searchIndex.length - 1; i >= 0; i--){
+                    const item = searchIndex[i];
+                    // Adapt for multiFind
+                    if (multiFind({ title: item.t, url: item.u }, filterStrings, settings)) {
+                        itemsToProcess.push(item.id);
+                        keysToFetch.push("ClosedTab-" + item.id);
+                        if(itemsToProcess.length >= 1000) break; // Hard limit
+                    }
+                 }
+            } else {
+                // Fallback: Fetch all
+                keysToFetch = closedTabIndex.map(id => "ClosedTab-" + id);
+            }
         } else {
             // Fetch only current page
             for(let i = pageStart; i >= pageEnd; i--){
@@ -146,8 +148,7 @@ async function populate(){
 
         // Check for missing items (only in the fetched set)
 		let missingIds = [];
-        // If filtering, we check all. If paging, check page.
-        const checkList = (filterStrings != null) ? closedTabIndex : itemsToProcess;
+        const checkList = (filterStrings != null && !searchIndex) ? closedTabIndex : itemsToProcess;
         
 		for(let id of checkList){
 			if(!closedTabsMap["ClosedTab-"+id]){
@@ -157,10 +158,6 @@ async function populate(){
 
 		if(missingIds.length > 0){
 			await removeClosedTabBatch(missingIds);
-            // Re-fetch or recursive call? Simplest is return and let user reload or recursive call.
-            // But removing modifies storage.
-            // Let's just remove from our local list and continue if possible, or reload.
-            // Reloading populate is safer.
 			closedTabIndex = closedTabIndex.filter(id => !missingIds.includes(id));
             await populate(); 
             return;
@@ -169,21 +166,29 @@ async function populate(){
 		let j = 0;
         
         if (filterStrings != null) {
-             // Filter logic (iterating backwards)
-             for(let i = closedTabIndex.length - 1; i>=0; i--){
-                let key = "ClosedTab-"+closedTabIndex[i];
-                let closedTab = closedTabsMap[key];
-                if (closedTab && multiFind(closedTab, filterStrings, settings)){
-                    createEntry(closedTabIndex[i], closedTab);
-                    j++;
-                }
+             if (searchIndex) {
+                 // Render from our pre-calculated list
+                 for(let id of itemsToProcess){
+                     let key = "ClosedTab-" + id;
+                     let closedTab = closedTabsMap[key];
+                     if(closedTab) {
+                         createEntry(id, closedTab);
+                         j++;
+                     }
+                 }
+             } else {
+                 // Fallback Legacy Loop
+                 for(let i = closedTabIndex.length - 1; i>=0; i--){
+                    let key = "ClosedTab-"+closedTabIndex[i];
+                    let closedTab = closedTabsMap[key];
+                    if (closedTab && multiFind(closedTab, filterStrings, settings)){
+                        createEntry(closedTabIndex[i], closedTab);
+                        j++;
+                    }
+                 }
              }
         } else {
             // Paged logic
-            // itemsToProcess has the IDs for this page (in reverse order already? No, pushed in reverse loop)
-            // Wait, I pushed: for(let i = pageStart; i >= pageEnd; i--) -> pushed [N-1, N-2...]
-            // So itemsToProcess is [Newest, 2nd Newest...]
-            
             for(let i = 0; i < itemsToProcess.length; i++){
                 let id = itemsToProcess[i];
                 let key = "ClosedTab-"+id;
@@ -279,7 +284,11 @@ function createEntry(i, closedTab) {
 		if(settings.enhancedStyling) {
             timeSpan.className = "nxtLine smeLine delTxt";
         }
-		timeSpan.innerHTML = getElapsedTime(currentTime - tabTime); // getElapsedTime returns bold tags
+		const tStr = getElapsedTime(currentTime - tabTime); 
+        const b = document.createElement('b');
+        b.textContent = tStr;
+        timeSpan.appendChild(b);
+        timeSpan.appendChild(document.createTextNode(" ago"));
 	}
 	
 	let itm = document.createElement("div");
@@ -348,7 +357,7 @@ function buildDelBtn(i){
 		
         const delTxt = document.createElement("p");
         delTxt.className = "delTxt";
-        delTxt.innerHTML = "&times;";
+        delTxt.textContent = "×";
         delBtn.appendChild(delTxt);
 		
 		const delBg = document.createElement("div");
@@ -366,7 +375,7 @@ function buildDelBtn(i){
 
         const delTxt = document.createElement("p");
         delTxt.className = "delTxt2";
-        delTxt.innerHTML = "&times;";
+        delTxt.textContent = "×";
         delBtn.appendChild(delTxt);
 		
 		fragment.appendChild(delBtn);
@@ -423,20 +432,33 @@ function reset(){
 
 async function deleteFoundTabs(){
 	if (filterStrings == null) return;
-	let data = await getStorage(['ClosedTabIndex']);
+	let data = await getStorage(['ClosedTabIndex', 'SearchIndex']);
     let closedTabIndex = data.ClosedTabIndex || [];
-    let keys = closedTabIndex.map(id => "ClosedTab-" + id);
-    let closedTabsMap = await getStorage(keys);
+    let searchIndex = data.SearchIndex;
+    let idsToRemove = [];
+
+    if (searchIndex) {
+         for(let i = searchIndex.length - 1; i >= 0; i--){
+            const item = searchIndex[i];
+            if (multiFind({ title: item.t, url: item.u }, filterStrings, settings)) {
+                idsToRemove.push(item.id);
+            }
+         }
+    } else {
+        // Fallback
+        let keys = closedTabIndex.map(id => "ClosedTab-" + id);
+        let closedTabsMap = await getStorage(keys);
+        
+        for(let i = closedTabIndex.length - 1; i>=0; i--){
+            let closedTab = closedTabsMap["ClosedTab-"+closedTabIndex[i]];
+            if (closedTab){
+                if (multiFind(closedTab, filterStrings, settings)){
+                    idsToRemove.push(closedTabIndex[i]);
+                }
+            }
+        }
+    }
     
-	let idsToRemove = [];
-	for(let i = closedTabIndex.length - 1; i>=0; i--){
-		let closedTab = closedTabsMap["ClosedTab-"+closedTabIndex[i]];
-		if (closedTab){
-			if (filterStrings != null && multiFind(closedTab, filterStrings, settings)){
-				idsToRemove.push(closedTabIndex[i]);
-			}
-		}
-	}
 	if (idsToRemove.length > 0) {
 		await removeClosedTabBatch(idsToRemove);
 	}
@@ -446,7 +468,7 @@ async function deleteFoundTabs(){
 }
 
 function getElapsedTime(ms){
-	let text = "<b>";
+	let text = "";
 	let s,min,h,days,x;
     x = ms / 1000;
     s = Math.floor(x % 60);
@@ -463,7 +485,6 @@ function getElapsedTime(ms){
 	else if(min!=0) {text += min+"min "}
 	else if(s!=0) {text += s+"s "}	
 	else {text += "0s "}
-	text+="</b> ago";
 	
 	return text;
 }

@@ -67,18 +67,8 @@ function encodeHtml(str) {
 }
 
 function stripVowelAccent(str) {
-    const rExps = [ /[\u00C0-\u00C2]/g, /[\u00E0-\u00E2]/g,
-        /[\u00C8-\u00CA]/g, /[\u00E8-\u00EB]/g,
-        /[\u00CC-\u00CE]/g, /[\u00EC-\u00EE]/g,
-        /[\u00D2-\u00D4]/g, /[\u00F2-\u00F4]/g,
-        /[\u00D9-\u00DB]/g, /[\u00F9-\u00FB]/g ];
-
-    const repChar = ['A','a','E','e','I','i','O','o','U','u'];
-
-    for(let i=0; i<rExps.length; i++) {
-        str = str.replace(rExps[i], repChar[i]);
-    }
-    return str;
+    if (!str) return "";
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 function multiFind(data, strings, settings) {
@@ -113,9 +103,7 @@ function multiReplace(strReal, strings) {
         }
     }
     
-    let encoded = encodeHtml(workingStr);
-    encoded = encoded.split(startTag).join("<u>").split(endTag).join("</u>");
-    return encoded;
+    return workingStr;
 }
 
 // --- Business Logic Functions ---
@@ -158,8 +146,8 @@ async function createTabWindow(id, wId) {
 async function addNewTab(tab) {
 	const re = /^(http:|https:|chrome-extension:|file:)/;
 	if (re.test(tab.url)) {
-		if (await chkNewTab(tab)) {
-			await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+		await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+			if (await chkNewTab(tab)) {
 				let insertThis = { url: tab.url, title: tab.title };
 
 				const listKey = "TabList-" + tab.id;
@@ -177,8 +165,8 @@ async function addNewTab(tab) {
 						[listKey]: insertThis
 					});
 				}
-			});
-		}
+			}
+		});
 	}
 }
 
@@ -207,6 +195,9 @@ async function removeClosedTabInternal(id) {
 	let closedTabIndex = data.ClosedTabIndex || [];
 
 	await removeStorage(["ClosedTab-" + id]);
+    
+    // Sync Index
+    await removeFromSearchIndex([id]);
 
 	const index = closedTabIndex.indexOf(id);
 	if (index > -1) {
@@ -225,6 +216,9 @@ async function removeClosedTabBatch(ids) {
 		
 		let keysToRemove = ids.map(id => "ClosedTab-" + id);
 		await removeStorage(keysToRemove);
+        
+        // Sync Index
+        await removeFromSearchIndex(ids);
 
 		let newIndex = closedTabIndex.filter(id => !ids.includes(id));
 		
@@ -262,12 +256,41 @@ async function resetData() {
 	await setStorage({
 		"settings": settings,
 		"TabListIndex": [],
-		"ClosedTabIndex": []
+		"ClosedTabIndex": [],
+        "SearchIndex": []
 	});
 
 	await regExistingTabs();
 	await setBadge();
 }
+
+// ... (Rest of existing functions)
+
+async function updateSearchIndex(id, title, url) {
+    // Note: Called inside lock usually
+    let data = await getStorage(['SearchIndex']);
+    let index = data.SearchIndex || [];
+    // We add new items to the END (matching ClosedTabIndex)
+    // Minimal data for search
+    index.push({ id: id, t: title, u: url });
+    await setStorage({ SearchIndex: index });
+}
+
+async function removeFromSearchIndex(ids) {
+    if (!ids || ids.length === 0) return;
+    let data = await getStorage(['SearchIndex']);
+    let index = data.SearchIndex || [];
+    
+    // Convert single ID to array check just in case, though usually array passed
+    const idSet = new Set(Array.isArray(ids) ? ids : [ids]);
+
+    let newIndex = index.filter(item => !idSet.has(item.id));
+    
+    if (newIndex.length !== index.length) {
+        await setStorage({ SearchIndex: newIndex });
+    }
+}
+
 
 async function updateIcon() {
 	let data = await getStorage(["settings"]);

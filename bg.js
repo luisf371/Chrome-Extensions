@@ -110,7 +110,8 @@ async function initialize(){
 	await setStorage({
         settings: defaultSettings,
         TabListIndex: [],
-        ClosedTabIndex: []
+        ClosedTabIndex: [],
+        SearchIndex: []
     });
 	await regExistingTabs();
 }
@@ -152,9 +153,27 @@ async function settingsUpdate(){
             await setStorage({ settings: settings });
         }
         
-        let checks = await getStorage(['TabListIndex', 'ClosedTabIndex']);
+        let checks = await getStorage(['TabListIndex', 'ClosedTabIndex', 'SearchIndex']);
         if(!checks.TabListIndex){ await setStorage({ TabListIndex: [] }); }
         if(!checks.ClosedTabIndex){ await setStorage({ ClosedTabIndex: [] }); }
+        
+        // Migration: Build SearchIndex if missing but items exist
+        if(!checks.SearchIndex && checks.ClosedTabIndex && checks.ClosedTabIndex.length > 0){
+             let newIndex = [];
+             const ids = checks.ClosedTabIndex;
+             const keys = ids.map(id => "ClosedTab-" + id);
+             const tabsData = await getStorage(keys);
+             
+             for(let id of ids){
+                 const t = tabsData["ClosedTab-"+id];
+                 if(t){
+                     newIndex.push({ id: id, t: t.title, u: t.url });
+                 }
+             }
+             await setStorage({ SearchIndex: newIndex });
+        } else if (!checks.SearchIndex) {
+             await setStorage({ SearchIndex: [] });
+        }
 	});
 
     if (needsInit) {
@@ -178,6 +197,7 @@ async function addClosedTabInternal(tabId, mode){
 		
 		let storageUpdates = {};
 		let keysToRemove = [key];
+        let idsToRemoveIndex = [];
 
         const tabData = data[key];
 		const url = tabData.url;
@@ -207,6 +227,7 @@ async function addClosedTabInternal(tabId, mode){
 
 			if (exists!=-1){
 				keysToRemove.push("ClosedTab-"+exists);
+                idsToRemoveIndex.push(exists);
 				closedTabIndex.splice(closedTabIndex.indexOf(exists),1);
 			}
 
@@ -221,12 +242,25 @@ async function addClosedTabInternal(tabId, mode){
 					
 					if (closedTab || closedTabsData[cTabKey] === undefined){ 
 						keysToRemove.push(cTabKey);
+                        idsToRemoveIndex.push(closedTabIndex[i]);
 						closedTabIndex.splice(closedTabIndex.indexOf(closedTabIndex[i]),1);
 						break;
 					}
 				}
 			}
 			storageUpdates.ClosedTabIndex = closedTabIndex;
+            
+            // Perform writes
+            await setStorage(storageUpdates);
+            await removeStorage(keysToRemove);
+            
+            // Update Index (Wait for storage write first to be safe, or concurrent)
+            // Remove old/evicted from index
+            if(idsToRemoveIndex.length > 0) {
+                await removeFromSearchIndex(idsToRemoveIndex);
+            }
+            // Add new to index
+            await updateSearchIndex(rId, createObj.title, createObj.url);
 		}
 		
 		const tabListIndex = data.TabListIndex || [];
@@ -234,10 +268,10 @@ async function addClosedTabInternal(tabId, mode){
 		if (tIdx > -1) {
 			tabListIndex.splice(tIdx, 1);
 			storageUpdates.TabListIndex = tabListIndex;
+            // Note: we might set TabListIndex twice in updates, but that's fine, last one wins or merge
+            await setStorage({ TabListIndex: tabListIndex });
 		}
 
-		await setStorage(storageUpdates);
-		await removeStorage(keysToRemove);
 		await setBadge();
 	}
 }
@@ -290,6 +324,15 @@ async function cleanClosedTabs() {
 
         if (indexChanged) {
             await setStorage({ ClosedTabIndex: newIndexList });
+        }
+        
+        // Sync SearchIndex
+        let searchData = await getStorage(['SearchIndex']);
+        let searchIndex = searchData.SearchIndex || [];
+        let newSearchIndex = searchIndex.filter(item => db[item.id]); // Keep only if in valid ID list
+        
+        if (newSearchIndex.length !== searchIndex.length) {
+            await setStorage({ SearchIndex: newSearchIndex });
         }
     });
 }
