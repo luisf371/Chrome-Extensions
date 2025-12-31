@@ -25,7 +25,7 @@ let noTabs;
 
 let tWidth, tWidth2, tWidth3;
 
-let delType;
+let styleId;
 let longpress = false;
 let lpdVal;
 let chkArray;
@@ -48,6 +48,21 @@ function createLink(id, url, pgTitle) {
 	return link;
 }
 
+function applyPopupStyle(styleValue) {
+    const body = document.body;
+    body.classList.remove("style-classic", "style-studio", "style-ledger", "style-beacon");
+
+    const styleMap = {
+        1: "style-classic",
+        2: "style-studio",
+        3: "style-ledger",
+        4: "style-beacon"
+    };
+    const key = parseInt(styleValue, 10);
+    const className = styleMap[key] || "style-classic";
+    body.classList.add(className);
+}
+
 // Replaced encodeHtml with the version in common.js (assumed present)
 
 async function setup(){
@@ -55,7 +70,6 @@ async function setup(){
 	content = document.getElementById("content");
 
 	if (settings.menuTop === true) content = document.getElementById("content2");
-	if (settings.boldFont === true) content.classList.add("bold");
 	
 	await populate();
 	
@@ -257,8 +271,9 @@ function createEntry(i, closedTab) {
     let titleDiv = document.createElement('div');
     titleDiv.className = "titleTxt";
     
-	if (settings.numLines != 0 && !isNaN(settings.numLines) && filterStrings == null) {
-        titleDiv.classList.add("maxh" + settings.numLines);
+	if (!isNaN(settings.numLines) && filterStrings == null) {
+        const clampedLines = Math.min(3, Math.max(1, settings.numLines));
+        titleDiv.classList.add("maxh" + clampedLines);
     }
 
 	if (filterStrings != null) {
@@ -282,12 +297,10 @@ function createEntry(i, closedTab) {
 	    titleDiv.textContent = tabTitle; // Safe assignment
     }
 	
-	if(longpress && delType != 2 && !settings.enhancedStyling) {
-		tWidth3 = tWidth - 28;
-	} else if((longpress || delType == 2) && settings.enhancedStyling) {
+	if(longpress) {
 		tWidth3 = tWidth - 28;
 	} else {
-        tWidth3 = tWidth;
+		tWidth3 = tWidth;
 	}
     titleDiv.style.width = tWidth3 + "px";
 	
@@ -295,9 +308,6 @@ function createEntry(i, closedTab) {
 	if(settings.showTime){ 
 		timeSpan = document.createElement('span');
         timeSpan.className = "nxtLine";
-		if(settings.enhancedStyling) {
-            timeSpan.className = "nxtLine smeLine delTxt";
-        }
 		const tStr = getElapsedTime(currentTime - tabTime); 
         const b = document.createElement('b');
         b.textContent = tStr;
@@ -312,30 +322,11 @@ function createEntry(i, closedTab) {
     if(timeSpan) itm.appendChild(timeSpan);
 	
 	if(!longpress){
-		if(delType == 1){
-			itm.className = "item";
-			itm.appendChild(buildDelBtn(i));
-			text_link.appendChild(itm);
-			text_link.classList.add("link");
-			content.appendChild(text_link);
-		}
-		if(delType == 2){
-			const itm2 = document.createElement("div");
-			itm2.className = "item2";
-		
-			text_link.appendChild(itm);
-			text_link.style.width = tWidth2+"px";
-			text_link.classList.add("classicExpand");
-			itm2.appendChild(buildDelBtn(i));
-			itm2.appendChild(text_link);
-			content.appendChild(itm2);
-		}
-		if(delType == 3){
-			itm.className = "item";
-			text_link.appendChild(itm);
-			text_link.classList.add("link");
-			content.appendChild(text_link);
-		}
+		itm.className = "item";
+		itm.appendChild(buildDelBtn(i));
+		text_link.appendChild(itm);
+		text_link.classList.add("link");
+		content.appendChild(text_link);
 	}else{
 		const itm3 = document.createElement("div");
 		itm3.className = "item2";
@@ -362,40 +353,24 @@ function createEntry(i, closedTab) {
 
 function buildDelBtn(i){
     const fragment = document.createDocumentFragment();
-  
-    if(delType == 1){
-		const delBtn = document.createElement("div");
-		delBtn.dataset.id = i;
-		delBtn.className = "del";
-		delBtn.title = chrome.i18n.getMessage("popup_delbtn");
-		
-        const delTxt = document.createElement("p");
-        delTxt.className = "delTxt";
-        delTxt.textContent = "×";
-        delBtn.appendChild(delTxt);
-		
-		const delBg = document.createElement("div");
-		delBg.className = "delBg";
-		
-		fragment.appendChild(delBtn);
-		fragment.appendChild(delBg);
-	}
-	
-	if(delType == 2){
-		const delBtn = document.createElement("div");
-		delBtn.dataset.id = i;
-		delBtn.className = "del2";
-		delBtn.title = chrome.i18n.getMessage("popup_delbtn");
 
-        const delTxt = document.createElement("p");
-        delTxt.className = "delTxt2";
-        delTxt.textContent = "×";
-        delBtn.appendChild(delTxt);
-		
-		fragment.appendChild(delBtn);
-	}
-	
-	return fragment;
+    const delBtn = document.createElement("div");
+    delBtn.dataset.id = i;
+    delBtn.className = "del";
+    delBtn.title = chrome.i18n.getMessage("popup_delbtn");
+
+    const delTxt = document.createElement("p");
+    delTxt.className = "delTxt";
+    delTxt.textContent = "x";
+    delBtn.appendChild(delTxt);
+
+    const delBg = document.createElement("div");
+    delBg.className = "delBg";
+
+    fragment.appendChild(delBtn);
+    fragment.appendChild(delBg);
+
+    return fragment;
 }
 
 function searchFor(string) {
@@ -567,7 +542,7 @@ function btnLangAdj(){
 // Global Event Handlers for Delegation
 function handleGlobalClick(e) {
     // Delete Button
-    const delBtn = e.target.closest('.del, .del2');
+    const delBtn = e.target.closest('.del');
     if (delBtn) {
         e.stopPropagation();
         (async () => {
@@ -705,13 +680,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     settings = data.settings;
     if (!settings) return;
 
-    delType = settings.style;
+    styleId = parseInt(settings.style, 10) || 1;
     lpdVal = settings.longPressDelay * 1000;
+
+    applyPopupStyle(styleId);
 
     document.body.style.width = settings.popupWidth+'px';
     tWidth = settings.popupWidth - 30-5;
-    if(settings.enhancedStyling) tWidth -= 91;
-    if(!settings.enhancedStyling && delType == 2) tWidth -= 28;
     tWidth2 = settings.popupWidth - 28;
 
     chkArray = [];

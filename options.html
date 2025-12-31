@@ -54,7 +54,10 @@
                     
                     <div class="option-row">
                         <div class="option-info">
-                            <label for="saveHistory" i18n="opt_func_opt7">Keep history after closing browser</label>
+                            <div class="option-label">
+                                <label for="saveHistory" i18n="opt_func_opt7">Keep history after closing browser</label>
+                                <span class="info-icon" data-tooltip="Keeps closed-tab history across browser restarts.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <label class="switch">
@@ -66,7 +69,10 @@
 
                     <div class="option-row">
                         <div class="option-info">
-                            <span i18n="opt_func_opt8">History size:</span>
+                            <div class="option-label">
+                                <span i18n="opt_func_opt8">History size:</span>
+                                <span class="info-icon" data-tooltip="Maximum number of closed tabs to store.">i</span>
+                            </div>
                         </div>
                         <div class="option-control range-control">
                             <input type="range" min="1" max="600" step="1" id="numLimit">
@@ -76,8 +82,10 @@
 
                     <div class="option-row">
                         <div class="option-info">
-                            <span class="label">Clear Data</span>
-                            <p class="description">Remove all saved closed tabs history.</p>
+                            <div class="option-label">
+                                <span class="label">Clear Data</span>
+                                <span class="info-icon" data-tooltip="Deletes all stored closed-tab history.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                              <button id="resetButton" class="btn danger" i18n="opt_resetbtn">Clear History</button>
@@ -90,8 +98,10 @@
 
                     <div class="option-row">
                         <div class="option-info">
-                            <span i18n="opt_func_opt1">Search in:</span>
-                            <p class="description" i18n="opt_func_opt1_tooltip">Determines which fields are searched in the popup.</p>
+                            <div class="option-label">
+                                <span i18n="opt_func_opt1">Search in:</span>
+                                <span class="info-icon" data-tooltip="Choose which fields are searched in the popup.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <div class="select-group">
@@ -104,7 +114,10 @@
 
                     <div class="option-row">
                         <div class="option-info">
-                            <label for="mClickClose" i18n="opt_func_opt12">Close popup on middle-click</label>
+                            <div class="option-label">
+                                <label for="mClickClose" i18n="opt_func_opt12">Close popup on middle-click</label>
+                                <span class="info-icon" data-tooltip="Middle-click restores a tab and closes the popup.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <label class="switch">
@@ -116,7 +129,10 @@
 
                     <div class="option-row">
                         <div class="option-info">
-                            <span i18n="opt_func_opt11">Long click duration (s):</span>
+                            <div class="option-label">
+                                <span i18n="opt_func_opt11">Long click duration (s):</span>
+                                <span class="info-icon" data-tooltip="Hold time to enter multi-select mode.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <input id="longPressDelay" type="number" min="1" class="input-number">
@@ -125,8 +141,10 @@
 
                      <div class="option-row">
                         <div class="option-info">
-                            <span i18n="opt_func_opt5">Shortcuts:</span>
-                            <p class="description" i18n="opt_func_opt5_tooltip">Manage extension shortcuts in Chrome settings.</p>
+                            <div class="option-label">
+                                <span i18n="opt_func_opt5">Shortcuts:</span>
+                                <span class="info-icon" data-tooltip="Open Chrome shortcut settings for the extension.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <button id="openKBshort" class="btn secondary" i18n="opt_func_opt5a">Configure</button>
@@ -144,7 +162,10 @@
                     
                     <div class="option-row">
                         <div class="option-info">
-                            <span i18n="opt_looks_opt12">Theme:</span>
+                            <div class="option-label">
+                                <span i18n="opt_looks_opt12">Theme:</span>
+                                <span class="info-icon" data-tooltip="Use system, force light, or force dark theme.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                              <div class="select-group">
@@ -157,22 +178,29 @@
 
                     <div class="option-row">
                         <div class="option-info">
-                            <span i18n="opt_looks_opt11">List Style:</span>
+                            <div class="option-label">
+                                <span i18n="opt_looks_opt11">Popup style:</span>
+                                <span class="info-icon" data-tooltip="Choose the visual layout for list items.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <div class="select-group">
-                                <label><input type="radio" id="style1" name="styleIn" value="1"><span>Default</span></label>
-                                <label><input type="radio" id="style2" name="styleIn" value="2"><span>Classic</span></label>
-                                <label><input type="radio" id="style3" name="styleIn" value="3"><span>Compact</span></label>
+                                <label><input type="radio" id="styleIn1" name="styleIn" value="1"><span>Classic</span></label>
+                                <label><input type="radio" id="styleIn2" name="styleIn" value="2"><span>Studio</span></label>
+                                <label><input type="radio" id="styleIn3" name="styleIn" value="3"><span>Ledger</span></label>
+                                <label><input type="radio" id="styleIn4" name="styleIn" value="4"><span>Beacon</span></label>
                             </div>
                         </div>
                     </div>
-                     <div class="option-row">
+                    <div class="option-row">
                         <div class="option-info">
-                            <span i18n="opt_looks_opt10">Popup width:</span>
+                            <div class="option-label">
+                                <span i18n="opt_looks_opt10">Popup width:</span>
+                                <span class="info-icon" data-tooltip="Sets the popup width in pixels.">i</span>
+                            </div>
                         </div>
                         <div class="option-control range-control">
-                            <input type="range" min="300" max="800" step="10" id="popupWidth">
+                            <input type="range" min="300" max="700" step="10" id="popupWidth">
                             <span id="popupWidth-value" class="range-value"></span>
                         </div>
                     </div>
@@ -183,7 +211,10 @@
                     
                     <div class="option-row">
                         <div class="option-info">
-                            <label for="showBadge" i18n="opt_looks_opt1">Show count badge on icon</label>
+                            <div class="option-label">
+                                <label for="showBadge" i18n="opt_looks_opt1">Show count badge on icon</label>
+                                <span class="info-icon" data-tooltip="Shows the number of stored closed tabs on the icon.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <label class="switch">
@@ -195,7 +226,10 @@
 
                     <div class="option-row">
                         <div class="option-info">
-                            <label for="useAlternateIcon" i18n="opt_looks_opt8">Use alternate icon</label>
+                            <div class="option-label">
+                                <label for="useAlternateIcon" i18n="opt_looks_opt8">Use alternate icon</label>
+                                <span class="info-icon" data-tooltip="Switches to the alternate toolbar icon set.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <label class="switch">
@@ -207,7 +241,10 @@
 
                     <div class="option-row">
                         <div class="option-info">
-                            <label for="menuTop" i18n="opt_looks_opt2">Controls at top</label>
+                            <div class="option-label">
+                                <label for="menuTop" i18n="opt_looks_opt2">Controls at top</label>
+                                <span class="info-icon" data-tooltip="Moves the control bar above the list.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <label class="switch">
@@ -219,7 +256,10 @@
 
                     <div class="option-row">
                         <div class="option-info">
-                            <label for="showSearch" i18n="opt_looks_opt3">Show search bar</label>
+                            <div class="option-label">
+                                <label for="showSearch" i18n="opt_looks_opt3">Show search bar</label>
+                                <span class="info-icon" data-tooltip="Shows the search field in the popup.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <label class="switch">
@@ -231,7 +271,10 @@
 
                     <div class="option-row">
                         <div class="option-info">
-                            <label for="showClear" i18n="opt_looks_opt4">Show 'Clear' button</label>
+                            <div class="option-label">
+                                <label for="showClear" i18n="opt_looks_opt4">Show 'Clear' button</label>
+                                <span class="info-icon" data-tooltip="Shows the Clear History button in the popup.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <label class="switch">
@@ -243,19 +286,10 @@
 
                      <div class="option-row">
                         <div class="option-info">
-                            <label for="bold" i18n="opt_looks_opt6">Use bold font</label>
-                        </div>
-                        <div class="option-control">
-                            <label class="switch">
-                                <input type="checkbox" id="bold">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                     <div class="option-row">
-                        <div class="option-info">
-                            <label for="tooltipText" i18n="opt_looks_opt7">Tooltips show title instead of URL</label>
+                            <div class="option-label">
+                                <label for="tooltipText" i18n="opt_looks_opt7">Tooltips show title instead of URL</label>
+                                <span class="info-icon" data-tooltip="Hover tooltips show the tab title instead of the URL.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <label class="switch">
@@ -267,30 +301,10 @@
 
                     <div class="option-row">
                         <div class="option-info">
-                            <span i18n="opt_func_opt9">Items per page:</span>
-                        </div>
-                        <div class="option-control range-control">
-                            <input type="range" min="3" max="250" step="1" id="numItems">
-                            <span id="numItems-value" class="range-value"></span>
-                        </div>
-                    </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <span i18n="opt_func_opt10">Lines per item:</span>
-                        </div>
-                        <div class="option-control range-control">
-                            <input type="range" min="0" max="6" step="1" id="numLines">
-                            <span id="numLines-value" class="range-value"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3>Timestamp Options</h3>
-                    <div class="option-row">
-                        <div class="option-info">
-                            <label for="showTime" i18n="opt_looks_opt5">Show timestamp</label>
+                            <div class="option-label">
+                                <label for="showTime" i18n="opt_looks_opt5">Show timestamp</label>
+                                <span class="info-icon" data-tooltip="Shows time since a tab was closed.">i</span>
+                            </div>
                         </div>
                         <div class="option-control">
                             <label class="switch">
@@ -299,18 +313,30 @@
                             </label>
                         </div>
                     </div>
-                    
-                    <div class="sub-options" id="enhancedStylingContainer">
-                         <div class="option-row">
-                            <div class="option-info">
-                                <label for="enhancedStyling" i18n="opt_looks_opt9">Align timestamp right</label>
+
+                    <div class="option-row">
+                        <div class="option-info">
+                            <div class="option-label">
+                                <span i18n="opt_func_opt9">Items per page:</span>
+                                <span class="info-icon" data-tooltip="Number of entries shown per page.">i</span>
                             </div>
-                            <div class="option-control">
-                                <label class="switch">
-                                    <input type="checkbox" id="enhancedStyling">
-                                    <span class="slider"></span>
-                                </label>
+                        </div>
+                        <div class="option-control range-control">
+                            <input type="range" min="3" max="80" step="1" id="numItems">
+                            <span id="numItems-value" class="range-value"></span>
+                        </div>
+                    </div>
+
+                    <div class="option-row">
+                        <div class="option-info">
+                            <div class="option-label">
+                                <span i18n="opt_func_opt10">Lines per item:</span>
+                                <span class="info-icon" data-tooltip="Clamp each title to a set number of lines.">i</span>
                             </div>
+                        </div>
+                        <div class="option-control range-control">
+                            <input type="range" min="1" max="3" step="1" id="numLines">
+                            <span id="numLines-value" class="range-value"></span>
                         </div>
                     </div>
                 </div>

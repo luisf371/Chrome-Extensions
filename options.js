@@ -54,20 +54,11 @@ function applyTheme(themeValue) {
 }
 
 async function save() {
-    // Visibility toggles
-	if(!document.getElementById('showTime').checked) {
-        document.getElementById('enhancedStylingContainer').style.display = "none";
-    } else {
-        document.getElementById('enhancedStylingContainer').style.display = "block";
-    }
-
     // Capture values
 	settings.showClear = document.getElementById('showClear').checked;
 	settings.showBadge = document.getElementById('showBadge').checked;
 	settings.showTime = document.getElementById('showTime').checked;
-	settings.enhancedStyling = document.getElementById('enhancedStyling').checked;
 	settings.showSearch = document.getElementById('showSearch').checked;
-	settings.boldFont = document.getElementById('bold').checked;
 	settings.saveHistory = document.getElementById('saveHistory').checked;
 	settings.menuTop = document.getElementById('menuTop').checked;
 	settings.tooltipText = document.getElementById('tooltipText').checked;
@@ -80,10 +71,10 @@ async function save() {
 	settings.longPressDelay = document.getElementById("longPressDelay").value;
 	settings.mClickClose = document.getElementById('mClickClose').checked;
 	
-	settings.popupWidth = parseInt(document.getElementById('popupWidth-value').textContent, 10);
+    settings.popupWidth = Math.min(700, Math.max(300, parseInt(document.getElementById('popupWidth-value').textContent, 10)));
 	settings.numLimit = parseInt(document.getElementById('numLimit-value').textContent, 10);
-	settings.numItems = document.getElementById("numItems").value;
-	settings.numLines = parseInt(document.getElementById("numLines").value, 10);
+	settings.numItems = Math.min(80, Math.max(3, parseInt(document.getElementById("numItems").value, 10)));
+	settings.numLines = Math.min(3, Math.max(1, parseInt(document.getElementById("numLines").value, 10)));
 	
 	await setStorage({ settings: settings });
 
@@ -109,7 +100,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 	settings = data.settings || {};
 	
     // Initialize Inputs
-	const setChecked = (id, val) => {
+    const setChecked = (id, val) => {
         const el = document.getElementById(id);
         if(el) {
             el.checked = val;
@@ -120,19 +111,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     setChecked('showClear', settings.showClear);
     setChecked('showBadge', settings.showBadge);
     setChecked('showTime', settings.showTime);
-    setChecked('enhancedStyling', settings.enhancedStyling);
     setChecked('showSearch', settings.showSearch);
-    setChecked('bold', settings.boldFont);
     setChecked('saveHistory', settings.saveHistory);
     setChecked('menuTop', settings.menuTop);
     setChecked('tooltipText', settings.tooltipText);
     setChecked('useAlternateIcon', settings.useAlternateIcon);
     setChecked('mClickClose', settings.mClickClose);
-
-    // Handle conditional display immediately
-	if(!settings.showTime && document.getElementById('enhancedStylingContainer')) {
-        document.getElementById('enhancedStylingContainer').style.display = "none";
-    }
 
     // Radio Groups
     const setRadio = (name, val) => {
@@ -142,6 +126,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
         document.getElementsByName(name).forEach(r => r.addEventListener('change', save));
     };
+
 
     setRadio('searchIn', settings.searchMode);
     setRadio('styleIn', settings.style);
@@ -164,11 +149,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         const display = document.getElementById(id + '-value');
         if(input && display) {
             input.value = val;
-            display.textContent = val === 0 && id === 'numLines' ? "No Limit" : val + suffix;
+            display.textContent = val + suffix;
             
             input.addEventListener('input', (e) => {
                 const v = e.target.value;
-                display.textContent = (v == 0 && id === 'numLines') ? "No Limit" : v + suffix;
+                display.textContent = v + suffix;
             });
             input.addEventListener('change', save);
         }

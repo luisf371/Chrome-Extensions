@@ -297,7 +297,7 @@ export async function updateIcon() {
 	let settings = data.settings || {};
 
 	if (settings.useAlternateIcon) {
-		chrome.action.setIcon({ path: { "19": "icon-19-1.png", "38": "icon-38-1.png" } });
+		chrome.action.setIcon({ path: { "19": "icon-19-0.png", "38": "icon-38-0.png" } });
 	} else {
 		let isDark = false;
 		if (settings.theme == "3") {
