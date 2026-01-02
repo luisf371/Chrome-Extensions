@@ -48,7 +48,28 @@
             <!-- GENERAL SETTINGS -->
             <section id="general" class="content-section active">
                 <h2 i18n="opt_func_title">Behavior</h2>
-                
+
+                <!-- NEW: Stats Card -->
+                <div class="stats-card">
+                    <div class="stats-header">
+                        <span class="stats-title">Restored Tabs</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-session">0</div>
+                            <div class="stat-label">This Session</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-closed">0</div>
+                            <div class="stat-label">All Time</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-days">0</div>
+                            <div class="stat-label">Days Active</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <h3>History & Storage</h3>
                     
@@ -75,8 +96,20 @@
                             </div>
                         </div>
                         <div class="option-control range-control">
-                            <input type="range" min="1" max="600" step="1" id="numLimit">
+                            <input type="range" min="20" max="200" step="5" id="numLimit">
                             <span id="numLimit-value" class="range-value"></span>
+                        </div>
+                    </div>
+
+                    <div class="option-row">
+                        <div class="option-info">
+                            <div class="option-label">
+                                <span class="label">Reset Counter</span>
+                                <span class="info-icon" data-tooltip="Sets this session's restored tab counter to zero.">i</span>
+                            </div>
+                        </div>
+                        <div class="option-control">
+                             <button id="resetSessionButton" class="btn warning btn-wide">Reset Counter</button>
                         </div>
                     </div>
 
@@ -88,7 +121,7 @@
                             </div>
                         </div>
                         <div class="option-control">
-                             <button id="resetButton" class="btn danger" i18n="opt_resetbtn">Clear History</button>
+                             <button id="resetButton" class="btn danger btn-wide" i18n="opt_resetbtn">Clear History</button>
                         </div>
                     </div>
                 </div>
@@ -349,12 +382,12 @@
                     <h3 i18n="tips_title">Usage Tips</h3>
                     <div class="tip-item">
                         <h4 i18n="tips_tip1">Undo latest closed tab</h4>
-                        <p i18n="tips_tip1_line1">HOW: Check the hotkey option in Settings, then use the configured shortcut (Alt+Z).</p>
+                        <p i18n="tips_tip1_line1">HOW: Check the hotkey option in Settings, then use the configured shortcut <span class="kbd">Alt</span><span class="kbd-separator">+</span><span class="kbd">Z</span>.</p>
                     </div>
                     <div class="tip-item">
                         <h4 i18n="tips_tip3">Keyboard navigation in popup</h4>
                         <p i18n="tips_tip3_line1">HOW: Open the popup and use arrow keys to navigate.</p>
-                        <p i18n="tips_tip3_line2">CONTROLS: ←, → = Previous, Next page; ↑, ↓ = Select items; Enter = Restore.</p>
+                        <p i18n="tips_tip3_line2">CONTROLS: <span class="kbd">←</span><span class="kbd">→</span> = Previous, Next page; <span class="kbd">↑</span><span class="kbd">↓</span> = Select items; <span class="kbd">Enter</span> = Restore.</p>
                     </div>
                     <div class="tip-item">
                         <h4 i18n="tips_tip4">Assign browser shortcut</h4>
@@ -394,7 +427,7 @@
                 <h3 i18n="cLog_title" style="margin-top: 2rem;">Changelog</h3>
                 <div class="card">
                     <div class="changelog-item">
-                        <h4 class="version">v1.3.11 (13/11/2020)</h4>
+                        <h4 class="version">v1.3.11 (13/11/2020) <span class="highlight-badge pulse">Latest</span></h4>
                         <ul>
                             <li>Added support for dark mode with theme selection</li>
                         </ul>
@@ -418,5 +451,11 @@
             </section>
         </main>
     </div>
+
+    <!-- NEW: Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- NEW: Save Indicator -->
+    <div class="save-indicator" id="saveIndicator">Settings Saved</div>
 </body>
 </html>

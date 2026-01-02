@@ -5,14 +5,19 @@ document.addEventListener('DOMContentLoaded', async function () {
 	let settings = data.settings;
 	if (!settings) return;
 
-	const linkTag = document.getElementById('dark');
-	if (!linkTag) return;
-	
+	// Remove any existing theme classes
+	document.body.classList.remove('theme-light', 'theme-dark');
+
+	// Apply theme based on settings
 	if(settings.theme === "2"){
-		linkTag.removeAttribute("href");
+		// Light mode
+		document.body.classList.add('theme-light');
 	}
-	
+
 	if(settings.theme === "3"){
-		linkTag.removeAttribute("media");
+		// Dark mode
+		document.body.classList.add('theme-dark');
 	}
+
+	// If theme === "1" (System), let CSS @media handle it
 });

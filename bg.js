@@ -43,6 +43,8 @@ chrome.runtime.onStartup.addListener(async function() {
         settings = data.settings;
     }
 
+    await chrome.storage.session.set({ restoreCountSession: 0 });
+
 	if (settings && !settings.saveHistory) {
 		await resetData(); 
 	}
@@ -62,6 +64,7 @@ chrome.runtime.onInstalled.addListener(async function(runInfo) {
 	if (runInfo.reason === "update") {
 		await settingsUpdate();
 	}
+    await chrome.storage.session.set({ restoreCountSession: 0 });
 	await setBadge();
 	await updateIcon();
 });
@@ -121,7 +124,9 @@ async function initialize(){
         settings: defaultSettings,
         TabListIndex: [],
         ClosedTabIndex: [],
-        SearchIndex: []
+        SearchIndex: [],
+        restoreCountAllTime: 0,
+        installDate: Date.now()
     });
 	await regExistingTabs();
 }
@@ -163,9 +168,11 @@ async function settingsUpdate(){
             await setStorage({ settings: settings });
         }
         
-        let checks = await getStorage(['TabListIndex', 'ClosedTabIndex', 'SearchIndex']);
+        let checks = await getStorage(['TabListIndex', 'ClosedTabIndex', 'SearchIndex', 'restoreCountAllTime', 'installDate']);
         if(!checks.TabListIndex){ await setStorage({ TabListIndex: [] }); }
         if(!checks.ClosedTabIndex){ await setStorage({ ClosedTabIndex: [] }); }
+        if(!checks.restoreCountAllTime && checks.restoreCountAllTime !== 0){ await setStorage({ restoreCountAllTime: 0 }); }
+        if(!checks.installDate){ await setStorage({ installDate: Date.now() }); }
         
         // Migration: Build SearchIndex if missing but items exist
         if(!checks.SearchIndex && checks.ClosedTabIndex && checks.ClosedTabIndex.length > 0){

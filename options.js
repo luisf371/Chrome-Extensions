@@ -27,7 +27,7 @@ function setupNavigation() {
     navButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const targetId = btn.getAttribute('data-section');
-            
+
             // Update buttons
             navButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -39,7 +39,25 @@ function setupNavigation() {
                     s.classList.add('active');
                 }
             });
+
+            // Update stats when switching to General section
+            if (targetId === 'general') {
+                updateStatsCard();
+            }
         });
+    });
+
+    // Listen for storage changes to update stats in real-time
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+        const generalSection = document.getElementById('general');
+        if (!generalSection || !generalSection.classList.contains('active')) return;
+
+        if (areaName === 'local' && (changes.restoreCountAllTime || changes.installDate)) {
+            updateStatsCard();
+        }
+        if (areaName === 'session' && changes.restoreCountSession) {
+            updateStatsCard();
+        }
     });
 }
 
@@ -90,6 +108,18 @@ async function save() {
 	}
 	await setBadge();
 	await updateIcon();
+
+	// NEW: Update stats after saving
+    updateStatsCard();
+
+    // NEW: Show save indicator
+    const saveIndicator = document.getElementById('saveIndicator');
+    if (saveIndicator) {
+        saveIndicator.classList.add('show');
+        setTimeout(() => {
+            saveIndicator.classList.remove('show');
+        }, 2000);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async function () {
@@ -168,10 +198,25 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Buttons
 	document.getElementById('resetButton').addEventListener('click', clearMemory);
 	
+    const resetSessionBtn = document.getElementById('resetSessionButton');
+    if (resetSessionBtn) {
+        resetSessionBtn.addEventListener('click', async () => {
+            const sure = confirm('Reset the restored tab counter for this session?');
+            if (!sure) return;
+            await chrome.storage.session.set({ restoreCountSession: 0 });
+            updateStatsCard();
+            showToast('Counter Reset', 'Restored tab counter set to 0 for this session.', 'success');
+        });
+    }
+	
     const kbBtn = document.getElementById('openKBshort');
     if(kbBtn) kbBtn.addEventListener('click', openKBshortConfig);
 
 	await updateIcon();
+
+    // NEW: Initialize stats card and welcome toast
+    updateStatsCard();
+    showWelcomeToast();
 });
 
 async function trimTabs(tablimit){
@@ -227,4 +272,83 @@ function chkLPval(){
 function clearMemory(){
 	const sure = confirm(chrome.i18n.getMessage("opt_resetbtn_popupMsg"));
 	if (sure === true) resetData();
+}
+
+// ========================================
+// NEW: Stats Card Functionality
+// ========================================
+
+function updateStatsCard() {
+    Promise.all([
+        getStorage(['restoreCountAllTime', 'installDate']),
+        chrome.storage.session.get(['restoreCountSession'])
+    ]).then(([localData, sessionData]) => {
+        const allTimeCount = Number(localData.restoreCountAllTime) || 0;
+        const sessionCount = Number(sessionData.restoreCountSession) || 0;
+
+        document.getElementById('stat-closed').textContent = allTimeCount;
+        document.getElementById('stat-session').textContent = sessionCount;
+
+        if (localData.installDate) {
+            const installDate = new Date(localData.installDate);
+            const today = new Date();
+            const daysActive = Math.floor((today - installDate) / (1000 * 60 * 60 * 24));
+            document.getElementById('stat-days').textContent = daysActive > 0 ? daysActive : 1;
+        } else {
+            document.getElementById('stat-days').textContent = '1';
+        }
+    });
+}
+
+// ========================================
+// NEW: Toast Notification System
+// ========================================
+
+function showToast(title, message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+
+    const icon = document.createElement('div');
+    icon.className = `toast-icon ${type}`;
+    icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : 'i';
+
+    const content = document.createElement('div');
+    content.className = 'toast-content';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'toast-title';
+    titleEl.textContent = title;
+
+    const messageEl = document.createElement('div');
+    messageEl.className = 'toast-message';
+    messageEl.textContent = message;
+
+    content.appendChild(titleEl);
+    content.appendChild(messageEl);
+
+    toast.appendChild(icon);
+    toast.appendChild(content);
+    container.appendChild(toast);
+
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 4000);
+}
+
+// Demo: Show welcome toast when page loads
+function showWelcomeToast() {
+    // Only show once per session
+    if (!sessionStorage.getItem('welcomeToastShown')) {
+        setTimeout(() => {
+            showToast('Welcome!', 'Settings have been loaded successfully.', 'success');
+            sessionStorage.setItem('welcomeToastShown', 'true');
+        }, 1000);
+    }
 }

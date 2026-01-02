@@ -55,6 +55,15 @@ export const removeStorage = async (keys) => {
     await Promise.all(promises);
 };
 
+export const getSessionStorage = async (keys) => {
+    const keysArray = Array.isArray(keys) ? keys : [keys];
+    return chrome.storage.session.get(keysArray);
+};
+
+export const setSessionStorage = async (items) => {
+    await chrome.storage.session.set(items);
+};
+
 // Robust HTML escaping
 export function encodeHtml(str) {
     if (!str) return "";
@@ -118,6 +127,7 @@ export async function createTab(id, selected) {
 		const url = entry.url;
 		
 		await removeClosedTabInternal(id);
+        await incrementRestoreCounts();
 
 		if (selected === true) {
 			chrome.tabs.create({ "url": url, "active": true });
@@ -138,6 +148,7 @@ export async function createTabWindow(id, wId) {
 		const url = entry.url;
 		
 		await removeClosedTabInternal(id);
+        await incrementRestoreCounts();
 
 		chrome.tabs.create({ "url": url, "windowId": wId });
 	});
@@ -257,7 +268,8 @@ export async function resetData() {
 		"settings": settings,
 		"TabListIndex": [],
 		"ClosedTabIndex": [],
-        "SearchIndex": []
+        "SearchIndex": [],
+        "restoreCountAllTime": 0
 	});
 
 	await regExistingTabs();
@@ -365,4 +377,19 @@ export async function getLatestCTab() {
 	let data = await getStorage(["ClosedTabIndex"]);
 	let closedTabIndex = data.ClosedTabIndex || [];
 	if (closedTabIndex.length > 0) await createTab(closedTabIndex[closedTabIndex.length - 1], true);
+}
+
+async function incrementRestoreCounts() {
+    const [localData, sessionData] = await Promise.all([
+        getStorage(['restoreCountAllTime']),
+        getSessionStorage(['restoreCountSession'])
+    ]);
+
+    const allTime = Number(localData.restoreCountAllTime) || 0;
+    const session = Number(sessionData.restoreCountSession) || 0;
+
+    await Promise.all([
+        setStorage({ restoreCountAllTime: allTime + 1 }),
+        setSessionStorage({ restoreCountSession: session + 1 })
+    ]);
 }
