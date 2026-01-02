@@ -104,6 +104,21 @@
                     <div class="option-row">
                         <div class="option-info">
                             <div class="option-label">
+                                <label for="removeHistory" i18n="opt_removeHistory">Remove history entry</label>
+                                <span class="info-icon" data-tooltip="When enabled, deleting an item from the popup list will also remove it from Chrome's history.">i</span>
+                            </div>
+                        </div>
+                        <div class="option-control">
+                            <label class="switch">
+                                <input type="checkbox" id="removeHistory">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="option-row">
+                        <div class="option-info">
+                            <div class="option-label">
                                 <span class="label">Reset Counter</span>
                                 <span class="info-icon" data-tooltip="Sets this session's restored tab counter to zero.">i</span>
                             </div>
@@ -220,7 +235,7 @@
                             <div class="select-group">
                                 <label><input type="radio" id="styleIn1" name="styleIn" value="1"><span>Classic</span></label>
                                 <label><input type="radio" id="styleIn2" name="styleIn" value="2"><span>Studio</span></label>
-                                <label><input type="radio" id="styleIn3" name="styleIn" value="3"><span>Ledger</span></label>
+                                <label><input type="radio" id="styleIn3" name="styleIn" value="3"><span>Minimal</span></label>
                                 <label><input type="radio" id="styleIn4" name="styleIn" value="4"><span>Beacon</span></label>
                             </div>
                         </div>

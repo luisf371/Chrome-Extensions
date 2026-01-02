@@ -78,6 +78,7 @@ async function save() {
 	settings.showTime = document.getElementById('showTime').checked;
 	settings.showSearch = document.getElementById('showSearch').checked;
 	settings.saveHistory = document.getElementById('saveHistory').checked;
+	settings.removeHistory = document.getElementById('removeHistory').checked;
 	settings.menuTop = document.getElementById('menuTop').checked;
 	settings.tooltipText = document.getElementById('tooltipText').checked;
 	settings.useAlternateIcon = document.getElementById('useAlternateIcon').checked;
@@ -143,6 +144,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     setChecked('showTime', settings.showTime);
     setChecked('showSearch', settings.showSearch);
     setChecked('saveHistory', settings.saveHistory);
+    setChecked('removeHistory', settings.removeHistory);
     setChecked('menuTop', settings.menuTop);
     setChecked('tooltipText', settings.tooltipText);
     setChecked('useAlternateIcon', settings.useAlternateIcon);

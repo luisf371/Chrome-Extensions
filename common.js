@@ -197,6 +197,18 @@ export async function chkNewTab(tab) {
 
 export async function removeClosedTab(id) {
 	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+        const data = await getStorage(["ClosedTab-" + id, "settings"]);
+		const entry = data["ClosedTab-" + id];
+        const settings = data.settings || {};
+
+        if (settings.removeHistory && entry && entry.url) {
+            try {
+                await chrome.history.deleteUrl({ url: entry.url });
+            } catch (e) {
+                console.error("Failed to remove history entry:", e);
+            }
+        }
+
 		await removeClosedTabInternal(id);
 	});
 }
@@ -222,6 +234,23 @@ export async function removeClosedTabBatch(ids) {
 	if (!ids || ids.length === 0) return;
 	
 	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+        // Fetch settings and potential history items to delete
+        let keysToFetch = ids.map(id => "ClosedTab-" + id);
+        keysToFetch.push("settings");
+        let fetchData = await getStorage(keysToFetch);
+        let settings = fetchData.settings || {};
+
+        if (settings.removeHistory) {
+             for(let id of ids) {
+                 let entry = fetchData["ClosedTab-" + id];
+                 if(entry && entry.url) {
+                     try {
+                        await chrome.history.deleteUrl({ url: entry.url });
+                     } catch (e) { console.error(e); }
+                 }
+             }
+        }
+
 		let data = await getStorage(["ClosedTabIndex"]);
 		let closedTabIndex = data.ClosedTabIndex || [];
 		

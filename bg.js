@@ -30,7 +30,8 @@ const defaultSettings = {
 	"style" : 1,
 	"longPressDelay" : 3,
 	"mClickClose" : false,
-	"theme" : "1"
+	"theme" : "1",
+    "removeHistory" : false
 };
 
 chrome.runtime.onStartup.addListener(async function() {

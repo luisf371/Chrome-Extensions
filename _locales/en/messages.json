@@ -158,6 +158,9 @@
    "opt_resetbtn_popupMsg": {
       "message": "Are you sure you want to clear the history?"
    },
+   "opt_removeHistory": {
+      "message": "Remove history entry"
+   },
    "other_text1": {
       "message": "Do drop by my DeviantArt page to see more of my works!"
    },
