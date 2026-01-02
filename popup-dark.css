@@ -59,24 +59,24 @@ body.style-studio {
   --popup-highlight-glow: #f59e0b;
 }
 
-body.style-ledger {
-  --popup-bg: #0b1220;
-  --popup-text: #e6eef7;
-  --popup-muted: #a6b3c2;
-  --popup-link: #e6eef7;
-  --popup-control-bg: #0f172a;
-  --popup-control-border: #334155;
-  --popup-control-text: #cbd5e1;
-  --popup-control-hover-bg: #cbd5e1;
-  --popup-control-hover-text: #0b1220;
-  --popup-accent: #7aa2c7;
+body.style-minimalist {
+  --popup-bg: #121212;
+  --popup-text: #e5e5e5;
+  --popup-muted: #a3a3a3;
+  --popup-link: #e5e5e5;
+  --popup-control-bg: #1f1f1f;
+  --popup-control-border: #333333;
+  --popup-control-text: #d4d4d4;
+  --popup-control-hover-bg: #d4d4d4;
+  --popup-control-hover-text: #121212;
+  --popup-accent: #d4d4d4;
   --popup-item-bg: transparent;
-  --popup-item-border: rgba(122, 162, 199, 0.35);
-  --popup-hover: rgba(122, 162, 199, 0.12);
-  --popup-hover-outline: rgba(122, 162, 199, 0.4);
-  --popup-focus: rgba(122, 162, 199, 0.14);
-  --popup-focus-outline: rgba(122, 162, 199, 0.4);
-  --popup-rule: rgba(122, 162, 199, 0.18);
+  --popup-item-border: transparent;
+  --popup-hover: #262626;
+  --popup-hover-outline: transparent;
+  --popup-focus: #262626;
+  --popup-focus-outline: transparent;
+  --popup-rule: #262626;
 }
 
 body.style-beacon {

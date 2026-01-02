@@ -50,12 +50,12 @@ function createLink(id, url, pgTitle) {
 
 function applyPopupStyle(styleValue) {
     const body = document.body;
-    body.classList.remove("style-classic", "style-studio", "style-ledger", "style-beacon");
+    body.classList.remove("style-classic", "style-studio", "style-minimalist", "style-beacon");
 
     const styleMap = {
         1: "style-classic",
         2: "style-studio",
-        3: "style-ledger",
+        3: "style-minimalist",
         4: "style-beacon"
     };
     const key = parseInt(styleValue, 10);
