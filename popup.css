@@ -135,7 +135,7 @@ body.style-ledger {
 }
 
 body.style-ledger .contentDiv {
-padding: 2px 0;
+/*padding: 2px 0;*/
 background-image: none;
 }
 
@@ -242,7 +242,7 @@ box-shadow: none;
 }
 
 body.style-studio .contentDiv {
-padding: 0px 0 4px;
+/*padding: 0px 0 4px;*/
 }
 
 body.style-studio .item {
@@ -342,7 +342,7 @@ letter-spacing: 0.6px;
 table {
 width:100%;
 max-height:12px!important;
-padding:2px 0 2px;
+padding:4px 0 4px;
 }
 
 .icon {
@@ -359,7 +359,7 @@ width:100%;
 text-align:left;
 overflow-x:hidden;
 overflow-y:auto;
-max-height:500px;
+max-height:495px;
 }
 
 .contentDiv a{
