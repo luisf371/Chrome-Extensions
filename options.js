@@ -424,10 +424,14 @@ img {
         });
         
         const zoom = $('zoom-input');
-        const zoomInterval = setInterval(function(){
-            zoom.value = settings.zoom || 100;
-        }, 1000);
-        window.addEventListener('beforeunload', () => clearInterval(zoomInterval));
+        zoom.value = settings.zoom || 100;
+        
+        chrome.storage.onChanged.addListener((changes, area) => {
+            if (area === 'local' && changes.zoom) {
+                zoom.value = changes.zoom.newValue || 100;
+            }
+        });
+        
         zoom.addEventListener('input', function(){
             const val = Utils.toInt(zoom.value);
             if (val == 100){

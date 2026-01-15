@@ -198,8 +198,12 @@
     }).catch(console.error);
 
     // Events for the tree
+    let scrollTimeout;
     $tree.addEventListener('scroll', function(){
-        setSetting('scrollTop', $tree.scrollTop); // store scroll position at each scroll event
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            setSetting('scrollTop', $tree.scrollTop);
+        }, 200);
     });
     $tree.addEventListener('focus', function(e){
         const el = e.target;
@@ -226,9 +230,12 @@
         const expanded = parent.classList.contains('open');
         parent.setAttribute('aria-expanded', expanded);
         const children = parent.querySelector('ul');
-        if (!children){
+        if (!children && !parent.dataset.loading){
+            parent.dataset.loading = 'true';
             const id = parent.id.replace('neat-tree-item-', '');
             chrome.bookmarks.getChildren(id).then(function(children){
+                delete parent.dataset.loading;
+                if (!parent.classList.contains('open')) return;
                 const html = generateHTML(children, parseInt(parent.parentNode.dataset.level) + 1);
                 const div = document.createElement('div');
                 div.innerHTML = html;
@@ -236,7 +243,7 @@
                 Utils.inject(ul, parent);
                 div.remove();
                 setTimeout(adaptBookmarkTooltips, 100);
-            });
+            }).catch(() => delete parent.dataset.loading);
         }
         if (closeUnusedFolders && expanded){
             const siblings = Utils.getSiblings(parent);
@@ -514,10 +521,15 @@
         close: function(){
             const urlInput = $('edit-dialog-url');
             let url = urlInput.value;
-            if (!urlInput.validity.valid){
+            
+            if (/^(javascript|data):/i.test(url)) {
+                url = '';
+            }
+
+            if (!urlInput.validity.valid && url.length > 0){
                 urlInput.value = 'http://' + url;
-                if (!urlInput.validity.valid) url = ''; // if still invalid, forget it.
-                url = 'http://' + url;
+                if (!urlInput.validity.valid) url = ''; 
+                else url = urlInput.value;
             }
             EditDialog.fn($('edit-dialog-name').value, url);
             body.classList.remove('needEdit');
@@ -682,7 +694,7 @@
             const item = li.querySelector('span');
             if (bookmarkCount || folderCount){
                 let dialog = '';
-                const folderName = '<cite>' + item.textContent.trim() + '</cite>';
+                const folderName = '<cite>' + Utils.htmlspecialchars(item.textContent.trim()) + '</cite>';
                 if (bookmarkCount && folderCount){
                     dialog = _m('confirmDeleteFolderSubfoldersBookmarks', [folderName, folderCount, bookmarkCount]);
                 } else if (bookmarkCount){

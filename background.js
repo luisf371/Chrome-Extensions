@@ -35,7 +35,8 @@ if (chrome.omnibox) {
 
     const matcher = (text, value) => {
         let matched = false;
-        const exp = new RegExp(value.replace(/\s+/g, '|'), 'ig');
+        const escaped = value.replace(/([-.*+?^${}()|[\]/\\])/g, '\\$1');
+        const exp = new RegExp(escaped.replace(/\s+/g, '|'), 'ig');
         const matchedText = text.replace(exp, (m) => {
             matched = true;
             return '<match>' + m + '</match>';

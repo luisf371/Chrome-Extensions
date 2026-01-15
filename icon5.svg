@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="15 10 105 105">
+  <defs>
+    <radialGradient id="grad5" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#4fc3f7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0288d1;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+
+  <!-- Document/List Background -->
+  <rect x="30" y="15" width="68" height="98" rx="8" ry="8" fill="#fff" stroke="#cfd8dc" stroke-width="2" />
+  
+  <!-- List Items -->
+  <rect x="42" y="30" width="44" height="6" rx="2" fill="#b0bec5" />
+  <rect x="42" y="44" width="44" height="6" rx="2" fill="#b0bec5" />
+  <rect x="42" y="58" width="44" height="6" rx="2" fill="#b0bec5" />
+  <rect x="42" y="72" width="28" height="6" rx="2" fill="#b0bec5" />
+  
+  <!-- Magnifying Glass Handle -->
+  <path d="M85 85 l20 20" stroke="#546e7a" stroke-width="12" stroke-linecap="round" />
+  
+  <!-- Magnifying Glass Lens -->
+  <circle cx="75" cy="75" r="24" fill="url(#grad5)" stroke="#546e7a" stroke-width="6" />
+  
+  <!-- Reflection on Lens -->
+  <path d="M65 65 q10 -10 20 0" stroke="white" stroke-width="3" fill="none" opacity="0.6" stroke-linecap="round" />
+</svg>
