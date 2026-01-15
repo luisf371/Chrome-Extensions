@@ -1,8 +1,9 @@
 {
    "manifest_version": 3,
-   "name": "sGestures",
-   "version": "1.1",
-   "description": "a simple mouse gestures (sGestures) program with no bloat.",
+   "name": "__MSG_extName__",
+   "version": "1.2",
+   "description": "__MSG_extDescription__",
+   "default_locale": "en",
    "background": {
      "service_worker": "background.js"
    },

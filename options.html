@@ -3,229 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sGestures Config</title>
-    <script src="options.js" defer></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 0;
-            min-width: 350px; /* Set minimum width */
-        }
-        .tooltip {
-            position: relative;
-            display: inline-block;
-            cursor: pointer;
-        }
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 200px;
-            background-color: #555;
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%; /* Position the tooltip above the text */
-            left: 50%;
-            margin-left: -100px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .tooltip .tooltiptext::after {
-            content: "";
-            position: absolute;
-            top: 100%; /* Arrow at the bottom */
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #555 transparent transparent transparent;
-        }
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
-        }
-        h1 {
-            color: #333;
-        }
-        table {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        td {
-            background-color: #fff;
-        }
-        select, input[type="checkbox"] {
-            width: 100%;
-        }
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            display: block;
-            width: 100%;
-            max-width: 200px;
-            margin: 20px auto 0;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #status {
-            margin-top: 20px;
-            font-weight: bold;
-            text-align: center;
-        }
-    </style>
+    <title data-i18n="extName">sGestures Config</title>
+    <link rel="stylesheet" href="options.css">
 </head>
 <body>
-    <h1>sGestures Config</h1>
+    <div class="container">
+        <header>
+            <h1 data-i18n="optionsTitle">sGestures</h1>
+            <div class="header-actions">
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                    <span data-i18n="themeToggle">Theme</span>
+                </button>
+            </div>
+        </header>
 
-    <table id="optsTab" border="3">
-        <tr>
-            <th>Gesture Trails:<span class="tooltip">❓
-                <span class="tooltiptext">Enable or disable gesture trails.</span></span></th>
-            <td>
-                <input type="checkbox" id="trail" checked>
-            </td>
-        </tr>
-        <tr>
-            <th>Rocker Gestures:<span class="tooltip">❓
-                <span class="tooltiptext">Enable or disable rocker gestures.</span></span></th>
-            <td>
-                <input type="checkbox" id="rocker" checked>
-            </td>
-        </tr>
-        <tr>
-            <th>Gesture Color:</th>
-            <td>
-                <select id="color">
-                    <option value="red">Red</option>
-                    <option value="green">Green</option>
-                    <option value="blue">Blue</option>
-                    <option value="yellow">Yellow</option>
-                    <option value="black">Black</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th>Gesture Width:</th>
-            <td>
-                <select id="width">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3" selected>3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th>Gesture</th>
-            <th>Action</th>
-        </tr>
-        <tr>
-            <td>Mouse Up</td>
-            <td>
-                <select id="gesture-U">
-                    <option value="newtab">Open New Tab</option>
-                    <option value="closetab">Close Current Tab</option>
-                    <option value="reload">Reload</option>
-                    <option value="back">History Back</option>
-                    <option value="forward">History Forward</option>
-                    <option value="stop">Stop Loading</option>
-                    <option value="closeback">Close Background Tabs</option>
-                    <option value="closeall">Close Window</option>
-                    <option value="reloadall">Reload All Tabs</option>
-                    <option value="nexttab">Next Tab</option>
-                    <option value="prevtab">Previous Tab</option>
-                    <option value="scrolltop">Scroll to Top</option>
-                    <option value="scrollbottom">Scroll to Bottom</option>
-                    <option value="lasttab">Re-open Last Closed Tab</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <td>Mouse Down</td>
-            <td>
-                <select id="gesture-D">
-                    <option value="newtab">Open New Tab</option>
-                    <option value="closetab">Close Current Tab</option>
-                    <option value="reload">Reload</option>
-                    <option value="back">History Back</option>
-                    <option value="forward">History Forward</option>
-                    <option value="stop">Stop Loading</option>
-                    <option value="closeback">Close Background Tabs</option>
-                    <option value="closeall">Close Window</option>
-                    <option value="reloadall">Reload All Tabs</option>
-                    <option value="nexttab">Next Tab</option>
-                    <option value="prevtab">Previous Tab</option>
-                    <option value="scrolltop">Scroll to Top</option>
-                    <option value="scrollbottom">Scroll to Bottom</option>
-                    <option value="lasttab">Re-open Last Closed Tab</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <td>Mouse Left</td>
-            <td>
-                <select id="gesture-L">
-                    <option value="newtab">Open New Tab</option>
-                    <option value="closetab">Close Current Tab</option>
-                    <option value="reload">Reload</option>
-                    <option value="back">History Back</option>
-                    <option value="forward">History Forward</option>
-                    <option value="stop">Stop Loading</option>
-                    <option value="closeback">Close Background Tabs</option>
-                    <option value="closeall">Close Window</option>
-                    <option value="reloadall">Reload All Tabs</option>
-                    <option value="nexttab">Next Tab</option>
-                    <option value="prevtab">Previous Tab</option>
-                    <option value="scrolltop">Scroll to Top</option>
-                    <option value="scrollbottom">Scroll to Bottom</option>
-                    <option value="lasttab">Re-open Last Closed Tab</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <td>Mouse Right</td>
-            <td>
-                <select id="gesture-R">
-                    <option value="newtab">Open New Tab</option>
-                    <option value="closetab">Close Current Tab</option>
-                    <option value="reload">Reload</option>
-                    <option value="back">History Back</option>
-                    <option value="forward">History Forward</option>
-                    <option value="stop">Stop Loading</option>
-                    <option value="closeback">Close Background Tabs</option>
-                    <option value="closeall">Close Window</option>
-                    <option value="reloadall">Reload All Tabs</option>
-                    <option value="nexttab">Next Tab</option>
-                    <option value="prevtab">Previous Tab</option>
-                    <option value="scrolltop">Scroll to Top</option>
-                    <option value="scrollbottom">Scroll to Bottom</option>
-                    <option value="lasttab">Re-open Last Closed Tab</option>
-                </select>
-            </td>
-        </tr>
-    </table>
+        <main>
+            <!-- Settings Section -->
+            <section class="section">
+                <h2 class="section-title" data-i18n="sectionSettings">Settings</h2>
+                <div class="settings-card">
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="optTrail">Gesture Trails</span>
+                            <span class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltiptext" data-i18n="optTrailDesc">Enable or disable gesture trails.</span>
+                            </span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="trail" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="optRocker">Rocker Gestures</span>
+                            <span class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltiptext" data-i18n="optRockerDesc">Enable or disable rocker gestures.</span>
+                            </span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="rocker" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="optColor">Gesture Color</label>
+                        <select id="color">
+                            <option value="red" data-i18n="colorRed">Red</option>
+                            <option value="green" data-i18n="colorGreen">Green</option>
+                            <option value="blue" data-i18n="colorBlue">Blue</option>
+                            <option value="yellow" data-i18n="colorYellow">Yellow</option>
+                            <option value="black" data-i18n="colorBlack">Black</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="optWidth">Gesture Width</label>
+                        <select id="width">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3" selected>3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
 
-    <div id="status"></div>
-    <button id="save">Save Configuration</button>
+            <!-- Gestures Section -->
+            <section class="section">
+                <h2 class="section-title" data-i18n="sectionGestures">Gesture Actions</h2>
+                <div class="settings-card">
+                    <table class="gesture-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="colGesture">Gesture</th>
+                                <th data-i18n="colAction">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <span class="gesture-direction">
+                                        <span class="gesture-icon">↑</span>
+                                        <span class="gesture-name" data-i18n="gestureUp">Mouse Up</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <select id="gesture-U">
+                                        <option value="newtab" data-i18n="actionNewTab">Open New Tab</option>
+                                        <option value="closetab" data-i18n="actionCloseTab">Close Current Tab</option>
+                                        <option value="reload" data-i18n="actionReload">Reload</option>
+                                        <option value="back" data-i18n="actionBack">History Back</option>
+                                        <option value="forward" data-i18n="actionForward">History Forward</option>
+                                        <option value="stop" data-i18n="actionStop">Stop Loading</option>
+                                        <option value="closeback" data-i18n="actionCloseBackground">Close Background Tabs</option>
+                                        <option value="closeall" data-i18n="actionCloseWindow">Close Window</option>
+                                        <option value="reloadall" data-i18n="actionReloadAll">Reload All Tabs</option>
+                                        <option value="nexttab" data-i18n="actionNextTab">Next Tab</option>
+                                        <option value="prevtab" data-i18n="actionPrevTab">Previous Tab</option>
+                                        <option value="scrolltop" data-i18n="actionScrollTop">Scroll to Top</option>
+                                        <option value="scrollbottom" data-i18n="actionScrollBottom">Scroll to Bottom</option>
+                                        <option value="lasttab" data-i18n="actionLastTab">Re-open Last Closed Tab</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="gesture-direction">
+                                        <span class="gesture-icon">↓</span>
+                                        <span class="gesture-name" data-i18n="gestureDown">Mouse Down</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <select id="gesture-D">
+                                        <option value="newtab" data-i18n="actionNewTab">Open New Tab</option>
+                                        <option value="closetab" data-i18n="actionCloseTab">Close Current Tab</option>
+                                        <option value="reload" data-i18n="actionReload">Reload</option>
+                                        <option value="back" data-i18n="actionBack">History Back</option>
+                                        <option value="forward" data-i18n="actionForward">History Forward</option>
+                                        <option value="stop" data-i18n="actionStop">Stop Loading</option>
+                                        <option value="closeback" data-i18n="actionCloseBackground">Close Background Tabs</option>
+                                        <option value="closeall" data-i18n="actionCloseWindow">Close Window</option>
+                                        <option value="reloadall" data-i18n="actionReloadAll">Reload All Tabs</option>
+                                        <option value="nexttab" data-i18n="actionNextTab">Next Tab</option>
+                                        <option value="prevtab" data-i18n="actionPrevTab">Previous Tab</option>
+                                        <option value="scrolltop" data-i18n="actionScrollTop">Scroll to Top</option>
+                                        <option value="scrollbottom" data-i18n="actionScrollBottom">Scroll to Bottom</option>
+                                        <option value="lasttab" data-i18n="actionLastTab">Re-open Last Closed Tab</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="gesture-direction">
+                                        <span class="gesture-icon">←</span>
+                                        <span class="gesture-name" data-i18n="gestureLeft">Mouse Left</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <select id="gesture-L">
+                                        <option value="newtab" data-i18n="actionNewTab">Open New Tab</option>
+                                        <option value="closetab" data-i18n="actionCloseTab">Close Current Tab</option>
+                                        <option value="reload" data-i18n="actionReload">Reload</option>
+                                        <option value="back" data-i18n="actionBack">History Back</option>
+                                        <option value="forward" data-i18n="actionForward">History Forward</option>
+                                        <option value="stop" data-i18n="actionStop">Stop Loading</option>
+                                        <option value="closeback" data-i18n="actionCloseBackground">Close Background Tabs</option>
+                                        <option value="closeall" data-i18n="actionCloseWindow">Close Window</option>
+                                        <option value="reloadall" data-i18n="actionReloadAll">Reload All Tabs</option>
+                                        <option value="nexttab" data-i18n="actionNextTab">Next Tab</option>
+                                        <option value="prevtab" data-i18n="actionPrevTab">Previous Tab</option>
+                                        <option value="scrolltop" data-i18n="actionScrollTop">Scroll to Top</option>
+                                        <option value="scrollbottom" data-i18n="actionScrollBottom">Scroll to Bottom</option>
+                                        <option value="lasttab" data-i18n="actionLastTab">Re-open Last Closed Tab</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="gesture-direction">
+                                        <span class="gesture-icon">→</span>
+                                        <span class="gesture-name" data-i18n="gestureRight">Mouse Right</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <select id="gesture-R">
+                                        <option value="newtab" data-i18n="actionNewTab">Open New Tab</option>
+                                        <option value="closetab" data-i18n="actionCloseTab">Close Current Tab</option>
+                                        <option value="reload" data-i18n="actionReload">Reload</option>
+                                        <option value="back" data-i18n="actionBack">History Back</option>
+                                        <option value="forward" data-i18n="actionForward">History Forward</option>
+                                        <option value="stop" data-i18n="actionStop">Stop Loading</option>
+                                        <option value="closeback" data-i18n="actionCloseBackground">Close Background Tabs</option>
+                                        <option value="closeall" data-i18n="actionCloseWindow">Close Window</option>
+                                        <option value="reloadall" data-i18n="actionReloadAll">Reload All Tabs</option>
+                                        <option value="nexttab" data-i18n="actionNextTab">Next Tab</option>
+                                        <option value="prevtab" data-i18n="actionPrevTab">Previous Tab</option>
+                                        <option value="scrolltop" data-i18n="actionScrollTop">Scroll to Top</option>
+                                        <option value="scrollbottom" data-i18n="actionScrollBottom">Scroll to Bottom</option>
+                                        <option value="lasttab" data-i18n="actionLastTab">Re-open Last Closed Tab</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div id="status" class="status-message"></div>
+            <button class="btn btn-primary" id="save" data-i18n="btnSave">Save Configuration</button>
+        </footer>
+    </div>
+
+    <script src="options.js"></script>
 </body>
 </html>
