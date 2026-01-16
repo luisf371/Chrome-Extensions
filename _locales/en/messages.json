@@ -169,6 +169,15 @@
    "options": {
       "message": "Options"
    },
+   "optionsPageTitle": {
+      "message": "sNeater Bookmarks Options"
+   },
+   "popupTheme": {
+      "message": "Popup Theme"
+   },
+   "statusSaved": {
+      "message": "Saved"
+   },
    "optionsFooterText1": {
       "description": "Footer text for the Options page",
       "message": "Email the developer at $neaterEmail$",
