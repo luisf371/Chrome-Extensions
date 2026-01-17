@@ -1,0 +1,94 @@
+{
+  "extName": {
+    "message": "sTabControl",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Gérez vos onglets",
+    "description": "Extension description"
+  },
+  "popupDescription": {
+    "message": "Gestion de vos onglets en arrière-plan.",
+    "description": "Popup description text"
+  },
+  "btnOpenSettings": {
+    "message": "Ouvrir les paramètres",
+    "description": "Button to open options page"
+  },
+  "optionsTitle": {
+    "message": "Configuration",
+    "description": "Options page title"
+  },
+  "sectionSettings": {
+    "message": "Paramètres",
+    "description": "Settings section header"
+  },
+  "optTabsBehaviour": {
+    "message": "Position d'un nouvel onglet",
+    "description": "New tab position option label"
+  },
+  "optTabsActivate": {
+    "message": "Après fermeture, aller à",
+    "description": "After closing tab behavior option label"
+  },
+  "optTabsOpenMethod": {
+    "message": "Ouvrir un nouvel onglet en",
+    "description": "Open new tab method option label"
+  },
+  "valDefault": {
+    "message": "*** par défaut ***",
+    "description": "Default option value"
+  },
+  "valFirst": {
+    "message": "premier",
+    "description": "First position option"
+  },
+  "valNextLeft": {
+    "message": "suivant à gauche",
+    "description": "Next left position option"
+  },
+  "valNextRight": {
+    "message": "suivant à droite",
+    "description": "Next right position option"
+  },
+  "valLast": {
+    "message": "dernier",
+    "description": "Last position option"
+  },
+  "valLastUsed": {
+    "message": "dernier onglet utilisé",
+    "description": "Last used tab option"
+  },
+  "valLeftTab": {
+    "message": "onglet de gauche",
+    "description": "Left tab option"
+  },
+  "valRightTab": {
+    "message": "onglet de droite",
+    "description": "Right tab option"
+  },
+  "valForeground": {
+    "message": "premier plan",
+    "description": "Foreground option"
+  },
+  "valBackground": {
+    "message": "arrière-plan",
+    "description": "Background option"
+  },
+  "statusSaved": {
+    "message": "Configuration enregistrée",
+    "description": "Save success message"
+  },
+  "themeToggle": {
+    "message": "Thème",
+    "description": "Theme toggle button"
+  },
+  "optPreventDuplicates": {
+    "message": "Empêcher les onglets en double",
+    "description": "Checkbox label for duplicate tab prevention"
+  },
+  "optPreventDuplicatesHint": {
+    "message": "L'action \"Dupliquer l'onglet\" reste autorisée",
+    "description": "Hint text explaining the smart behavior"
+  }
+}

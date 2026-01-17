@@ -1,0 +1,94 @@
+{
+  "extName": {
+    "message": "sTabControl",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "管理您的标签页",
+    "description": "Extension description"
+  },
+  "popupDescription": {
+    "message": "在后台管理您的标签页。",
+    "description": "Popup description text"
+  },
+  "btnOpenSettings": {
+    "message": "打开设置",
+    "description": "Button to open options page"
+  },
+  "optionsTitle": {
+    "message": "配置",
+    "description": "Options page title"
+  },
+  "sectionSettings": {
+    "message": "设置",
+    "description": "Settings section header"
+  },
+  "optTabsBehaviour": {
+    "message": "新标签页的位置",
+    "description": "New tab position option label"
+  },
+  "optTabsActivate": {
+    "message": "关闭后转到",
+    "description": "After closing tab behavior option label"
+  },
+  "optTabsOpenMethod": {
+    "message": "在以下位置打开新标签页",
+    "description": "Open new tab method option label"
+  },
+  "valDefault": {
+    "message": "*** 默认 ***",
+    "description": "Default option value"
+  },
+  "valFirst": {
+    "message": "第一个",
+    "description": "First position option"
+  },
+  "valNextLeft": {
+    "message": "左边下一个",
+    "description": "Next left position option"
+  },
+  "valNextRight": {
+    "message": "右边下一个",
+    "description": "Next right position option"
+  },
+  "valLast": {
+    "message": "最后一个",
+    "description": "Last position option"
+  },
+  "valLastUsed": {
+    "message": "上次使用的标签页",
+    "description": "Last used tab option"
+  },
+  "valLeftTab": {
+    "message": "左边标签页",
+    "description": "Left tab option"
+  },
+  "valRightTab": {
+    "message": "右边标签页",
+    "description": "Right tab option"
+  },
+  "valForeground": {
+    "message": "前台",
+    "description": "Foreground option"
+  },
+  "valBackground": {
+    "message": "后台",
+    "description": "Background option"
+  },
+  "statusSaved": {
+    "message": "配置已保存",
+    "description": "Save success message"
+  },
+  "themeToggle": {
+    "message": "主题",
+    "description": "Theme toggle button"
+  },
+  "optPreventDuplicates": {
+    "message": "防止重复标签页",
+    "description": "Checkbox label for duplicate tab prevention"
+  },
+  "optPreventDuplicatesHint": {
+    "message": "「复制标签页」操作仍然允许",
+    "description": "Hint text explaining the smart behavior"
+  }
+}

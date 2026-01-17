@@ -3,12 +3,14 @@
 const DEFAULT_SETTINGS = Object.freeze({
    tabsBehaviour: 'default',
    tabsActivate: 'last_used',
-   tabsOpenMethod: 'default'
+   tabsOpenMethod: 'default',
+   preventDuplicates: false
 });
 
 const windowState = new Map();
 let settingsCache = { ...DEFAULT_SETTINGS };
 const sessionStorageAvailable = Boolean(chrome.storage && chrome.storage.session);
+const duplicateRemovals = new Set();
 let readyPromise = bootstrap().catch(handleStartupError);
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
@@ -36,6 +38,9 @@ chrome.tabs.onDetached.addListener((tabId, detachInfo) => {
 });
 chrome.tabs.onAttached.addListener((tabId, attachInfo) => {
    handleTabAttached(tabId, attachInfo).catch(handleRuntimeError);
+});
+chrome.webNavigation.onCommitted.addListener(details => {
+   handleNavigationCommitted(details).catch(handleRuntimeError);
 });
 
 async function bootstrap() {
@@ -208,6 +213,12 @@ async function handleTabActivated(activeInfo) {
 
 async function handleTabRemoved(tabId, removeInfo) {
    await waitForReady();
+   
+   if (duplicateRemovals.has(tabId)) {
+      duplicateRemovals.delete(tabId);
+      return;
+   }
+   
    const windowId = removeInfo.windowId;
    const state = getOrCreateWindowState(windowId);
    const wasActive = state.activeTabId === tabId;
@@ -365,7 +376,59 @@ function isIgnorableError(error) {
       message.includes('The tab was closed');
 }
 
+function logIgnorableError(error) {
+   if (isIgnorableError(error)) {
+      console.warn('[sTabControl] Ignorable error:', error.message);
+   } else {
+      console.error('[sTabControl] Error:', error);
+   }
+}
 
-chrome.action.onClicked.addListener(() => {
-   chrome.runtime.openOptionsPage();
-});
+function normalizeUrl(url) {
+   try {
+      const parsed = new URL(url);
+      return parsed.origin + parsed.pathname.replace(/\/$/, '') + parsed.search;
+   } catch {
+      return url;
+   }
+}
+
+async function handleNavigationCommitted(details) {
+   await waitForReady();
+   
+   if (details.frameId !== 0) return;
+   if (!settingsCache.preventDuplicates) return;
+   
+   const { tabId, url, transitionType, transitionQualifiers } = details;
+   
+   if (!url || url.startsWith('chrome') || url.startsWith('about:') || url.startsWith('edge:')) {
+      return;
+   }
+   
+   // Chrome uses 'reload' transitionType for "Duplicate Tab" context menu - allow it
+   if (transitionType === 'reload') return;
+   if (transitionQualifiers && transitionQualifiers.includes('from_address_bar')) return;
+   
+   try {
+      const currentTab = await chrome.tabs.get(tabId);
+      const tabs = await chrome.tabs.query({ windowId: currentTab.windowId });
+      const normalizedUrl = normalizeUrl(url);
+      
+      const existingTab = tabs.find(tab => {
+         if (tab.id === tabId) return false;
+         return normalizeUrl(tab.url || tab.pendingUrl || '') === normalizedUrl;
+      });
+      
+      if (existingTab) {
+         const tabToClose = currentTab.active ? existingTab : currentTab;
+         console.log('[sTabControl] Duplicate detected, removing:', tabToClose.id);
+         duplicateRemovals.add(tabToClose.id);
+         await chrome.tabs.remove(tabToClose.id);
+      }
+   } catch (error) {
+      logIgnorableError(error);
+   }
+}
+
+
+

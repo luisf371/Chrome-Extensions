@@ -1,18 +1,20 @@
 {
    "manifest_version": 3,
-   "name": "sTabControl",
+   "name": "__MSG_extName__",
    "version": "1.0",
-   "description": "Manage your tabs",
+   "description": "__MSG_extDescription__",
+   "default_locale": "en",
    "icons": {
-      "16": "stack.png",
-      "48": "stack.png",
-      "128": "stack.png"
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
    },
    "background": {
       "service_worker": "background.js"
    },
    "action": {
-      "default_title": "sTabControl"
+      "default_title": "__MSG_extName__",
+      "default_popup": "options.html?popup=1"
    },
    "options_ui": {
       "page": "options.html",
@@ -20,6 +22,7 @@
    },
    "permissions": [
       "tabs",
-      "storage"
+      "storage",
+      "webNavigation"
    ]
 }

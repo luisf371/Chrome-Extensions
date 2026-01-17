@@ -1,0 +1,94 @@
+{
+  "extName": {
+    "message": "sTabControl",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Gerencie suas guias",
+    "description": "Extension description"
+  },
+  "popupDescription": {
+    "message": "Gerenciando suas guias em segundo plano.",
+    "description": "Popup description text"
+  },
+  "btnOpenSettings": {
+    "message": "Abrir configurações",
+    "description": "Button to open options page"
+  },
+  "optionsTitle": {
+    "message": "Configuração",
+    "description": "Options page title"
+  },
+  "sectionSettings": {
+    "message": "Configurações",
+    "description": "Settings section header"
+  },
+  "optTabsBehaviour": {
+    "message": "Posição de uma nova guia",
+    "description": "New tab position option label"
+  },
+  "optTabsActivate": {
+    "message": "Após fechar ir para",
+    "description": "After closing tab behavior option label"
+  },
+  "optTabsOpenMethod": {
+    "message": "Abrir nova guia em",
+    "description": "Open new tab method option label"
+  },
+  "valDefault": {
+    "message": "*** padrão ***",
+    "description": "Default option value"
+  },
+  "valFirst": {
+    "message": "primeira",
+    "description": "First position option"
+  },
+  "valNextLeft": {
+    "message": "próxima à esquerda",
+    "description": "Next left position option"
+  },
+  "valNextRight": {
+    "message": "próxima à direita",
+    "description": "Next right position option"
+  },
+  "valLast": {
+    "message": "última",
+    "description": "Last position option"
+  },
+  "valLastUsed": {
+    "message": "última guia usada",
+    "description": "Last used tab option"
+  },
+  "valLeftTab": {
+    "message": "guia à esquerda",
+    "description": "Left tab option"
+  },
+  "valRightTab": {
+    "message": "guia à direita",
+    "description": "Right tab option"
+  },
+  "valForeground": {
+    "message": "primeiro plano",
+    "description": "Foreground option"
+  },
+  "valBackground": {
+    "message": "segundo plano",
+    "description": "Background option"
+  },
+  "statusSaved": {
+    "message": "Configuração salva",
+    "description": "Save success message"
+  },
+  "themeToggle": {
+    "message": "Tema",
+    "description": "Theme toggle button"
+  },
+  "optPreventDuplicates": {
+    "message": "Evitar guias duplicadas",
+    "description": "Checkbox label for duplicate tab prevention"
+  },
+  "optPreventDuplicatesHint": {
+    "message": "A ação \"Duplicar guia\" ainda é permitida",
+    "description": "Hint text explaining the smart behavior"
+  }
+}

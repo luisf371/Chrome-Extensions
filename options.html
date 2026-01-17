@@ -1,106 +1,94 @@
 <!DOCTYPE html>
+<html lang="en">
 <head>
-<title>sTabControl Options</title>
-<style>
-body {
-   margin: 0;
-   min-height: 100vh;
-   font-family: "Segoe UI", Arial, sans-serif;
-   background-color: #121212;
-   color: #E0E0E0;
-   display: flex;
-   align-items: center;
-   justify-content: center;
-}
-select {
-   font-family: "Segoe UI", Arial, sans-serif;
-   font-size: 15px;
-   width: 180px;
-   padding: 6px 10px;
-   border-radius: 6px;
-   border: 1px solid #2A2A2A;
-   background-color: #1E1E1E;
-   color: #F5F5F5;
-   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-select:focus {
-   outline: none;
-   border-color: #5C6BC0;
-   box-shadow: 0 0 0 2px rgba(92, 107, 192, 0.35);
-}
-.title {
-   color: #FFFFFF;
-   font-size: 24px;
-   font-weight: 600;
-   margin-bottom: 20px;
-   text-align: left;
-}
-.prompt {
-   color: #C1C6D7;
-   font-size: 14px;
-   text-align: left;
-   padding-right: 16px;
-}
-.options_table {
-   border: none;
-}
-.options {
-   background-color: rgba(30, 30, 30, 0.95);
-   border-radius: 16px;
-   padding: 36px 44px;
-   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-   min-width: 420px;
-}
-.options table {
-   width: 100%;
-   border-collapse: separate;
-   border-spacing: 0 12px;
-}
-.options td {
-   vertical-align: middle;
-}
-</style>
-<script type="text/javascript" src="options.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="extName">sTabControl Options</title>
+    <link rel="stylesheet" href="options.css">
 </head>
-
 <body>
-<table cellspacing="0" cellpadding="0" class="options_table">
-<tr><td class="options" align="center">
-<div class="title">sTabControl Options</div>
-<table cellspacing="0" cellpadding="0" border="0">
-<tr>
-<td nowrap class="prompt">Position of a new tab:</td>
-<td nowrap align="right" width="100%">
-<select id="tabsBehaviour">
-<option value="default" selected>*** default ***</option>
-<option value="first">first</option>
-<option value="left">next left</option>
-<option value="right">next right</option>
-<option value="last">last</option>
-</select>
-</td>
-</tr>
-<tr>
-<td nowrap class="prompt">After closing go to:</td>
-<td nowrap align="right" width="100%">
-<select id="tabsActivate">
-<option value="default">*** default ***</option>
-<option value="last_used">last used tab</option>
-<option value="left">left tab</option>
-<option value="right">right tab</option>
-</select>
-</td>
-</tr>
-<tr>
-<td nowrap class="prompt">Open a new tab in:</td>
-<td nowrap align="right" width="100%">
-<select id="tabsOpenMethod">
-<option value="default">*** default ***</option>
-<option value="foreground">foreground</option>
-<option value="background">background</option>
-</select>
-</td>
-</tr>
-</table>
-</td></tr></table>
+    <div class="container">
+        <header>
+            <h1 data-i18n="optionsTitle">Configuration</h1>
+            <div class="header-actions">
+                <span class="version-badge">v1.0</span>
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <svg class="icon-sun" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <section class="section">
+                <h2 class="section-title" data-i18n="sectionSettings">Settings</h2>
+                <div class="settings-card">
+                    <div class="form-row">
+                        <label class="form-label" for="tabsBehaviour" data-i18n="optTabsBehaviour">Position of a new tab</label>
+                        <select id="tabsBehaviour">
+                            <option value="default" data-i18n="valDefault">*** default ***</option>
+                            <option value="first" data-i18n="valFirst">first</option>
+                            <option value="left" data-i18n="valNextLeft">next left</option>
+                            <option value="right" data-i18n="valNextRight">next right</option>
+                            <option value="last" data-i18n="valLast">last</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" for="tabsActivate" data-i18n="optTabsActivate">After closing go to</label>
+                        <select id="tabsActivate">
+                            <option value="default" data-i18n="valDefault">*** default ***</option>
+                            <option value="last_used" data-i18n="valLastUsed">last used tab</option>
+                            <option value="left" data-i18n="valLeftTab">left tab</option>
+                            <option value="right" data-i18n="valRightTab">right tab</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" for="tabsOpenMethod" data-i18n="optTabsOpenMethod">Open a new tab in</label>
+                        <select id="tabsOpenMethod">
+                            <option value="default" data-i18n="valDefault">*** default ***</option>
+                            <option value="foreground" data-i18n="valForeground">foreground</option>
+                            <option value="background" data-i18n="valBackground">background</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-label-group">
+                            <label class="form-label" for="preventDuplicates" data-i18n="optPreventDuplicates">Prevent duplicate tabs</label>
+                            <span class="form-hint" data-i18n="optPreventDuplicatesHint">"Duplicate Tab" action is still allowed</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="preventDuplicates">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <div class="footer">
+                <span><span data-i18n="footerContact">Contact:</span> <a href="mailto:extension@tekky.cc">extension@tekky.cc</a></span>
+                <span><span data-i18n="footerDeveloper">Developer:</span> <a href="https://tekky.cc">tekky.cc</a></span>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span class="toast-icon">✓</span>
+        <span class="toast-message" data-i18n="statusSaved">Saved</span>
+    </div>
+
+    <script src="options.js"></script>
 </body>
+</html>
