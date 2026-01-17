@@ -4,171 +4,171 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "A simple mouse gestures program with no bloat.",
+    "message": "一款简洁的鼠标手势程序，无冗余功能。",
     "description": "Extension description"
   },
   "optionsTitle": {
-    "message": "Configuration",
+    "message": "配置",
     "description": "Options page title"
   },
   "themeToggle": {
-    "message": "Theme",
+    "message": "主题",
     "description": "Theme toggle button"
   },
   "sectionSettings": {
-    "message": "Settings",
+    "message": "设置",
     "description": "Settings section header"
   },
   "sectionGestures": {
-    "message": "Gesture Actions",
+    "message": "手势操作",
     "description": "Gestures section header"
   },
   "optTrail": {
-    "message": "Gesture Trails",
+    "message": "手势轨迹",
     "description": "Trail option label"
   },
   "optTrailDesc": {
-    "message": "Enable or disable gesture trails.",
+    "message": "启用或禁用手势轨迹。",
     "description": "Trail option tooltip"
   },
   "optRocker": {
-    "message": "Rocker Gestures",
+    "message": "摇摆手势",
     "description": "Rocker option label"
   },
   "optRockerDesc": {
-    "message": "Navigate back/forward by clicking one mouse button while holding the other (Opera-style).",
+    "message": "按住一个鼠标键的同时点击另一个鼠标键来前进/后退（Opera风格）。",
     "description": "Rocker option tooltip"
   },
   "rockerHint": {
-    "message": "Hold first button, then click second button to trigger.",
+    "message": "先按住第一个按钮，再点击第二个按钮触发。",
     "description": "Rocker gesture hint text"
   },
   "rockerRightLeft": {
-    "message": "Right + Left",
+    "message": "右键 + 左键",
     "description": "Right hold then left click rocker gesture"
   },
   "rockerLeftRight": {
-    "message": "Left + Right",
+    "message": "左键 + 右键",
     "description": "Left hold then right click rocker gesture"
   },
   "optColor": {
-    "message": "Gesture Color",
+    "message": "手势颜色",
     "description": "Color option label"
   },
   "optWidth": {
-    "message": "Gesture Width",
+    "message": "手势宽度",
     "description": "Width option label"
   },
   "colorRed": {
-    "message": "Red",
+    "message": "红色",
     "description": "Red color option"
   },
   "colorGreen": {
-    "message": "Green",
+    "message": "绿色",
     "description": "Green color option"
   },
   "colorBlue": {
-    "message": "Blue",
+    "message": "蓝色",
     "description": "Blue color option"
   },
   "colorYellow": {
-    "message": "Yellow",
+    "message": "黄色",
     "description": "Yellow color option"
   },
   "colorBlack": {
-    "message": "Black",
+    "message": "黑色",
     "description": "Black color option"
   },
   "colGesture": {
-    "message": "Gesture",
+    "message": "手势",
     "description": "Gesture column header"
   },
   "colAction": {
-    "message": "Action",
+    "message": "操作",
     "description": "Action column header"
   },
   "gestureUp": {
-    "message": "Mouse Up",
+    "message": "鼠标上滑",
     "description": "Up gesture label"
   },
   "gestureDown": {
-    "message": "Mouse Down",
+    "message": "鼠标下滑",
     "description": "Down gesture label"
   },
   "gestureLeft": {
-    "message": "Mouse Left",
+    "message": "鼠标左滑",
     "description": "Left gesture label"
   },
   "gestureRight": {
-    "message": "Mouse Right",
+    "message": "鼠标右滑",
     "description": "Right gesture label"
   },
   "actionNewTab": {
-    "message": "Open New Tab",
+    "message": "打开新标签页",
     "description": "New tab action"
   },
   "actionCloseTab": {
-    "message": "Close Current Tab",
+    "message": "关闭当前标签页",
     "description": "Close tab action"
   },
   "actionReload": {
-    "message": "Reload",
+    "message": "刷新",
     "description": "Reload action"
   },
   "actionBack": {
-    "message": "History Back",
+    "message": "后退",
     "description": "Back action"
   },
   "actionForward": {
-    "message": "History Forward",
+    "message": "前进",
     "description": "Forward action"
   },
   "actionStop": {
-    "message": "Stop Loading",
+    "message": "停止加载",
     "description": "Stop action"
   },
   "actionCloseBackground": {
-    "message": "Close Background Tabs",
+    "message": "关闭后台标签页",
     "description": "Close background tabs action"
   },
   "actionCloseWindow": {
-    "message": "Close Window",
+    "message": "关闭窗口",
     "description": "Close window action"
   },
   "actionReloadAll": {
-    "message": "Reload All Tabs",
+    "message": "刷新所有标签页",
     "description": "Reload all action"
   },
   "actionNextTab": {
-    "message": "Next Tab",
+    "message": "下一个标签页",
     "description": "Next tab action"
   },
   "actionPrevTab": {
-    "message": "Previous Tab",
+    "message": "上一个标签页",
     "description": "Previous tab action"
   },
   "actionScrollTop": {
-    "message": "Scroll to Top",
+    "message": "滚动到顶部",
     "description": "Scroll top action"
   },
   "actionScrollBottom": {
-    "message": "Scroll to Bottom",
+    "message": "滚动到底部",
     "description": "Scroll bottom action"
   },
   "actionLastTab": {
-    "message": "Re-open Last Closed Tab",
+    "message": "重新打开最近关闭的标签页",
     "description": "Reopen last tab action"
   },
   "btnSave": {
-    "message": "Save Configuration",
+    "message": "保存配置",
     "description": "Save button text"
   },
   "statusSaved": {
-    "message": "Configuration Saved",
+    "message": "配置已保存",
     "description": "Save success message"
   },
   "statusError": {
-    "message": "Error saving configuration",
+    "message": "保存配置时出错",
     "description": "Save error message"
   }
 }
