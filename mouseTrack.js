@@ -5,6 +5,8 @@
     lmousedown: false,
     rocker: false,
     trail: false,
+    rockerRL: "back",
+    rockerLR: "forward",
     mx: 0,
     my: 0,
     nx: 0,
@@ -134,7 +136,7 @@
       if (!chrome.runtime || !chrome.runtime.id) {
         return;
       }
-      chrome.storage.local.get(["colorCode", "width", "rocker", "trail"], (result) => {
+      chrome.storage.local.get(["colorCode", "width", "rocker", "trail", "rockerRL", "rockerLR"], (result) => {
         if (chrome.runtime.lastError) {
           console.error(chrome.runtime.lastError);
           return;
@@ -143,6 +145,8 @@
         state.myWidth = result.width || 3;
         state.rocker = result.rocker === true;
         state.trail = result.trail === true;
+        state.rockerRL = result.rockerRL || "back";
+        state.rockerLR = result.rockerLR || "forward";
         console.log("sGesture: Options loaded", state);
       });
     } catch (e) {
@@ -156,7 +160,7 @@
         state.lmousedown = true;
         if (state.rmousedown && state.rocker) {
           // R->L rocker gesture
-          handleAction("back");
+          handleAction(state.rockerRL);
           state.rocked = true;
           console.log("sGesture: Rocker (R->L) detected. state.rocked = true");
           event.preventDefault();
@@ -165,7 +169,7 @@
         state.rmousedown = true;
         if (state.lmousedown && state.rocker) {
           // L->R rocker gesture
-          handleAction("forward");
+          handleAction(state.rockerLR);
           state.rocked = true;
           console.log("sGesture: Rocker (L->R) detected. state.rocked = true");
           event.preventDefault();
