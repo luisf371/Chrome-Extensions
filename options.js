@@ -1,6 +1,6 @@
 /**
  * sGestures Options Page
- * Updated with unified theme support and i18n
+ * Auto-save with toast notification
  */
 
 const colorCodes = {
@@ -26,16 +26,19 @@ const defaultGests = {
   "D": "closetab"
 };
 
+const defaultRockerGests = {
+  "RL": "back",
+  "LR": "forward"
+};
+
 // =====================
 // i18n Support
 // =====================
 function initI18n() {
-  // Translate all elements with data-i18n attribute
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     const message = chrome.i18n.getMessage(key);
     if (message) {
-      // For elements with child nodes (like options), only set text if it's a leaf
       if (el.children.length === 0) {
         el.textContent = message;
       } else if (el.tagName === 'OPTION') {
@@ -44,7 +47,6 @@ function initI18n() {
     }
   });
   
-  // Update page title
   const titleMsg = chrome.i18n.getMessage('extName');
   if (titleMsg) {
     document.title = titleMsg + ' - ' + chrome.i18n.getMessage('optionsTitle');
@@ -56,9 +58,7 @@ function initI18n() {
 // =====================
 function initTheme() {
   const themeToggle = document.getElementById('themeToggle');
-  const themeIcon = themeToggle.querySelector('.theme-icon');
   
-  // Load saved theme or default to dark
   chrome.storage.local.get(['theme'], (result) => {
     const theme = result.theme || 'dark';
     applyTheme(theme);
@@ -72,20 +72,65 @@ function initTheme() {
   });
   
   function applyTheme(theme) {
-    if (theme === 'light') {
-      document.body.setAttribute('data-theme', 'light');
-      themeIcon.textContent = '☀️';
-    } else {
-      document.body.removeAttribute('data-theme');
-      themeIcon.textContent = '🌙';
-    }
+    document.body.setAttribute('data-theme', theme);
   }
 }
 
 // =====================
-// Options Save/Restore
+// Toast Notification
 // =====================
-function save_options() {
+let toastTimeout = null;
+let toastVisible = false;
+
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  const toastIcon = toast.querySelector('.toast-icon');
+  const toastMessage = toast.querySelector('.toast-message');
+  
+  // Clear any existing timeout
+  if (toastTimeout) {
+    clearTimeout(toastTimeout);
+  }
+  
+  // If toast is already visible, hide it first then reshow
+  if (toastVisible) {
+    toast.classList.remove('show');
+    // Brief delay before showing again to create visual "reset"
+    setTimeout(() => {
+      displayToast();
+    }, 100);
+  } else {
+    displayToast();
+  }
+  
+  function displayToast() {
+    // Set content
+    toastMessage.textContent = message;
+    toastIcon.textContent = type === 'success' ? '✓' : '✕';
+    
+    // Set type class
+    toast.className = 'toast ' + type;
+    
+    // Show toast
+    requestAnimationFrame(() => {
+      toast.classList.add('show');
+      toastVisible = true;
+    });
+    
+    // Hide after delay
+    toastTimeout = setTimeout(() => {
+      toast.classList.remove('show');
+      toastVisible = false;
+    }, 1500);
+  }
+}
+
+// =====================
+// Auto-Save
+// =====================
+let saveTimeout = null;
+
+function saveOptions() {
   const settings = {};
 
   // Color
@@ -111,16 +156,44 @@ function save_options() {
     settings[gesture] = select.value;
   });
 
+  // Rocker Gestures
+  const rockerGestures = ["RL", "LR"];
+  rockerGestures.forEach(gesture => {
+    const select = document.getElementById(`rocker-${gesture}`);
+    settings[`rocker${gesture}`] = select.value;
+  });
+
   // Save all at once
   chrome.storage.local.set(settings, () => {
     console.log("Settings saved:", settings);
-    showStatus('success', chrome.i18n.getMessage('statusSaved') || 'Configuration Saved');
+    const msg = chrome.i18n.getMessage('statusSaved') || 'Saved';
+    showToast(msg, 'success');
   });
 }
 
-function restore_options() {
+function queueSave() {
+  // Debounce saves - wait 300ms after last change
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+  }
+  saveTimeout = setTimeout(saveOptions, 300);
+}
+
+function initAutoSave() {
+  // Listen to all form changes
+  const inputs = document.querySelectorAll('input, select');
+  inputs.forEach(input => {
+    input.addEventListener('change', queueSave);
+  });
+}
+
+// =====================
+// Restore Options
+// =====================
+function restoreOptions() {
   const gestures = ["U", "D", "L", "R"];
-  const settingsToGet = ["colorCode", "width", "rocker", "trail", ...gestures];
+  const rockerGestures = ["RL", "LR"];
+  const settingsToGet = ["colorCode", "width", "rocker", "trail", ...gestures, "rockerRL", "rockerLR"];
   
   chrome.storage.local.get(settingsToGet, (result) => {
     console.log("Restored options:", result);
@@ -137,32 +210,24 @@ function restore_options() {
 
     // Restore rocker
     const rockerCheckbox = document.getElementById('rocker');
-    rockerCheckbox.checked = result.rocker !== false; // Default to true
+    rockerCheckbox.checked = result.rocker !== false;
 
     // Restore trail
     const trailCheckbox = document.getElementById('trail');
-    trailCheckbox.checked = result.trail !== false; // Default to true
+    trailCheckbox.checked = result.trail !== false;
 
     // Restore gestures
     gestures.forEach(gesture => {
       const gestureSelect = document.getElementById(`gesture-${gesture}`);
       gestureSelect.value = result[gesture] || defaultGests[gesture];
     });
-  });
-}
 
-// =====================
-// Status Messages
-// =====================
-function showStatus(type, message) {
-  const status = document.getElementById("status");
-  status.textContent = message;
-  status.className = `status-message ${type}`;
-  
-  setTimeout(() => {
-    status.textContent = '';
-    status.className = 'status-message';
-  }, 2000);
+    // Restore rocker gestures
+    rockerGestures.forEach(gesture => {
+      const rockerSelect = document.getElementById(`rocker-${gesture}`);
+      rockerSelect.value = result[`rocker${gesture}`] || defaultRockerGests[gesture];
+    });
+  });
 }
 
 // =====================
@@ -171,15 +236,13 @@ function showStatus(type, message) {
 document.addEventListener('DOMContentLoaded', function() {
   console.log("Options page loaded");
   
-  // Initialize i18n (will use fallback text if no locales exist yet)
+  // Detect popup mode
+  if (new URLSearchParams(location.search).has('popup')) {
+    document.body.classList.add('popup');
+  }
+  
   initI18n();
-  
-  // Initialize theme
   initTheme();
-  
-  // Restore saved options
-  restore_options();
-  
-  // Save button handler
-  document.getElementById('save').addEventListener('click', save_options);
+  restoreOptions();
+  initAutoSave();
 });
