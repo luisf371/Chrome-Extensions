@@ -11,9 +11,22 @@
         <header>
             <h1 data-i18n="optionsTitle">sGestures</h1>
             <div class="header-actions">
+                <span class="version-badge">v1.2</span>
                 <button class="theme-toggle" id="themeToggle" title="Toggle theme">
-                    <span class="theme-icon">🌙</span>
-                    <span data-i18n="themeToggle">Theme</span>
+                    <svg class="icon-sun" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
                 </button>
             </div>
         </header>
@@ -41,13 +54,58 @@
                             <span data-i18n="optRocker">Rocker Gestures</span>
                             <span class="tooltip">
                                 <span class="tooltip-icon">?</span>
-                                <span class="tooltiptext" data-i18n="optRockerDesc">Enable or disable rocker gestures.</span>
+                                <span class="tooltiptext" data-i18n="optRockerDesc">Navigate back/forward by clicking one mouse button while holding the other (Opera-style).</span>
                             </span>
                         </label>
                         <label class="toggle-switch">
                             <input type="checkbox" id="rocker" checked>
                             <span class="toggle-slider"></span>
                         </label>
+                    </div>
+                    <div class="form-row rocker-info" id="rockerInfo">
+                        <div class="rocker-mappings">
+                            <div class="rocker-item">
+                                <span class="rocker-combo" data-i18n="rockerRightLeft">Right + Left</span>
+                                <span class="rocker-arrow">→</span>
+                                <select id="rocker-RL" class="rocker-select">
+                                    <option value="newtab" data-i18n="actionNewTab">Open New Tab</option>
+                                    <option value="closetab" data-i18n="actionCloseTab">Close Current Tab</option>
+                                    <option value="reload" data-i18n="actionReload">Reload</option>
+                                    <option value="back" data-i18n="actionBack">History Back</option>
+                                    <option value="forward" data-i18n="actionForward">History Forward</option>
+                                    <option value="stop" data-i18n="actionStop">Stop Loading</option>
+                                    <option value="closeback" data-i18n="actionCloseBackground">Close Background Tabs</option>
+                                    <option value="closeall" data-i18n="actionCloseWindow">Close Window</option>
+                                    <option value="reloadall" data-i18n="actionReloadAll">Reload All Tabs</option>
+                                    <option value="nexttab" data-i18n="actionNextTab">Next Tab</option>
+                                    <option value="prevtab" data-i18n="actionPrevTab">Previous Tab</option>
+                                    <option value="scrolltop" data-i18n="actionScrollTop">Scroll to Top</option>
+                                    <option value="scrollbottom" data-i18n="actionScrollBottom">Scroll to Bottom</option>
+                                    <option value="lasttab" data-i18n="actionLastTab">Re-open Last Closed Tab</option>
+                                </select>
+                            </div>
+                            <div class="rocker-item">
+                                <span class="rocker-combo" data-i18n="rockerLeftRight">Left + Right</span>
+                                <span class="rocker-arrow">→</span>
+                                <select id="rocker-LR" class="rocker-select">
+                                    <option value="newtab" data-i18n="actionNewTab">Open New Tab</option>
+                                    <option value="closetab" data-i18n="actionCloseTab">Close Current Tab</option>
+                                    <option value="reload" data-i18n="actionReload">Reload</option>
+                                    <option value="back" data-i18n="actionBack">History Back</option>
+                                    <option value="forward" data-i18n="actionForward">History Forward</option>
+                                    <option value="stop" data-i18n="actionStop">Stop Loading</option>
+                                    <option value="closeback" data-i18n="actionCloseBackground">Close Background Tabs</option>
+                                    <option value="closeall" data-i18n="actionCloseWindow">Close Window</option>
+                                    <option value="reloadall" data-i18n="actionReloadAll">Reload All Tabs</option>
+                                    <option value="nexttab" data-i18n="actionNextTab">Next Tab</option>
+                                    <option value="prevtab" data-i18n="actionPrevTab">Previous Tab</option>
+                                    <option value="scrolltop" data-i18n="actionScrollTop">Scroll to Top</option>
+                                    <option value="scrollbottom" data-i18n="actionScrollBottom">Scroll to Bottom</option>
+                                    <option value="lasttab" data-i18n="actionLastTab">Re-open Last Closed Tab</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="rocker-hint" data-i18n="rockerHint">Hold first button, then click second button to trigger.</p>
                     </div>
                     <div class="form-row">
                         <label class="form-label" data-i18n="optColor">Gesture Color</label>
@@ -192,12 +250,19 @@
                     </table>
                 </div>
             </section>
-        </main>
 
-        <footer>
-            <div id="status" class="status-message"></div>
-            <button class="btn btn-primary" id="save" data-i18n="btnSave">Save Configuration</button>
-        </footer>
+            <!-- Footer -->
+            <div class="footer">
+                <span>Contact: <a href="mailto:extension@tekky.cc">extension@tekky.cc</a></span>
+                <span>Developer: <a href="https://tekky.cc">tekky.cc</a></span>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span class="toast-icon">✓</span>
+        <span class="toast-message">Saved</span>
     </div>
 
     <script src="options.js"></script>
