@@ -1,65 +1,41 @@
-# sGestures
+![sGestures Icon](icon-128.png)
 
-sGestures is a simple mouse gesture extension that allows users to perform various browser actions using mouse gestures. This extension enhances productivity by enabling quick navigation and control through intuitive gestures.
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Language](https://img.shields.io/badge/language-JavaScript-yellow.svg)
+![Version](https://img.shields.io/badge/version-1.2-green.svg)
 
-## Features
+🌍 **Supported Languages:** English, Spanish, French, Japanese, Portuguese (Brazil), Chinese (Simplified)
 
-- **Mouse Gestures**: Perform actions like navigating back, forward, opening new tabs, closing tabs, and more using mouse movements.
-- **Customizable Gestures**: Users can configure gestures for different actions through an options page.
-- **Gesture Trails**: Visual feedback for gestures with customizable colors and widths.
-- **Rocker Gestures**: Enable rocker gestures for additional functionality.
+sGestures is a lightweight, bloat-free Chrome extension that brings intuitive mouse gestures to your browser. It allows you to execute common navigation tasks through simple mouse movements and rocker combinations without the overhead of complex configurations.
 
-## Installation
+## Key Features
 
-1. Clone the repository or download the source code.
-2. Open Chrome and navigate to `chrome://extensions/`.
-3. Enable "Developer mode" in the top right corner.
-4. Click on "Load unpacked" and select the directory where the extension files are located.
-5. The sGestures extension should now be installed and ready to use.
+*   **Mouse Gestures**: Execute actions by moving the mouse in four directions (Up, Down, Left, Right) while holding the right button.
+*   **Rocker Gestures**: Perform quick actions by clicking one mouse button while holding the other.
+*   **Visual Feedback**: Customizable gesture trails with adjustable color and width.
+*   **Comprehensive Actions**: Map gestures to New Tab, Close Tab, Reload, Back/Forward, Scroll to Top/Bottom, and more.
+*   **Dark/Light Themes**: A clean options interface that respects your system's theme preferences.
+
+## Quick Start
+
+To install sGestures manually:
+
+1.  Download or clone this repository.
+2.  Open Chrome and navigate to `chrome://extensions/`.
+3.  Enable **Developer mode** in the top right corner.
+4.  Click **Load unpacked** and select the `sGesture` directory.
 
 ## Usage
 
-1. **Open the Options Page**: Click on the extension icon in the toolbar to access the options page.
-2. **Configure Gestures**: Set up your desired gestures and their corresponding actions. You can choose from actions like:
-   - Open New Tab
-   - Close Current Tab
-   - History Back
-   - History Forward
-   - Reload
-   - Scroll to Top/Bottom
-3. **Use Gestures**: To perform a gesture, click and hold the mouse button, then move the mouse in the desired direction. Release the button to execute the action.
+### Mouse Gestures
+1.  **Hold** the right mouse button.
+2.  **Move** the mouse in a specific direction (e.g., move Left to go back).
+3.  **Release** the button to trigger the action.
 
-## Supported Gestures
+### Rocker Gestures
+1.  **Hold** one mouse button (e.g., Right).
+2.  **Click** the other mouse button (e.g., Left).
+3.  **Release** to trigger the action.
 
-- **Mouse Up**: Configurable action (default: Open New Tab)
-- **Mouse Down**: Configurable action (default: Close Current Tab)
-- **Mouse Left**: Configurable action (default: History Back)
-- **Mouse Right**: Configurable action (default: History Forward)
-
-## Customization
-
-You can customize the following settings in the options page:
-
-- **Gesture Color**: Choose the color of the gesture trail.
-- **Gesture Width**: Set the width of the gesture trail.
-- **Enable/Disable Gesture Trails**: Toggle the visibility of gesture trails.
-- **Enable/Disable Rocker Gestures**: Toggle rocker gestures for additional functionality.
-
-## Known Issues
-
-- Some users may experience issues with gesture recognition depending on their mouse sensitivity settings.
-- The extension may not work as expected on certain websites due to restrictions.
-
-## Changelog
-
-Refer to the `CHANGELOG.MD` file for a detailed history of changes and updates.
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
-
-## Acknowledgments
-
-- Thanks to the contributors and the open-source community for their support and resources.
-
-Version 1.4
+**Default Rocker Mappings:**
+| Combination | Default Action |
