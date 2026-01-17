@@ -1,0 +1,254 @@
+{
+  "extName": {
+    "message": "sBookmarkCleaner",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Nettoyeur de favoris simple : Trie, trouve les liens cassés et identifie les doublons.",
+    "description": "Extension description"
+  },
+  "optionsTitle": {
+    "message": "Paramètres du nettoyeur de favoris",
+    "description": "Options page title"
+  },
+  "optionsSubtitle": {
+    "message": "Configurez vos préférences d'analyse et de tri",
+    "description": "Options page subtitle"
+  },
+  "sectionGeneral": {
+    "message": "Général",
+    "description": "General section tag"
+  },
+  "sectionAppearance": {
+    "message": "Apparence",
+    "description": "Appearance section header"
+  },
+  "sectionAppearanceDesc": {
+    "message": "Personnalisez l'apparence de l'extension.",
+    "description": "Appearance section description"
+  },
+  "optTheme": {
+    "message": "Thème",
+    "description": "Theme option label"
+  },
+  "optThemeHelp": {
+    "message": "Sélectionnez votre thème de couleurs préféré.",
+    "description": "Theme option help text"
+  },
+  "themeDark": {
+    "message": "Sombre",
+    "description": "Dark theme option"
+  },
+  "themeLight": {
+    "message": "Clair",
+    "description": "Light theme option"
+  },
+  "sectionScanning": {
+    "message": "Analyse",
+    "description": "Scanning section tag"
+  },
+  "sectionConnection": {
+    "message": "Paramètres de connexion",
+    "description": "Connection section header"
+  },
+  "sectionConnectionDesc": {
+    "message": "Ajustez la façon dont le nettoyeur se connecte aux sites web pour vérifier leur état.",
+    "description": "Connection section description"
+  },
+  "optTimeout": {
+    "message": "Délai de connexion (secondes)",
+    "description": "Timeout option label"
+  },
+  "optTimeoutHelp": {
+    "message": "Temps d'attente de la réponse du site. Par défaut : 5s. Des valeurs plus basses analysent plus vite mais peuvent signaler des faux positifs pour les sites lents. Recommandé : 3s - 10s.",
+    "description": "Timeout option help text"
+  },
+  "sectionSorting": {
+    "message": "Tri",
+    "description": "Sorting section tag"
+  },
+  "sectionOrganization": {
+    "message": "Organisation",
+    "description": "Organization section header"
+  },
+  "sectionOrganizationDesc": {
+    "message": "Gérez le tri de vos favoris avant l'analyse.",
+    "description": "Organization section description"
+  },
+  "optAutoSort": {
+    "message": "Trier automatiquement avant l'analyse",
+    "description": "Auto sort option label"
+  },
+  "optAutoSortHelp": {
+    "message": "Si activé, les favoris seront triés par ordre alphabétique au début d'une analyse.",
+    "description": "Auto sort option help text"
+  },
+  "optSortScope": {
+    "message": "Portée du tri",
+    "description": "Sort scope option label"
+  },
+  "scopeParent": {
+    "message": "Dossiers parents uniquement",
+    "description": "Parent scope option"
+  },
+  "scopeRecursive": {
+    "message": "Dossiers et contenu (récursif)",
+    "description": "Recursive scope option"
+  },
+  "scopeHelp": {
+    "message": "« Dossiers parents uniquement » trie seulement les dossiers visibles dans la barre/structure du menu. « Récursif » trie tous les dossiers et favoris qu'ils contiennent.",
+    "description": "Scope option help text"
+  },
+  "statusSaved": {
+    "message": "Enregistré",
+    "description": "Status message when saved"
+  },
+  "popupTitle": {
+    "message": "Nettoyeur de favoris",
+    "description": "Popup title"
+  },
+  "btnFindBroken": {
+    "message": "Trouver les liens cassés",
+    "description": "Find broken links button"
+  },
+  "btnFindDuplicates": {
+    "message": "Trouver les doublons",
+    "description": "Find duplicates button"
+  },
+  "btnSortBookmarks": {
+    "message": "Trier les favoris",
+    "description": "Sort bookmarks button"
+  },
+  "statusReady": {
+    "message": "Prêt à analyser.",
+    "description": "Ready status message"
+  },
+  "statusPaused": {
+    "message": "Analyse en pause.",
+    "description": "Paused status message"
+  },
+  "statBrokenShort": {
+    "message": "Cassés",
+    "description": "Broken count label"
+  },
+  "statDuplicates": {
+    "message": "Doublons",
+    "description": "Statistic label"
+  },
+  "statusScanning": {
+    "message": "Analyse en cours...",
+    "description": "Generic scanning status"
+  },
+  "statusScanningBroken": {
+    "message": "Recherche des liens cassés...",
+    "description": "Scanning broken links status"
+  },
+  "statusScanningDuplicates": {
+    "message": "Recherche des doublons...",
+    "description": "Scanning duplicates status"
+  },
+  "statusPausing": {
+    "message": "Mise en pause...",
+    "description": "Pausing status"
+  },
+  "statusResuming": {
+    "message": "Reprise...",
+    "description": "Resuming status"
+  },
+  "statusCancelling": {
+    "message": "Annulation...",
+    "description": "Cancelling status"
+  },
+  "statusStartingBroken": {
+    "message": "Démarrage de l'analyse des liens cassés...",
+    "description": "Starting broken scan status"
+  },
+  "statusStartingDuplicates": {
+    "message": "Démarrage de l'analyse des doublons...",
+    "description": "Starting duplicate scan status"
+  },
+  "statusSorting": {
+    "message": "Tri en cours...",
+    "description": "Sorting status"
+  },
+  "statusSortingComplete": {
+    "message": "Tri terminé.",
+    "description": "Sorting complete status"
+  },
+  "reportTitle": {
+    "message": "Rapport d'analyse",
+    "description": "Report page title"
+  },
+  "scanHistoryBroken": {
+    "message": "Analyse des liens cassés",
+    "description": "Broken links scan label"
+  },
+  "scanHistoryDup": {
+    "message": "Analyse des doublons",
+    "description": "Duplicates scan label"
+  },
+  "sectionBroken": {
+    "message": "Liens cassés",
+    "description": "Broken links section header"
+  },
+  "sectionDuplicates": {
+    "message": "Liens en double",
+    "description": "Duplicates section header"
+  },
+  "btnDeleteSelected": {
+    "message": "Supprimer la sélection",
+    "description": "Delete selected button"
+  },
+  "btnOpenSelected": {
+    "message": "Ouvrir la sélection",
+    "description": "Open selected button"
+  },
+  "btnIgnoreSelected": {
+    "message": "Ignorer la sélection",
+    "description": "Ignore selected button"
+  },
+  "btnRecheckSelected": {
+    "message": "Revérifier la sélection",
+    "description": "Recheck selected button"
+  },
+  "thBookmark": {
+    "message": "Favori",
+    "description": "Table header bookmark"
+  },
+  "thURL": {
+    "message": "URL",
+    "description": "Table header URL"
+  },
+  "thStatus": {
+    "message": "État",
+    "description": "Table header status"
+  },
+  "emptyBroken": {
+    "message": "Aucun lien cassé trouvé.",
+    "description": "Empty state broken"
+  },
+  "emptyDuplicates": {
+    "message": "Aucun doublon trouvé.",
+    "description": "Empty state duplicates"
+  },
+  "dupInstruction": {
+    "message": "Sélectionnez les copies à supprimer. Nous recommandons de garder une copie valide.",
+    "description": "Duplicate instruction"
+  },
+  "dangerZone": {
+    "message": "Zone de danger",
+    "description": "Danger zone header"
+  },
+  "dangerDesc": {
+    "message": "Effacer tous les résultats et l'historique d'analyse. Cette action est irréversible.",
+    "description": "Danger zone description"
+  },
+  "btnClearReport": {
+    "message": "Effacer les données du rapport",
+    "description": "Clear report button"
+  },
+  "textNever": {
+    "message": "Jamais",
+    "description": "Never scanned text"
+  }
+}

@@ -1,0 +1,254 @@
+{
+  "extName": {
+    "message": "sBookmarkCleaner",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Limpiador de marcadores simple: Ordena, encuentra enlaces rotos e identifica duplicados.",
+    "description": "Extension description"
+  },
+  "optionsTitle": {
+    "message": "Configuración del limpiador de marcadores",
+    "description": "Options page title"
+  },
+  "optionsSubtitle": {
+    "message": "Configura tus preferencias de escaneo y ordenación",
+    "description": "Options page subtitle"
+  },
+  "sectionGeneral": {
+    "message": "General",
+    "description": "General section tag"
+  },
+  "sectionAppearance": {
+    "message": "Apariencia",
+    "description": "Appearance section header"
+  },
+  "sectionAppearanceDesc": {
+    "message": "Personaliza el aspecto de la extensión.",
+    "description": "Appearance section description"
+  },
+  "optTheme": {
+    "message": "Tema",
+    "description": "Theme option label"
+  },
+  "optThemeHelp": {
+    "message": "Selecciona tu tema de color preferido.",
+    "description": "Theme option help text"
+  },
+  "themeDark": {
+    "message": "Oscuro",
+    "description": "Dark theme option"
+  },
+  "themeLight": {
+    "message": "Claro",
+    "description": "Light theme option"
+  },
+  "sectionScanning": {
+    "message": "Escaneo",
+    "description": "Scanning section tag"
+  },
+  "sectionConnection": {
+    "message": "Configuración de conexión",
+    "description": "Connection section header"
+  },
+  "sectionConnectionDesc": {
+    "message": "Ajusta cómo el limpiador se conecta a los sitios web para verificar su estado.",
+    "description": "Connection section description"
+  },
+  "optTimeout": {
+    "message": "Tiempo de espera de conexión (segundos)",
+    "description": "Timeout option label"
+  },
+  "optTimeoutHelp": {
+    "message": "Tiempo de espera para la respuesta del sitio. Por defecto: 5s. Valores bajos escanean más rápido pero pueden reportar falsos positivos en sitios lentos. Recomendado: 3s - 10s.",
+    "description": "Timeout option help text"
+  },
+  "sectionSorting": {
+    "message": "Ordenación",
+    "description": "Sorting section tag"
+  },
+  "sectionOrganization": {
+    "message": "Organización",
+    "description": "Organization section header"
+  },
+  "sectionOrganizationDesc": {
+    "message": "Gestiona cómo se ordenan tus marcadores antes del escaneo.",
+    "description": "Organization section description"
+  },
+  "optAutoSort": {
+    "message": "Ordenar automáticamente antes de escanear",
+    "description": "Auto sort option label"
+  },
+  "optAutoSortHelp": {
+    "message": "Si está activado, los marcadores se ordenarán alfabéticamente cuando comience un escaneo.",
+    "description": "Auto sort option help text"
+  },
+  "optSortScope": {
+    "message": "Alcance de ordenación",
+    "description": "Sort scope option label"
+  },
+  "scopeParent": {
+    "message": "Solo carpetas principales",
+    "description": "Parent scope option"
+  },
+  "scopeRecursive": {
+    "message": "Carpetas y contenido (recursivo)",
+    "description": "Recursive scope option"
+  },
+  "scopeHelp": {
+    "message": "'Solo carpetas principales' ordena solo las carpetas visibles en la barra/estructura del menú. 'Recursivo' ordena todas las carpetas y marcadores dentro de ellas.",
+    "description": "Scope option help text"
+  },
+  "statusSaved": {
+    "message": "Guardado",
+    "description": "Status message when saved"
+  },
+  "popupTitle": {
+    "message": "Limpiador de marcadores",
+    "description": "Popup title"
+  },
+  "btnFindBroken": {
+    "message": "Buscar enlaces rotos",
+    "description": "Find broken links button"
+  },
+  "btnFindDuplicates": {
+    "message": "Buscar duplicados",
+    "description": "Find duplicates button"
+  },
+  "btnSortBookmarks": {
+    "message": "Ordenar marcadores",
+    "description": "Sort bookmarks button"
+  },
+  "statusReady": {
+    "message": "Listo para escanear.",
+    "description": "Ready status message"
+  },
+  "statusPaused": {
+    "message": "Escaneo pausado.",
+    "description": "Paused status message"
+  },
+  "statBrokenShort": {
+    "message": "Rotos",
+    "description": "Broken count label"
+  },
+  "statDuplicates": {
+    "message": "Duplicados",
+    "description": "Statistic label"
+  },
+  "statusScanning": {
+    "message": "Escaneando...",
+    "description": "Generic scanning status"
+  },
+  "statusScanningBroken": {
+    "message": "Buscando enlaces rotos...",
+    "description": "Scanning broken links status"
+  },
+  "statusScanningDuplicates": {
+    "message": "Buscando duplicados...",
+    "description": "Scanning duplicates status"
+  },
+  "statusPausing": {
+    "message": "Pausando...",
+    "description": "Pausing status"
+  },
+  "statusResuming": {
+    "message": "Reanudando...",
+    "description": "Resuming status"
+  },
+  "statusCancelling": {
+    "message": "Cancelando...",
+    "description": "Cancelling status"
+  },
+  "statusStartingBroken": {
+    "message": "Iniciando escaneo de enlaces rotos...",
+    "description": "Starting broken scan status"
+  },
+  "statusStartingDuplicates": {
+    "message": "Iniciando escaneo de duplicados...",
+    "description": "Starting duplicate scan status"
+  },
+  "statusSorting": {
+    "message": "Ordenando...",
+    "description": "Sorting status"
+  },
+  "statusSortingComplete": {
+    "message": "Ordenación completada.",
+    "description": "Sorting complete status"
+  },
+  "reportTitle": {
+    "message": "Informe de escaneo",
+    "description": "Report page title"
+  },
+  "scanHistoryBroken": {
+    "message": "Escaneo de enlaces rotos",
+    "description": "Broken links scan label"
+  },
+  "scanHistoryDup": {
+    "message": "Escaneo de duplicados",
+    "description": "Duplicates scan label"
+  },
+  "sectionBroken": {
+    "message": "Enlaces rotos",
+    "description": "Broken links section header"
+  },
+  "sectionDuplicates": {
+    "message": "Enlaces duplicados",
+    "description": "Duplicates section header"
+  },
+  "btnDeleteSelected": {
+    "message": "Eliminar seleccionados",
+    "description": "Delete selected button"
+  },
+  "btnOpenSelected": {
+    "message": "Abrir seleccionados",
+    "description": "Open selected button"
+  },
+  "btnIgnoreSelected": {
+    "message": "Ignorar seleccionados",
+    "description": "Ignore selected button"
+  },
+  "btnRecheckSelected": {
+    "message": "Verificar de nuevo",
+    "description": "Recheck selected button"
+  },
+  "thBookmark": {
+    "message": "Marcador",
+    "description": "Table header bookmark"
+  },
+  "thURL": {
+    "message": "URL",
+    "description": "Table header URL"
+  },
+  "thStatus": {
+    "message": "Estado",
+    "description": "Table header status"
+  },
+  "emptyBroken": {
+    "message": "No se encontraron enlaces rotos.",
+    "description": "Empty state broken"
+  },
+  "emptyDuplicates": {
+    "message": "No se encontraron duplicados.",
+    "description": "Empty state duplicates"
+  },
+  "dupInstruction": {
+    "message": "Selecciona copias para eliminar. Recomendamos mantener una copia válida.",
+    "description": "Duplicate instruction"
+  },
+  "dangerZone": {
+    "message": "Zona de peligro",
+    "description": "Danger zone header"
+  },
+  "dangerDesc": {
+    "message": "Borrar todos los resultados e historial de escaneo. Esto no se puede deshacer.",
+    "description": "Danger zone description"
+  },
+  "btnClearReport": {
+    "message": "Borrar datos del informe",
+    "description": "Clear report button"
+  },
+  "textNever": {
+    "message": "Nunca",
+    "description": "Never scanned text"
+  }
+}
