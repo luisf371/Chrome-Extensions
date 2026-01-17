@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>sBookmarkCleaner</title>
+  <title data-i18n="extName">sBookmarkCleaner</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="popup">
+<body class="popup" data-theme="dark">
   <div class="container">
     <div style="display: flex; align-items: center; margin-bottom: 20px;">
         <!-- Left: Title -->
-        <h1 style="font-size: 1.2rem; margin: 0; margin-right: auto;">sBookmarkCleaner</h1>
+        <h1 style="font-size: 1.2rem; margin: 0; margin-right: auto;" data-i18n="extName">sBookmarkCleaner</h1>
 
         <!-- Right: Controls -->
         <div style="display: flex; gap: 8px; align-items: center;">
@@ -40,7 +40,7 @@
     </div>
     
     <div id="status-container">
-      <p id="status-text">Ready to scan.</p>
+      <p id="status-text" data-i18n="statusReady">Ready to scan.</p>
       <div class="progress-bar-bg">
         <div id="progress-bar" class="progress-bar-fill"></div>
       </div>
@@ -62,22 +62,22 @@
 
     <div class="stats">
       <div class="stat-box">
-        <span class="stat-label">Broken</span>
+        <span class="stat-label" data-i18n="statBrokenShort">Broken</span>
         <span id="broken-count" class="stat-number">0</span>
         <span id="last-scan-broken" class="stat-timestamp">Never scanned</span>
       </div>
       <div class="stat-box">
-        <span class="stat-label">Duplicates</span>
+        <span class="stat-label" data-i18n="statDuplicates">Duplicates</span>
         <span id="duplicate-count" class="stat-number">0</span>
         <span id="last-scan-duplicates" class="stat-timestamp">Never scanned</span>
       </div>
     </div>
 
     <div class="actions">
-      <button id="btn-broken" class="btn-action">Find Broken Links</button>
-      <button id="btn-duplicates" class="btn-action">Find Duplicates</button>
-      <button id="btn-sort" class="btn-action">Sort Bookmarks</button>
-      <button id="btn-report" class="btn-action" disabled>View Report</button>
+      <button id="btn-broken" class="btn-action" data-i18n="btnFindBroken">Find Broken Links</button>
+      <button id="btn-duplicates" class="btn-action" data-i18n="btnFindDuplicates">Find Duplicates</button>
+      <button id="btn-sort" class="btn-action" data-i18n="btnSortBookmarks">Sort Bookmarks</button>
+      <button id="btn-report" class="btn-action" disabled data-i18n="btnReport">View Report</button>
     </div>
   </div>
   <script src="popup.js"></script>

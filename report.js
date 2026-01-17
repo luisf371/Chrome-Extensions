@@ -26,6 +26,23 @@ let currentState = null;
 let currentFilter = null; // Filter by status code
 let selectedIds = new Set(); // Store selected IDs globally
 
+// =====================
+// i18n Support
+// =====================
+function initI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const message = chrome.i18n.getMessage(key);
+    if (message) {
+      if (el.children.length === 0) {
+        el.textContent = message;
+      } else if (el.tagName === 'OPTION') {
+        el.textContent = message;
+      }
+    }
+  });
+}
+
 // Theme Logic
 // 1. Load saved theme
 chrome.storage.local.get(['theme'], (result) => {
@@ -74,13 +91,13 @@ function render(state) {
   if (state.lastScanDateBroken) {
     brokenDateSpan.textContent = new Date(state.lastScanDateBroken).toLocaleString();
   } else {
-    brokenDateSpan.textContent = 'Never';
+    brokenDateSpan.textContent = chrome.i18n.getMessage('textNever');
   }
 
   if (state.lastScanDateDuplicates) {
     dupDateSpan.textContent = new Date(state.lastScanDateDuplicates).toLocaleString();
   } else {
-    dupDateSpan.textContent = 'Never';
+    dupDateSpan.textContent = chrome.i18n.getMessage('textNever');
   }
 
   renderBroken(state.broken);
@@ -187,12 +204,6 @@ function renderDuplicates(duplicatesMap) {
     
     let itemsHtml = '<table style="margin:0; width:100%;"><tbody>';
     items.forEach(item => {
-      // Duplicates need their own selection logic or shared? 
-      // For now, let's keep duplicate selection separate locally as it was before,
-      // or we could use the same Set if IDs are unique globally (they are).
-      // However, usually duplicate management is separate. Let's keep it separate for now or minimal.
-      // The user request was specific to "selected links under a filter", implying the Findings section.
-      
       itemsHtml += `
         <tr>
             <td style="width:30px; border:none;"><input type="checkbox" class="dup-check" data-id="${item.id}"></td>
@@ -217,17 +228,19 @@ function renderDuplicates(duplicatesMap) {
 
 function updateBrokenButtonState() {
   const count = selectedIds.size;
+  const countStr = count > 0 ? ` (${count})` : '';
+
   elements.deleteBrokenBtn.disabled = count === 0;
-  elements.deleteBrokenBtn.textContent = count > 0 ? `Delete Selected (${count})` : 'Delete Selected';
+  elements.deleteBrokenBtn.textContent = chrome.i18n.getMessage('btnDeleteSelected') + countStr;
   
   elements.recheckBtn.disabled = count === 0;
-  elements.recheckBtn.textContent = count > 0 ? `Recheck Selected (${count})` : 'Recheck Selected';
+  elements.recheckBtn.textContent = chrome.i18n.getMessage('btnRecheckSelected') + countStr;
 
   elements.ignoreBtn.disabled = count === 0;
-  elements.ignoreBtn.textContent = count > 0 ? `Ignore Selected (${count})` : 'Ignore Selected';
+  elements.ignoreBtn.textContent = chrome.i18n.getMessage('btnIgnoreSelected') + countStr;
   
   elements.openBtn.disabled = count === 0;
-  elements.openBtn.textContent = count > 0 ? `Open Selected (${count})` : 'Open Selected';
+  elements.openBtn.textContent = chrome.i18n.getMessage('btnOpenSelected') + countStr;
 
   // Update "Select All" checkbox state based on visible items
   const visibleChecks = Array.from(document.querySelectorAll('.broken-check'));
@@ -243,8 +256,9 @@ function updateBrokenButtonState() {
 
 function updateDupButtonState() {
   const checked = document.querySelectorAll('.dup-check:checked');
+  const countStr = checked.length > 0 ? ` (${checked.length})` : '';
   elements.deleteDupBtn.disabled = checked.length === 0;
-  elements.deleteDupBtn.textContent = checked.length > 0 ? `Delete Selected (${checked.length})` : 'Delete Selected';
+  elements.deleteDupBtn.textContent = chrome.i18n.getMessage('btnDeleteSelected') + countStr;
 }
 
 // Helpers
@@ -411,4 +425,7 @@ elements.clearReportBtn.addEventListener('click', () => {
 });
 
 // Initial Load
-chrome.runtime.sendMessage({ action: 'getStatus' }, render);
+document.addEventListener('DOMContentLoaded', () => {
+  initI18n();
+  chrome.runtime.sendMessage({ action: 'getStatus' }, render);
+});

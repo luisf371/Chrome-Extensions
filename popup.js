@@ -18,18 +18,37 @@ const elements = {
   btnCancel: document.getElementById('btn-cancel')
 };
 
+// =====================
+// i18n Support
+// =====================
+function initI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const message = chrome.i18n.getMessage(key);
+    if (message) {
+      if (el.children.length === 0) {
+        el.textContent = message;
+      } else if (el.tagName === 'OPTION') {
+        el.textContent = message;
+      }
+    }
+  });
+}
+
 // Theme Logic (Sync with Report)
 chrome.storage.local.get(['theme'], (result) => {
-  const savedTheme = result.theme || 'light';
+  const savedTheme = result.theme || 'dark';
   document.body.setAttribute('data-theme', savedTheme);
 });
 
-elements.themeToggle.addEventListener('click', () => {
-  const currentTheme = document.body.getAttribute('data-theme');
-  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-  document.body.setAttribute('data-theme', newTheme);
-  chrome.storage.local.set({ theme: newTheme });
-});
+if (elements.themeToggle) {
+    elements.themeToggle.addEventListener('click', () => {
+      const currentTheme = document.body.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.body.setAttribute('data-theme', newTheme);
+      chrome.storage.local.set({ theme: newTheme });
+    });
+}
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.theme) {
@@ -88,15 +107,15 @@ function updateUI(state) {
       elements.btnPause.title = 'Pause';
       elements.btnPause.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
       
-      let modeText = 'Scanning...';
-      if (state.mode === 'broken') modeText = 'Scanning for Broken Links...';
-      if (state.mode === 'duplicates') modeText = 'Scanning for Duplicates...';
+      let modeText = chrome.i18n.getMessage('statusScanning');
+      if (state.mode === 'broken') modeText = chrome.i18n.getMessage('statusScanningBroken');
+      if (state.mode === 'duplicates') modeText = chrome.i18n.getMessage('statusScanningDuplicates');
       elements.statusText.textContent = `${modeText} (${Math.round(percentage)}%)`;
     } else {
       // Paused
       elements.btnPause.title = 'Resume';
       elements.btnPause.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-      elements.statusText.textContent = 'Scan Paused.';
+      elements.statusText.textContent = chrome.i18n.getMessage('statusPaused');
     }
   } else {
     // Idle - Ensure buttons are enabled immediately
@@ -104,9 +123,12 @@ function updateUI(state) {
     elements.scanControls.style.display = 'none';
     
     if (state.lastScanDateBroken || state.lastScanDateDuplicates) {
-      elements.statusText.textContent = 'Ready.';
+       // "Ready." is not in messages.json, I used statusReady for "Ready to scan."
+       // I'll reuse statusReady for both cases or just use "Ready" text if strict i18n not required for dynamic small texts, 
+       // but better to be consistent. I'll use statusReady for now.
+      elements.statusText.textContent = chrome.i18n.getMessage('statusReady'); 
     } else {
-      elements.statusText.textContent = 'Ready to scan.';
+      elements.statusText.textContent = chrome.i18n.getMessage('statusReady');
     }
   }
 }
@@ -124,9 +146,9 @@ function enableAllActions() {
 }
 
 function resetButtonLabels() {
-  elements.btnBroken.textContent = 'Find Broken Links';
-  elements.btnDuplicates.textContent = 'Find Duplicates';
-  elements.btnSort.textContent = 'Sort Bookmarks';
+  elements.btnBroken.textContent = chrome.i18n.getMessage('btnFindBroken');
+  elements.btnDuplicates.textContent = chrome.i18n.getMessage('btnFindDuplicates');
+  elements.btnSort.textContent = chrome.i18n.getMessage('btnSortBookmarks');
 }
 
 function pollStatus() {
@@ -149,12 +171,12 @@ function pollStatus() {
 elements.btnPause.addEventListener('click', () => {
   if (elements.btnPause.title === 'Pause') {
     chrome.runtime.sendMessage({ action: 'pauseScan' }, () => {
-      elements.statusText.textContent = 'Pausing...';
+      elements.statusText.textContent = chrome.i18n.getMessage('statusPausing');
       pollStatus();
     });
   } else {
     chrome.runtime.sendMessage({ action: 'resumeScan' }, () => {
-      elements.statusText.textContent = 'Resuming...';
+      elements.statusText.textContent = chrome.i18n.getMessage('statusResuming');
       pollStatus();
     });
   }
@@ -162,34 +184,34 @@ elements.btnPause.addEventListener('click', () => {
 
 elements.btnCancel.addEventListener('click', () => {
   chrome.runtime.sendMessage({ action: 'cancelScan' }, () => {
-    elements.statusText.textContent = 'Cancelling...';
+    elements.statusText.textContent = chrome.i18n.getMessage('statusCancelling');
     pollStatus();
   });
 });
 
 elements.btnBroken.addEventListener('click', () => {
   chrome.runtime.sendMessage({ action: 'startBrokenScan' }, () => {
-    elements.statusText.textContent = 'Starting Broken Link Scan...';
+    elements.statusText.textContent = chrome.i18n.getMessage('statusStartingBroken');
     pollStatus();
   });
 });
 
 elements.btnDuplicates.addEventListener('click', () => {
   chrome.runtime.sendMessage({ action: 'startDuplicateScan' }, () => {
-    elements.statusText.textContent = 'Starting Duplicate Scan...';
+    elements.statusText.textContent = chrome.i18n.getMessage('statusStartingDuplicates');
     pollStatus();
   });
 });
 
 elements.btnSort.addEventListener('click', () => {
   disableAllActions();
-  elements.statusText.textContent = 'Sorting...';
+  elements.statusText.textContent = chrome.i18n.getMessage('statusSorting');
   chrome.runtime.sendMessage({ action: 'startSort' }, (response) => {
     enableAllActions();
     if (response && response.success) {
-      elements.statusText.textContent = 'Sorting complete.';
+      elements.statusText.textContent = chrome.i18n.getMessage('statusSortingComplete');
     } else {
-      elements.statusText.textContent = 'Sorting failed.';
+      elements.statusText.textContent = chrome.i18n.getMessage('statusSortingFailed');
     }
   });
 });
@@ -206,5 +228,8 @@ document.getElementById('btn-options').addEventListener('click', () => {
   }
 });
 
-// Initial check
-pollStatus();
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  initI18n();
+  pollStatus();
+});
