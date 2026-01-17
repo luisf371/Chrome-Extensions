@@ -3,120 +3,100 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bookmark Cleaner - Settings</title>
+  <title data-i18n="optionsTitle">Bookmark Cleaner Settings</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body data-theme="dark">
   <div class="container">
-    <!-- Actions (Save/Status) -->
-    <div class="form-actions">
-      <div id="status-msg"></div>
-    </div>
-
     <header>
-      <h1>Bookmark Cleaner Settings</h1>
-      <p class="subtitle">Configure your scanning and sorting preferences</p>
+      <h1 data-i18n="optionsTitle">Bookmark Cleaner Settings</h1>
+      <div class="header-actions">
+          <span class="version-badge">v1.0.0</span>
+          <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+              <svg class="icon-sun" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg class="icon-moon" viewBox="0 0 24 24">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+          </button>
+      </div>
     </header>
 
     <main>
-      <form id="options-form" class="settings-form">
+      <!-- Settings Card -->
+      <div class="settings-card">
         
-        <!-- Appearance Section -->
-        <section class="form-section">
-          <div class="section-header">
-            <span class="section-tag">General</span>
-            <div>
-              <h2>Appearance</h2>
-              <p class="section-description">Customize the extension's look and feel.</p>
-            </div>
-          </div>
-          <div class="section-grid single-column">
-            <article class="settings-card full-span">
-              <div class="form-group">
-                <label for="theme-select">Theme</label>
-                <select id="theme-select">
-                  <option value="dark" selected>Dark</option>
-                  <option value="light">Light</option>
-                </select>
-                <small class="help-text">Select your preferred color theme.</small>
-              </div>
-            </article>
-          </div>
-        </section>
-
         <!-- Scanning Section -->
-        <section class="form-section">
+        <div class="form-section">
           <div class="section-header">
-            <span class="section-tag">Scanning</span>
-            <div>
-              <h2>Connection Settings</h2>
-              <p class="section-description">Adjust how the cleaner connects to websites to check their status.</p>
-            </div>
+            <h2 data-i18n="sectionConnection">Connection Settings</h2>
           </div>
-          <div class="section-grid single-column">
-            <article class="settings-card full-span">
-              <div class="form-group">
-                <label for="timeout-input">Connection Timeout (seconds)</label>
-                <input type="number" id="timeout-input" min="1" max="60" step="1" placeholder="5">
-                <small class="help-text">
-                  Time to wait for a site to respond. Default: 5s.<br>
-                  Lower values scan faster but may report false positives for slow sites.<br>
-                  Recommended: 3s - 10s.
-                </small>
-              </div>
-            </article>
+          
+          <div class="form-group">
+            <label for="timeout-input">
+              <span data-i18n="optTimeout">Connection Timeout (seconds)</span>
+              <span class="tooltip">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltiptext" data-i18n="optTimeoutHelp">Time to wait for a site to respond. Default: 5s.</span>
+              </span>
+            </label>
+            <input type="number" id="timeout-input" min="1" max="60" step="1" placeholder="5">
           </div>
-        </section>
+        </div>
 
         <!-- Sorting Section -->
-        <section class="form-section">
+        <div class="form-section">
           <div class="section-header">
-            <span class="section-tag">Sorting</span>
-            <div>
-              <h2>Organization</h2>
-              <p class="section-description">Manage how your bookmarks are sorted before scanning.</p>
+            <h2 data-i18n="sectionOrganization">Organization</h2>
+          </div>
+          
+          <div class="form-group">
+            <label for="sort-check">
+              <span data-i18n="optAutoSort">Sort automatically before scanning</span>
+            </label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="sort-check">
+              <label class="slider" for="sort-check"></label>
             </div>
           </div>
-          <div class="section-grid single-column">
-            <article class="settings-card full-span">
-              
-              <!-- Auto Sort Toggle -->
-              <div class="form-group form-group-toggle">
-                <div class="toggle-header">
-                  <label for="sort-check">Sort automatically before scanning</label>
-                  <small class="help-text inline-help">If enabled, bookmarks will be sorted alphabetically when a scan starts.</small>
-                </div>
-                <div class="toggle-switch">
-                  <input type="checkbox" id="sort-check">
-                  <label class="slider" for="sort-check"></label>
-                </div>
-              </div>
 
-              <!-- Sort Scope (Conditional) -->
-              <div id="sort-scope-container" class="sub-option">
-                <label>Sort Scope</label>
-                <div class="radio-group">
-                  <label>
-                    <input type="radio" name="sort-scope" value="parent" checked>
-                    Parent Folders Only
-                  </label>
-                  <label>
-                    <input type="radio" name="sort-scope" value="recursive">
-                    Folders &amp; Content (Recursive)
-                  </label>
-                </div>
-                <small class="help-text">
-                  "Parent Folders Only" sorts just the folders you see in the bar/menu structure.<br>
-                  "Recursive" sorts all folders and all bookmarks within them.
-                </small>
-              </div>
-
-            </article>
+          <!-- Sort Scope (Conditional) -->
+          <div id="sort-scope-container" class="sub-option">
+            <div class="radio-group">
+              <label>
+                <input type="radio" name="sort-scope" value="parent" checked>
+                <span data-i18n="scopeParent">Parent Folders Only</span>
+              </label>
+              <label>
+                <input type="radio" name="sort-scope" value="recursive">
+                <span data-i18n="scopeRecursive">Folders &amp; Content (Recursive)</span>
+              </label>
+            </div>
           </div>
-        </section>
+        </div>
 
-      </form>
+        <!-- Footer -->
+        <div class="footer">
+          <span>Contact: <a href="mailto:extension@tekky.cc">extension@tekky.cc</a></span>
+          <span>Developer: <a href="https://tekky.cc">tekky.cc</a></span>
+        </div>
+      </div>
     </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">
+      <span class="toast-icon">✓</span>
+      <span class="toast-message" data-i18n="statusSaved">Saved</span>
   </div>
 
   <script src="options.js"></script>
