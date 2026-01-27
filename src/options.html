@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reddit New Comments Highlighter - Options</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <h1>Reddit New Comments Highlighter</h1>
+    
+    <section>
+      <h2>Highlight Colors</h2>
+      
+      <div class="field">
+        <label for="highlightColor">Light Theme Color</label>
+        <div class="color-input">
+          <input type="color" id="highlightColor" value="#FFFDCC">
+          <input type="text" id="highlightColorText" placeholder="#FFFDCC" pattern="^#[0-9A-Fa-f]{6}$">
+        </div>
+      </div>
+      
+      <div class="field">
+        <label for="darkModeColor">Dark Theme Color</label>
+        <div class="color-input">
+          <input type="color" id="darkModeColor" value="#3d3d00">
+          <input type="text" id="darkModeColorText" placeholder="#3d3d00" pattern="^#[0-9A-Fa-f]{6}$">
+        </div>
+      </div>
+    </section>
+    
+    <section>
+      <h2>Theme Selection</h2>
+      
+      <div class="field checkbox">
+        <input type="checkbox" id="useSystemTheme">
+        <label for="useSystemTheme">Follow system dark/light mode</label>
+      </div>
+      
+      <div class="field checkbox" id="manualThemeGroup">
+        <input type="checkbox" id="useDarkTheme">
+        <label for="useDarkTheme">Use dark theme color</label>
+      </div>
+      
+      <div class="field checkbox">
+        <input type="checkbox" id="autoChangeTheme">
+        <label for="autoChangeTheme">Auto-switch theme by time</label>
+      </div>
+      
+      <div class="field time-range" id="timeRangeGroup">
+        <label>Dark theme active between:</label>
+        <div class="time-inputs">
+          <input type="time" id="themeStartTime" value="18:00">
+          <span>to</span>
+          <input type="time" id="themeEndTime" value="08:00">
+        </div>
+      </div>
+    </section>
+    
+    <section>
+      <h2>Storage</h2>
+      
+      <div class="field">
+        <label for="maxHistory">Maximum threads to remember</label>
+        <input type="number" id="maxHistory" min="100" max="50000" step="100" value="10000">
+        <small>Higher values use more storage but remember more threads</small>
+      </div>
+      
+      <button type="button" id="clearHistory" class="danger">Clear All History</button>
+    </section>
+    
+    <section>
+      <h2>Keyboard Shortcuts</h2>
+      <div class="shortcuts">
+        <kbd>j</kbd> or <kbd>n</kbd> - Next new comment<br>
+        <kbd>k</kbd> or <kbd>p</kbd> - Previous new comment
+      </div>
+    </section>
+    
+    <div class="actions">
+      <button type="button" id="save" class="primary">Save Settings</button>
+      <span id="status"></span>
+    </div>
+  </main>
+  
+  <script src="options.js"></script>
+</body>
+</html>
