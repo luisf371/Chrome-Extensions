@@ -96,7 +96,7 @@
     "description": "Recursive scope option"
   },
   "scopeHelp": {
-    "message": ""仅父文件夹"只排序您在栏/菜单结构中看到的文件夹。"递归"排序所有文件夹及其中的所有书签。",
+    "message": "'仅父文件夹'只排序您在栏/菜单结构中看到的文件夹。'递归'排序所有文件夹及其中的所有书签。",
     "description": "Scope option help text"
   },
   "statusSaved": {
