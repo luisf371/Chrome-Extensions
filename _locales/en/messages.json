@@ -95,8 +95,25 @@
     "message": "Prevent duplicate tabs",
     "description": "Checkbox label for duplicate tab prevention"
   },
-  "optPreventDuplicatesHint": {
+    "optPreventDuplicatesHint": {
     "message": "\"Duplicate Tab\" action is still allowed",
     "description": "Hint text explaining the smart behavior"
+  },
+  "optDuplicateMode": {
+    "message": "Duplicate handling",
+    "description": "Label for duplicate handling mode"
+  },
+  "valCloseNew": {
+    "message": "close new, focus old",
+    "description": "Option to close the new tab and focus the existing one"
+  },
+  "valCloseOld": {
+    "message": "close old, stay on new",
+    "description": "Option to close the existing tab and stay on the new one"
+  },
+  "valTeleport": {
+    "message": "teleport old to new (Best)",
+    "description": "Option to move existing tab to new position and focus"
   }
 }
+

@@ -4,10 +4,11 @@ const DEFAULT_SETTINGS = Object.freeze({
    tabsBehaviour: 'default',
    tabsActivate: 'last_used',
    tabsOpenMethod: 'default',
-   preventDuplicates: false
+   preventDuplicates: false,
+   duplicateMode: 'teleport'
 });
 
-const SETTING_IDS = ['tabsBehaviour', 'tabsActivate', 'tabsOpenMethod', 'preventDuplicates'];
+const SETTING_IDS = ['tabsBehaviour', 'tabsActivate', 'tabsOpenMethod', 'preventDuplicates', 'duplicateMode'];
 
 // =====================
 // i18n Support
@@ -142,9 +143,21 @@ function initAutoSave() {
   SETTING_IDS.forEach(id => {
     const element = document.getElementById(id);
     if (element) {
-        element.addEventListener('change', queueSave);
+        element.addEventListener('change', () => {
+          if (id === 'preventDuplicates') {
+            updateDuplicateModeVisibility(element.checked);
+          }
+          queueSave();
+        });
     }
   });
+}
+
+function updateDuplicateModeVisibility(show) {
+  const row = document.getElementById('duplicateModeRow');
+  if (row) {
+    row.style.display = show ? 'flex' : 'none';
+  }
 }
 
 // =====================
@@ -160,6 +173,9 @@ async function restoreOptions() {
       if (element) {
           if (element.type === 'checkbox') {
               element.checked = settings[id] ?? DEFAULT_SETTINGS[id];
+              if (id === 'preventDuplicates') {
+                updateDuplicateModeVisibility(element.checked);
+              }
           } else {
               element.value = settings[id] || DEFAULT_SETTINGS[id];
           }

@@ -4,7 +4,8 @@ const DEFAULT_SETTINGS = Object.freeze({
    tabsBehaviour: 'default',
    tabsActivate: 'last_used',
    tabsOpenMethod: 'default',
-   preventDuplicates: false
+   preventDuplicates: false,
+   duplicateMode: 'teleport'
 });
 
 const windowState = new Map();
@@ -405,13 +406,12 @@ async function handleNavigationCommitted(details) {
       return;
    }
    
-   // Chrome uses 'reload' transitionType for "Duplicate Tab" context menu - allow it
    if (transitionType === 'reload') return;
    if (transitionQualifiers && transitionQualifiers.includes('from_address_bar')) return;
    
    try {
       const currentTab = await chrome.tabs.get(tabId);
-      const tabs = await chrome.tabs.query({ windowId: currentTab.windowId });
+      const tabs = await chrome.tabs.query({}); // Query all windows for global duplicates
       const normalizedUrl = normalizeUrl(url);
       
       const existingTab = tabs.find(tab => {
@@ -420,14 +420,76 @@ async function handleNavigationCommitted(details) {
       });
       
       if (existingTab) {
-         const tabToClose = currentTab.active ? existingTab : currentTab;
-         console.log('[sTabControl] Duplicate detected, removing:', tabToClose.id);
-         duplicateRemovals.add(tabToClose.id);
-         await chrome.tabs.remove(tabToClose.id);
+         console.log('[sTabControl] Duplicate detected. Mode:', settingsCache.duplicateMode);
+         
+         switch (settingsCache.duplicateMode) {
+            case 'close_old': {
+               // Smoothest: Keep current, remove old
+               duplicateRemovals.add(existingTab.id);
+               await chrome.tabs.remove(existingTab.id);
+               break;
+            }
+            case 'close_new': {
+               // Data Preservation: Focus old, remove new
+               duplicateRemovals.add(currentTab.id);
+               await chrome.tabs.remove(currentTab.id);
+               await activateTab(existingTab.id);
+               if (existingTab.windowId !== currentTab.windowId) {
+                  await chrome.windows.update(existingTab.windowId, { focused: true });
+               }
+               blinkTab(existingTab.id);
+               break;
+            }
+            case 'teleport':
+            default: {
+               // Best of both worlds: Move old to new position, remove new
+               duplicateRemovals.add(currentTab.id);
+               
+               // Move existing tab to new location
+               await chrome.tabs.move(existingTab.id, { 
+                  windowId: currentTab.windowId, 
+                  index: currentTab.index 
+               });
+               
+               // Close the new tab
+               await chrome.tabs.remove(currentTab.id);
+               
+               // Focus the existing tab (it's now at the new position)
+               await activateTab(existingTab.id);
+               if (existingTab.windowId !== currentTab.windowId) {
+                  await chrome.windows.update(existingTab.windowId, { focused: true });
+               }
+               
+               blinkTab(existingTab.id);
+               break;
+            }
+         }
       }
    } catch (error) {
       logIgnorableError(error);
    }
+}
+
+/**
+ * Visual feedback for teleported/focused tabs
+ */
+function blinkTab(tabId) {
+   chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+         const originalTitle = document.title;
+         let count = 0;
+         const interval = setInterval(() => {
+            document.title = count % 2 === 0 ? `👀 ${originalTitle}` : originalTitle;
+            if (++count > 5) {
+               clearInterval(interval);
+               document.title = originalTitle;
+            }
+         }, 400);
+      }
+   }).catch(() => {
+      // Ignore errors if content script can't run (e.g. restricted URLs)
+   });
 }
 
 

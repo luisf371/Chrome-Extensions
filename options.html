@@ -72,6 +72,14 @@
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
+                    <div id="duplicateModeRow" class="form-row" style="display: none;">
+                        <label class="form-label" for="duplicateMode" data-i18n="optDuplicateMode">Duplicate handling</label>
+                        <select id="duplicateMode">
+                            <option value="close_new" data-i18n="valCloseNew">close new, focus old</option>
+                            <option value="close_old" data-i18n="valCloseOld">close old, stay on new</option>
+                            <option value="teleport" data-i18n="valTeleport">teleport old to new (Best)</option>
+                        </select>
+                    </div>
                 </div>
             </section>
 
