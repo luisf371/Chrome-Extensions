@@ -7,7 +7,7 @@
 - **License**: MIT
 
 ## This Fork
-- **Name**: sNeater Bookmarks (bookarmk)
+- **Name**: sNeatBookmarks (bookarmk)
 - **Changes Made**:
   - Updated to Manifest V3
   - Added popup theme presets (Light, Light Modern, Dark, Neon, Vintage)

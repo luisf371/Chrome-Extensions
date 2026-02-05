@@ -104,7 +104,7 @@
    },
    "extName": {
       "description": "拡張機能の名前",
-      "message": "sNeater Bookmarks"
+      "message": "sNeatBookmarks"
    },
    "general": {
       "message": "一般設定"
@@ -170,7 +170,7 @@
       "message": "オプション"
    },
    "optionsPageTitle": {
-      "message": "sNeater Bookmarks オプション"
+      "message": "sNeatBookmarks オプション"
    },
    "popupTheme": {
       "message": "ポップアップテーマ"
@@ -180,55 +180,55 @@
    },
    "optionsFooterText1": {
       "description": "オプションページのフッターテキスト",
-      "message": "開発者へのメール: $neaterEmail$",
+      "message": "開発者へのメール: $neatEmail$",
       "placeholders": {
-         "neaterEmail": {
+         "neatEmail": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText2": {
-      "message": "$extName$ はオープンソースです！ $neaterGithub$",
+      "message": "$extName$ はオープンソースです！ $neatGithub$",
       "placeholders": {
          "extName": {
             "content": "$1"
          },
-         "neaterGithub": {
+         "neatGithub": {
             "content": "$2"
          }
       }
    },
    "optionsFooterText3": {
-      "message": "よくある質問: $neaterFaq$",
+      "message": "よくある質問: $neatFaq$",
       "placeholders": {
-         "neaterFaq": {
+         "neatFaq": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText4": {
-      "message": "問題の報告や確認: $neaterIssues$",
+      "message": "問題の報告や確認: $neatIssues$",
       "placeholders": {
-         "neaterIssues": {
+         "neatIssues": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText5": {
-      "message": "カスタムアイコンを見る: $neaterIcons$",
+      "message": "カスタムアイコンを見る: $neatIcons$",
       "placeholders": {
-         "neaterIcons": {
+         "neatIcons": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText6": {
-      "message": "$extName$ の翻訳に協力する: $neaterTranslate$",
+      "message": "$extName$ の翻訳に協力する: $neatTranslate$",
       "placeholders": {
          "extName": {
             "content": "$1"
          },
-         "neaterTranslate": {
+         "neatTranslate": {
             "content": "$2"
          }
       }

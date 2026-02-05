@@ -104,7 +104,7 @@
    },
    "extName": {
       "description": "Nom de l'extension.",
-      "message": "sNeater Bookmarks"
+      "message": "sNeatBookmarks"
    },
    "general": {
       "message": "Paramètres généraux"
@@ -170,7 +170,7 @@
       "message": "Options"
    },
    "optionsPageTitle": {
-      "message": "Options de sNeater Bookmarks"
+      "message": "Options de sNeatBookmarks"
    },
    "popupTheme": {
       "message": "Thème du popup"
@@ -180,55 +180,55 @@
    },
    "optionsFooterText1": {
       "description": "Texte de pied de page pour la page Options",
-      "message": "Contactez le développeur à $neaterEmail$",
+      "message": "Contactez le développeur à $neatEmail$",
       "placeholders": {
-         "neaterEmail": {
+         "neatEmail": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText2": {
-      "message": "$extName$ est open source ! $neaterGithub$",
+      "message": "$extName$ est open source ! $neatGithub$",
       "placeholders": {
          "extName": {
             "content": "$1"
          },
-         "neaterGithub": {
+         "neatGithub": {
             "content": "$2"
          }
       }
    },
    "optionsFooterText3": {
-      "message": "FAQ : $neaterFaq$",
+      "message": "FAQ : $neatFaq$",
       "placeholders": {
-         "neaterFaq": {
+         "neatFaq": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText4": {
-      "message": "Voir les problèmes ou en signaler un nouveau : $neaterIssues$",
+      "message": "Voir les problèmes ou en signaler un nouveau : $neatIssues$",
       "placeholders": {
-         "neaterIssues": {
+         "neatIssues": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText5": {
-      "message": "Parcourir les icônes personnalisées : $neaterIcons$",
+      "message": "Parcourir les icônes personnalisées : $neatIcons$",
       "placeholders": {
-         "neaterIcons": {
+         "neatIcons": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText6": {
-      "message": "Aidez à traduire $extName$ sur $neaterTranslate$",
+      "message": "Aidez à traduire $extName$ sur $neatTranslate$",
       "placeholders": {
          "extName": {
             "content": "$1"
          },
-         "neaterTranslate": {
+         "neatTranslate": {
             "content": "$2"
          }
       }

@@ -109,7 +109,7 @@
         }
         
         // Document title
-        const extName = _m('extName') || 'sNeater Bookmarks';
+        const extName = _m('extName') || 'sNeatBookmarks';
         const options = _m('options') || 'Options';
         document.title = extName + ' - ' + options;
     }
@@ -213,7 +213,7 @@ img { filter: sepia(100%) contrast(1.2) !important; opacity: 0.9 !important; }
         }
         
         // Reset text
-        const extName = _m('extName') || 'sNeater Bookmarks';
+        const extName = _m('extName') || 'sNeatBookmarks';
         const resetTextEl = document.getElementById('resetText');
         if (resetTextEl) {
             resetTextEl.textContent = _m('resetText', [extName]) || 'Reset all options to default.';

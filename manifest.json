@@ -20,5 +20,5 @@
    },
    "options_page": "options.html",
    "permissions": [ "bookmarks", "tabs", "favicon", "storage" ],
-   "version": "0.9.7.1"
+   "version": "1.0.0"
 }

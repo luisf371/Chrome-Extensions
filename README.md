@@ -1,14 +1,14 @@
-# sNeater Bookmarks
+# sNeatBookmarks
 
-![sNeater Bookmarks Icon](icon128.png)
+![sNeatBookmarks Icon](icon128.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Language: JavaScript](https://img.shields.io/badge/Language-JavaScript-F7DF1E.svg)
-![Version: 0.9.7.1](https://img.shields.io/badge/Version-0.9.7.1-blue.svg)
+![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-blue.svg)
 
 🌍 **Supported Languages:** English, Spanish, French, Japanese, Portuguese (Brazil), Chinese (Simplified)
 
-sNeater Bookmarks is a streamlined and highly customizable bookmark manager for Chrome that provides a clean tree-view popup for efficient navigation. This fork modernizes the original Neat Bookmarks with Manifest V3 support, custom themes, and enhanced user controls.
+sNeatBookmarks is a streamlined and highly customizable bookmark manager for Chrome that provides a clean tree-view popup for efficient navigation. This fork modernizes the original Neat Bookmarks with Manifest V3 support, custom themes, and enhanced user controls.
 
 ## Key Features
 
@@ -22,7 +22,7 @@ sNeater Bookmarks is a streamlined and highly customizable bookmark manager for 
 
 ## Quick Start
 
-To install sNeater Bookmarks in developer mode:
+To install sNeatBookmarks in developer mode:
 
 1.  **Download** the repository as a ZIP file and extract it, or clone it using Git.
 2.  Open Google Chrome and navigate to `chrome://extensions/`.
@@ -32,7 +32,7 @@ To install sNeater Bookmarks in developer mode:
 
 ## Overview
 
-sNeater Bookmarks is built on the Google Chrome Manifest V3 platform, ensuring long-term compatibility and performance. The extension utilizes a Service Worker (`background.js`) for background tasks and efficient event handling.
+sNeatBookmarks is built on the Google Chrome Manifest V3 platform, ensuring long-term compatibility and performance. The extension utilizes a Service Worker (`background.js`) for background tasks and efficient event handling.
 
 ### Tech Stack
 *   **Logic**: Pure JavaScript for bookmark manipulation and tree rendering.
@@ -48,13 +48,13 @@ sNeater Bookmarks is built on the Google Chrome Manifest V3 platform, ensuring l
 ## FAQ
 
 **Q: How do I access the options and configuration?**
-A: Right-click the sNeater Bookmarks icon in your toolbar and select "Options", or click the gear icon located at the bottom of the popup.
+A: Right-click the sNeatBookmarks icon in your toolbar and select "Options", or click the gear icon located at the bottom of the popup.
 
 **Q: Can I customize the look further than the presets?**
 A: Yes! The options page includes a "Custom CSS" field where you can inject your own styles to completely personalize the interface.
 
 **Q: Does this extension track my browsing data?**
-A: No. sNeater Bookmarks only interacts with your bookmarks and does not collect or transmit any personal browsing history.
+A: No. sNeatBookmarks only interacts with your bookmarks and does not collect or transmit any personal browsing history.
 
 **Q: How do I open a bookmark in a new background tab?**
 A: You can Ctrl+Click (or Cmd+Click on Mac) any bookmark, or middle-click it to open it in a new background tab.

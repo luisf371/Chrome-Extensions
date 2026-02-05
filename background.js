@@ -1,8 +1,8 @@
-// Service Worker for Neater Bookmarks
+// Service Worker for sNeatBookmarks
 
 // Error reporting
 const reportError = function(msg, url, line) {
-    console.error('Neater Bookmarks Error:', msg, 'URL:', url, 'Line:', line);
+    console.error('sNeatBookmarks Error:', msg, 'URL:', url, 'Line:', line);
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

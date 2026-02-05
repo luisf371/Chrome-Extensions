@@ -100,11 +100,11 @@
    },
    "extDesc": {
       "description": "The extension description.",
-      "message": "A neater bookmarks tree popup."
+      "message": "A neat bookmarks tree popup."
    },
    "extName": {
       "description": "The extension name.",
-      "message": "sNeater Bookmarks"
+      "message": "sNeatBookmarks"
    },
    "general": {
       "message": "General Settings"
@@ -170,7 +170,7 @@
       "message": "Options"
    },
    "optionsPageTitle": {
-      "message": "sNeater Bookmarks Options"
+      "message": "sNeatBookmarks Options"
    },
    "popupTheme": {
       "message": "Popup Theme"
@@ -180,55 +180,55 @@
    },
    "optionsFooterText1": {
       "description": "Footer text for the Options page",
-      "message": "Email the developer at $neaterEmail$",
+      "message": "Email the developer at $neatEmail$",
       "placeholders": {
-         "neaterEmail": {
+         "neatEmail": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText2": {
-      "message": "$extName$ is open source! $neaterGithub$",
+      "message": "$extName$ is open source! $neatGithub$",
       "placeholders": {
          "extName": {
             "content": "$1"
          },
-         "neaterGithub": {
+         "neatGithub": {
             "content": "$2"
          }
       }
    },
    "optionsFooterText3": {
-      "message": "FAQ: $neaterFaq$",
+      "message": "FAQ: $neatFaq$",
       "placeholders": {
-         "neaterFaq": {
+         "neatFaq": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText4": {
-      "message": "View issues or submit a new one: $neaterIssues$",
+      "message": "View issues or submit a new one: $neatIssues$",
       "placeholders": {
-         "neaterIssues": {
+         "neatIssues": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText5": {
-      "message": "Browse custom icons: $neaterIcons$",
+      "message": "Browse custom icons: $neatIcons$",
       "placeholders": {
-         "neaterIcons": {
+         "neatIcons": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText6": {
-      "message": "Help translate $extName$ at $neaterTranslate$",
+      "message": "Help translate $extName$ at $neatTranslate$",
       "placeholders": {
          "extName": {
             "content": "$1"
          },
-         "neaterTranslate": {
+         "neatTranslate": {
             "content": "$2"
          }
       }

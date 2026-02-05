@@ -104,7 +104,7 @@
    },
    "extName": {
       "description": "扩展名称",
-      "message": "sNeater Bookmarks"
+      "message": "sNeatBookmarks"
    },
    "general": {
       "message": "常规设置"
@@ -170,7 +170,7 @@
       "message": "选项"
    },
    "optionsPageTitle": {
-      "message": "sNeater Bookmarks 选项"
+      "message": "sNeatBookmarks 选项"
    },
    "popupTheme": {
       "message": "弹出窗口主题"
@@ -180,55 +180,55 @@
    },
    "optionsFooterText1": {
       "description": "选项页面的页脚文本",
-      "message": "联系开发者：$neaterEmail$",
+      "message": "联系开发者：$neatEmail$",
       "placeholders": {
-         "neaterEmail": {
+         "neatEmail": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText2": {
-      "message": "$extName$ 是开源的！$neaterGithub$",
+      "message": "$extName$ 是开源的！$neatGithub$",
       "placeholders": {
          "extName": {
             "content": "$1"
          },
-         "neaterGithub": {
+         "neatGithub": {
             "content": "$2"
          }
       }
    },
    "optionsFooterText3": {
-      "message": "常见问题：$neaterFaq$",
+      "message": "常见问题：$neatFaq$",
       "placeholders": {
-         "neaterFaq": {
+         "neatFaq": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText4": {
-      "message": "查看问题或提交新问题：$neaterIssues$",
+      "message": "查看问题或提交新问题：$neatIssues$",
       "placeholders": {
-         "neaterIssues": {
+         "neatIssues": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText5": {
-      "message": "浏览自定义图标：$neaterIcons$",
+      "message": "浏览自定义图标：$neatIcons$",
       "placeholders": {
-         "neaterIcons": {
+         "neatIcons": {
             "content": "$1"
          }
       }
    },
    "optionsFooterText6": {
-      "message": "帮助翻译 $extName$：$neaterTranslate$",
+      "message": "帮助翻译 $extName$：$neatTranslate$",
       "placeholders": {
          "extName": {
             "content": "$1"
          },
-         "neaterTranslate": {
+         "neatTranslate": {
             "content": "$2"
          }
       }
