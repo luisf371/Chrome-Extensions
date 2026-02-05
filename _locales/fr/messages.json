@@ -1,9 +1,12 @@
 {
    "accessibility": {
-      "message": "Les paramètres d'accessibilité"
+      "message": "Paramètres d'accessibilité"
+   },
+   "addBookmark": {
+      "message": "Ajouter un signet à ce dossier"
    },
    "confirmDeleteFolderBookmarks": {
-      "message": "Êtes-vous certain de bien vouloir supprimer le répertoire $folderName$ et $bookmarkCount$ signet(s) les contenant?",
+      "message": "Êtes-vous sûr de vouloir supprimer le dossier $folderName$ et les $bookmarkCount$ signet(s) qu'il contient ?",
       "placeholders": {
          "bookmarkCount": {
             "content": "$2"
@@ -14,7 +17,7 @@
       }
    },
    "confirmDeleteFolderSubfolders": {
-      "message": "Êtes-vous certain de bien vouloir supprimer le répertoire $folderName$ et $subFolderCount$ sous-répertoire(s) les contenant?",
+      "message": "Êtes-vous sûr de vouloir supprimer le dossier $folderName$ et les $subFolderCount$ sous-dossier(s) qu'il contient ?",
       "placeholders": {
          "folderName": {
             "content": "$1"
@@ -25,7 +28,7 @@
       }
    },
    "confirmDeleteFolderSubfoldersBookmarks": {
-      "message": "Êtes-vous certain de bien vouloir supprimer le répertoire $folderName$, $subFolderCount$ sous-répertoire(s) et $bookmarkCount$ signets les contenant?",
+      "message": "Êtes-vous sûr de vouloir supprimer le dossier $folderName$, les $subFolderCount$ sous-dossier(s) et les $bookmarkCount$ signet(s) qu'il contient ?",
       "placeholders": {
          "bookmarkCount": {
             "content": "$3"
@@ -40,7 +43,7 @@
    },
    "confirmOpenBookmarks": {
       "description": "Message de confirmation pour ouvrir tous les signets.",
-      "message": "Etes-vous certain de bien vouloir ouvrir tous les $count$ signets?",
+      "message": "Êtes-vous sûr de vouloir ouvrir les $count$ signets ?",
       "placeholders": {
          "count": {
             "content": "$1"
@@ -48,8 +51,8 @@
       }
    },
    "confirmOpenBookmarksNewIncognitoWindow": {
-      "description": "Message de confirmation pour ouvrir tous les signets dans une nouvelle fenêtre de navigation incognito.",
-      "message": "Etes-vous certain de bien vouloir ouvrir tous les $count$ signets dans une nouvelle fenêtre incognito?",
+      "description": "Message de confirmation pour ouvrir tous les signets dans une nouvelle fenêtre de navigation privée.",
+      "message": "Êtes-vous sûr de vouloir ouvrir les $count$ signets dans une nouvelle fenêtre de navigation privée ?",
       "placeholders": {
          "count": {
             "content": "$1"
@@ -57,13 +60,25 @@
       }
    },
    "confirmOpenBookmarksNewWindow": {
-      "description": "Message de confirmation pour ouvrir tous les signets dans une nouvelle fenêtre de navigation.",
-      "message": "Etes-vous certain de bien vouloir ouvrir tous les $count$ signets dans une nouvelle fenêtre?",
+      "description": "Message de confirmation pour ouvrir tous les signets dans une nouvelle fenêtre.",
+      "message": "Êtes-vous sûr de vouloir ouvrir les $count$ signets dans une nouvelle fenêtre ?",
       "placeholders": {
          "count": {
             "content": "$1"
          }
       }
+   },
+   "customIcon": {
+      "message": "Icône personnalisée"
+   },
+   "customIconText": {
+      "message": "L'icône doit mesurer 19×19 pixels, sinon elle sera redimensionnée."
+   },
+   "customStyles": {
+      "message": "Thèmes"
+   },
+   "customStylesDesc": {
+      "message": "Pour personnaliser le thème, copiez le code de base ci-dessous dans la zone de texte et ajustez les valeurs des couleurs."
    },
    "delete": {
       "message": "Supprimer"
@@ -72,16 +87,24 @@
       "message": "Supprimer..."
    },
    "edit": {
-      "message": "Éditer..."
+      "message": "Modifier..."
    },
    "editBookmark": {
-      "message": "Éditer le signet"
+      "message": "Modifier le signet"
    },
    "editFolder": {
-      "message": "Éditer le répertoire"
+      "message": "Modifier le dossier"
    },
    "errorOccured": {
       "message": "Oups, une erreur s'est produite."
+   },
+   "extDesc": {
+      "description": "Description de l'extension.",
+      "message": "Un arbre de signets plus élégant en popup."
+   },
+   "extName": {
+      "description": "Nom de l'extension.",
+      "message": "sNeater Bookmarks"
    },
    "general": {
       "message": "Paramètres généraux"
@@ -94,8 +117,8 @@
       "message": "Nom"
    },
    "noTitle": {
-      "description": "Le titre donné aux répertoires ou signets sans noms.",
-      "message": "(Sans titre)"
+      "description": "Titre pour les signets sans titre ni URL http(s) ou les dossiers sans titre.",
+      "message": "(sans titre)"
    },
    "nope": {
       "message": "Non"
@@ -108,13 +131,13 @@
       "message": "Ouvrir tous les signets"
    },
    "openBookmarksIncognitoWindow": {
-      "message": "Ouvrir tous les signets dans une nouvelle fenêtre incognito"
+      "message": "Ouvrir tous les signets en navigation privée"
    },
    "openBookmarksNewWindow": {
       "message": "Ouvrir tous les signets dans une nouvelle fenêtre"
    },
    "openIncognitoWindow": {
-      "message": "Ouvrir dans une fenêtre incognito"
+      "message": "Ouvrir en navigation privée"
    },
    "openNewTab": {
       "message": "Ouvrir dans un nouvel onglet"
@@ -123,22 +146,22 @@
       "message": "Ouvrir dans une nouvelle fenêtre"
    },
    "optionClickNewTab": {
-      "message": "Clic gauche ouvre le signet dans un nouvel onglet."
+      "message": "Le clic gauche ouvre les signets dans un nouvel onglet."
    },
    "optionCloseUnusedFolders": {
-      "message": "Fermer les répertoires non utilisés lors de l'ouverture d’un répertoire."
+      "message": "Garder un seul dossier ouvert à la fois."
    },
    "optionConfirmOpenFolder": {
-      "message": "Afficher un message de confirmation lors de l’ouverture de beaucoup de signets d’un dossier."
+      "message": "Afficher une confirmation lors de l'ouverture de plus de 10 signets."
    },
    "optionOpenNewTab": {
-      "message": "Clic milieu ou Ctrl-clic ouvre le signet dans un nouvel onglet en arrière-plan (au lieu d’en premier plan)."
+      "message": "Le clic central (ou Ctrl+clic) ouvre les signets dans un onglet en arrière-plan."
    },
    "optionPopupStays": {
-      "message": "La popup reste ouverte lors de l'ouverture (clic gauche) de signets."
+      "message": "Le popup reste ouvert lors de l'ouverture des signets (via clic gauche)."
    },
    "optionRememberPrevState": {
-      "message": "Se rappeler de l’état précédent (position dans la page et répertoires ouverts)."
+      "message": "Le popup mémorise l'état précédent (position de défilement et dossiers ouverts)."
    },
    "optionZoom": {
       "message": "Zoom"
@@ -146,9 +169,84 @@
    "options": {
       "message": "Options"
    },
+   "optionsPageTitle": {
+      "message": "Options de sNeater Bookmarks"
+   },
+   "popupTheme": {
+      "message": "Thème du popup"
+   },
+   "statusSaved": {
+      "message": "Enregistré"
+   },
+   "optionsFooterText1": {
+      "description": "Texte de pied de page pour la page Options",
+      "message": "Contactez le développeur à $neaterEmail$",
+      "placeholders": {
+         "neaterEmail": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText2": {
+      "message": "$extName$ est open source ! $neaterGithub$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neaterGithub": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText3": {
+      "message": "FAQ : $neaterFaq$",
+      "placeholders": {
+         "neaterFaq": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText4": {
+      "message": "Voir les problèmes ou en signaler un nouveau : $neaterIssues$",
+      "placeholders": {
+         "neaterIssues": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText5": {
+      "message": "Parcourir les icônes personnalisées : $neaterIcons$",
+      "placeholders": {
+         "neaterIcons": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText6": {
+      "message": "Aidez à traduire $extName$ sur $neaterTranslate$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neaterTranslate": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText7": {
+      "message": "Basé sur $neatGithub$ par $linkCheeAun$",
+      "placeholders": {
+         "linkCheeAun": {
+            "content": "$2"
+         },
+         "neatGithub": {
+            "content": "$1"
+         }
+      }
+   },
    "parentFolder": {
-      "description": "L’information des répertoires parents est affichée dans l’infobulle des signets dans la liste des résultats.",
-      "message": "Répertoire parent: \"$folderName$\"",
+      "description": "Information du dossier parent affichée dans l'infobulle des signets dans la liste des résultats de recherche.",
+      "message": "Dossier parent : \"$folderName$\"",
       "placeholders": {
          "folderName": {
             "content": "$1",
@@ -157,14 +255,32 @@
       }
    },
    "reportError": {
-      "message": "Signaler l’erreur"
+      "message": "Signaler l'erreur"
+   },
+   "reportedToDeveloper": {
+      "description": "Message indiquant qu'une erreur dans l'extension a été signalée au développeur.",
+      "message": "Ceci a été signalé au développeur."
+   },
+   "reset": {
+      "message": "Réinitialiser"
+   },
+   "resetSettings": {
+      "message": "Réinitialiser les paramètres"
+   },
+   "resetText": {
+      "message": "Réinitialiser toutes les options de $extName$ aux valeurs par défaut.",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         }
+      }
    },
    "save": {
       "message": "Enregistrer"
    },
    "searchBookmarks": {
-      "description": "Texte d’information du champ de recherche.",
-      "message": "Rechercher Signets"
+      "description": "Texte indicatif du champ de recherche.",
+      "message": "Rechercher dans les signets"
    },
    "url": {
       "message": "URL"

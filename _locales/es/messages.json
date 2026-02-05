@@ -2,6 +2,9 @@
    "accessibility": {
       "message": "Ajustes de accesibilidad"
    },
+   "addBookmark": {
+      "message": "Añadir marcador a esta carpeta"
+   },
    "confirmDeleteFolderBookmarks": {
       "message": "¿Está seguro de que quiere eliminar la carpeta $folderName$ y $bookmarkCount$ marcador(es) almacenado(s) en ésta?",
       "placeholders": {
@@ -69,18 +72,13 @@
       "message": "Icono personalizado"
    },
    "customIconText": {
-      "message": "El icono debe ser de 19x19 o será redimensionado."
+      "message": "El icono debe ser de 19×19 o será redimensionado."
    },
    "customStyles": {
-      "message": "Estilos personalizados"
+      "message": "Temas"
    },
-   "customStylesText": {
-      "message": "Se requiere cierto conocimiento de CSS. Se recomienda compartir código mediante $linkGithubGist$.",
-      "placeholders": {
-         "linkGithubGist": {
-            "content": "$1"
-         }
-      }
+   "customStylesDesc": {
+      "message": "Para personalizar el tema, copie el código base de abajo en el área de texto y ajuste los valores de los colores."
    },
    "delete": {
       "message": "Eliminar"
@@ -102,11 +100,11 @@
    },
    "extDesc": {
       "description": "Descripción de la extensión.",
-      "message": "Una elegante ventana de marcadores."
+      "message": "Un árbol de marcadores más elegante en ventana emergente."
    },
    "extName": {
       "description": "El nombre de la extensión.",
-      "message": "Marcadores elegantes"
+      "message": "sNeater Bookmarks"
    },
    "general": {
       "message": "Ajustes generales"
@@ -123,7 +121,7 @@
       "message": "(sin título)"
    },
    "nope": {
-      "message": "¡No!"
+      "message": "No"
    },
    "open": {
       "description": "Acción al abrir marcadores.",
@@ -151,25 +149,34 @@
       "message": "Clic izquierdo abre el marcador en una nueva pestaña."
    },
    "optionCloseUnusedFolders": {
-      "message": "Cerrar carpetas inactivas al abrir una carpeta."
+      "message": "Mantener solo una carpeta abierta a la vez."
    },
    "optionConfirmOpenFolder": {
-      "message": "Mostrar confirmación al abrir varios marcadores de una carpeta."
+      "message": "Mostrar confirmación al abrir más de 10 marcadores."
    },
    "optionOpenNewTab": {
-      "message": "Botón central del ratón o control-clic abre el marcador en segundo plano (en lugar de en primer plano)."
+      "message": "Clic central (o Ctrl+clic) abre los marcadores en una pestaña en segundo plano."
    },
    "optionPopupStays": {
-      "message": "El pop-up se mantiene abierto al abrir (con click izquierdo) los marcadores."
+      "message": "La ventana emergente permanece abierta al abrir marcadores (con clic izquierdo)."
    },
    "optionRememberPrevState": {
-      "message": "Recordar estado previo (posición de la barra de desplazamiento y carpetas abiertas)."
+      "message": "La ventana emergente recuerda el estado anterior (posición de desplazamiento y carpetas abiertas)."
    },
    "optionZoom": {
       "message": "Zoom"
    },
    "options": {
       "message": "Opciones"
+   },
+   "optionsPageTitle": {
+      "message": "Opciones de sNeater Bookmarks"
+   },
+   "popupTheme": {
+      "message": "Tema de la ventana emergente"
+   },
+   "statusSaved": {
+      "message": "Guardado"
    },
    "optionsFooterText1": {
       "description": "Texto de pie de página para la página de opciones.",
@@ -192,7 +199,7 @@
       }
    },
    "optionsFooterText3": {
-      "message": "FAQ: $neaterFaq$",
+      "message": "Preguntas frecuentes: $neaterFaq$",
       "placeholders": {
          "neaterFaq": {
             "content": "$1"
@@ -200,7 +207,7 @@
       }
    },
    "optionsFooterText4": {
-      "message": "Informar o ver errores: $neaterIssues$",
+      "message": "Ver problemas o informar uno nuevo: $neaterIssues$",
       "placeholders": {
          "neaterIssues": {
             "content": "$1"
@@ -208,7 +215,7 @@
       }
    },
    "optionsFooterText5": {
-      "message": "Mostrar iconos personalizados: $neaterIcons$",
+      "message": "Explorar iconos personalizados: $neaterIcons$",
       "placeholders": {
          "neaterIcons": {
             "content": "$1"
@@ -216,7 +223,7 @@
       }
    },
    "optionsFooterText6": {
-      "message": "Ayuda traducciendo $extName$ en $neaterTranslate$",
+      "message": "Ayuda a traducir $extName$ en $neaterTranslate$",
       "placeholders": {
          "extName": {
             "content": "$1"
@@ -248,20 +255,20 @@
       }
    },
    "reportError": {
-      "message": "Informar de este error"
+      "message": "Informar del error"
    },
    "reportedToDeveloper": {
       "description": "Un mensaje para un error ocurrido en la extensión, el desarrollador ha sido informado.",
-      "message": "El desarrollador ha sido informado."
+      "message": "Esto ha sido informado al desarrollador."
    },
    "reset": {
-      "message": "Reiniciar"
+      "message": "Restablecer"
    },
    "resetSettings": {
-      "message": "Reiniciar ajustes."
+      "message": "Restablecer ajustes"
    },
    "resetText": {
-      "message": "Reiniciar todas las opciones de $extName$ a los valores por defecto",
+      "message": "Restablecer todas las opciones de $extName$ a los valores predeterminados.",
       "placeholders": {
          "extName": {
             "content": "$1"

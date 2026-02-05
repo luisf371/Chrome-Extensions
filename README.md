@@ -1,43 +1,72 @@
-# Neater Bookmarks
+# sNeater Bookmarks
 
-A neat bookmarks tree popup extension for Google Chrome. Licensed under the [MIT License](http://www.opensource.org/licenses/mit-license.php).
+![sNeater Bookmarks Icon](icon128.png)
 
-Based on [Neat Bookmarks](https://github.com/cheeaun/neat-bookmarks) by [Lim Chee Aun](http://cheeaun.com/).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Language: JavaScript](https://img.shields.io/badge/Language-JavaScript-F7DF1E.svg)
+![Version: 0.9.7.1](https://img.shields.io/badge/Version-0.9.7.1-blue.svg)
 
-Some code has been inspired by (or even copied from!) [vBookmarks](https://github.com/windviki/vBookmarks). Thanks windviki!
+🌍 **Supported Languages:** English, Spanish, French, Japanese, Portuguese (Brazil), Chinese (Simplified)
 
-Translation help is welcomed through [WebTranslateIt](https://webtranslateit.com/en/projects/4222-Neater-Bookmarks).
+sNeater Bookmarks is a streamlined and highly customizable bookmark manager for Chrome that provides a clean tree-view popup for efficient navigation. This fork modernizes the original Neat Bookmarks with Manifest V3 support, custom themes, and enhanced user controls.
 
-# FAQ
+## Key Features
 
-### Can I resize the width and height of the popup?
+*   **Tree-View Navigation**: Browse your bookmarks in a familiar, organized folder structure.
+*   **Instant Search**: Quickly locate bookmarks and folders with a responsive search bar.
+*   **In-Place Editing**: Edit titles, URLs, and manage folders directly within the popup interface.
+*   **Custom Themes**: Choose from presets like Light, Modern, Dark, Neon, and Vintage, or apply custom CSS.
+*   **Batch Opening**: Open all bookmarks in a folder simultaneously with an optional confirmation prompt.
+*   **State Persistence**: Automatically remembers your scroll position and open folders across sessions.
+*   **Omnibox Integration**: Search your bookmarks directly from the address bar using the `*` keyword.
 
-For the width, yes, by dragging on the left (or right for RTL systems) edge of the popup. For the height, no, because it resizes automatically based on the bookmarks displayed. Note that Google Chrome sets a maximum limit on the popup width and height, so it may not expand that far for high resolution screens.
+## Quick Start
 
-### Why not use a better (more native-looking) toolbar icon?
+To install sNeater Bookmarks in developer mode:
 
-There is a difference between Chrome's default toolbar icons and extension's toolbar icon. Chrome's icons are basically simple glyphs and shapes to indicate the purpose of the toolbar action. They are simple and dynamic, in a way that can change colors based on the current theme applied. As for extensions, the icon doesn't just indicate purpose but is also a form of branding which sets it apart from all the other extensions. Also, extension icons are not dynamic and don't change based on the theme applied. So, if the extension icon contains just one color (black or dark gray, like the default icons), it won't be able to adapt when you choose a theme with totally different colors. However, Neater Bookmarks provides a way to replace the default toolbar icon with a custom one in the Options menu.
+1.  **Download** the repository as a ZIP file and extract it, or clone it using Git.
+2.  Open Google Chrome and navigate to `chrome://extensions/`.
+3.  Enable **Developer mode** by toggling the switch in the top-right corner.
+4.  Click the **Load unpacked** button.
+5.  Select the `bookarmk` folder from your local directory.
 
-### Sidebar instead of popup please?
+## Overview
 
-Check out [this issue](http://crbug.com/51084).
+sNeater Bookmarks is built on the Google Chrome Manifest V3 platform, ensuring long-term compatibility and performance. The extension utilizes a Service Worker (`background.js`) for background tasks and efficient event handling.
 
-### Is there a keyboard shortcut to open Neater Bookmarks (popup)?
+### Tech Stack
+*   **Logic**: Pure JavaScript for bookmark manipulation and tree rendering.
+*   **Styling**: Modular CSS with theme support and a unified design system.
+*   **Storage**: `chrome.storage.sync` for cross-device preference synchronization.
 
-One can be added by going to the [Extensions tab](chrome://extensions/) and clicking the "Configure commands" link at the bottom of the page. In the popup, type a keyboard command (such as Ctrl+B) in the box next to "Neater Bookmarks". The keyboard command will open the popup with focus on the search box; typing will immediately search bookmarks while pressing the arrow keys will navigate the bookmark tree.
+### Permissions Explanation
+*   **bookmarks**: Required to read, create, edit, and delete your bookmarks.
+*   **tabs**: Used to open bookmarks in new tabs/windows and manage batch opening.
+*   **favicon**: Used to retrieve and display website icons next to your bookmarks.
+*   **storage**: Used to save your settings, theme preferences, and UI state.
 
-### Does Neater Bookmarks support Google Bookmarks?
+## FAQ
 
-No. There are no plans to support it, because it's lacking an official public API and Chrome already has its own bookmarks system with Sync. There are several existing Chrome extensions that support Google Bookmarks.
+**Q: How do I access the options and configuration?**
+A: Right-click the sNeater Bookmarks icon in your toolbar and select "Options", or click the gear icon located at the bottom of the popup.
 
-### How do I report bugs or suggest features?
+**Q: Can I customize the look further than the presets?**
+A: Yes! The options page includes a "Custom CSS" field where you can inject your own styles to completely personalize the interface.
 
-Preferably via the [issue tracker](https://github.com/evanshultz/neater-bookmarks/issues) or [email](neaterbookmarks@gmail.com). If you're reporting bugs, please include at least the version/build of Chrome and your OS.
+**Q: Does this extension track my browsing data?**
+A: No. sNeater Bookmarks only interacts with your bookmarks and does not collect or transmit any personal browsing history.
 
-### Why isn't this built into Google Chrome by default?
+**Q: How do I open a bookmark in a new background tab?**
+A: You can Ctrl+Click (or Cmd+Click on Mac) any bookmark, or middle-click it to open it in a new background tab.
 
-No idea. That's why Neater Bookmarks exists.
+**Q: What is the Omnibox keyword?**
+A: Type `*` followed by a space in your address bar to search through your bookmarks directly.
 
-# Technical Details
+## Credits
 
-Neater Bookmarks was powered by [MooTools](http://mootools.net/), but is now powered by Neatools, a custom-coded smaller subset of MooTools. [CodeMirror](http://codemirror.net/) is used for the Custom CSS section.
+This project is a fork of [Neat Bookmarks](https://github.com/cheeaun/neat-bookmarks) originally created by **Lim Chee Aun (@cheeaun)**. We thank the original author for the excellent foundation.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+

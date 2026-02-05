@@ -2,8 +2,11 @@
    "accessibility": {
       "message": "辅助功能设置"
    },
+   "addBookmark": {
+      "message": "添加书签到此文件夹"
+   },
    "confirmDeleteFolderBookmarks": {
-      "message": "您确定要删除文件夹[$folderName$]（包含 $bookmarkCount$ 个书签）？",
+      "message": "您确定要删除文件夹'$folderName$'及其中的 $bookmarkCount$ 个书签吗？",
       "placeholders": {
          "bookmarkCount": {
             "content": "$2"
@@ -14,7 +17,7 @@
       }
    },
    "confirmDeleteFolderSubfolders": {
-      "message": "您确定要删除文件夹[$folderName$]（包含 $subFolderCount$ 个子目录）？",
+      "message": "您确定要删除文件夹'$folderName$'及其中的 $subFolderCount$ 个子文件夹吗？",
       "placeholders": {
          "folderName": {
             "content": "$1"
@@ -25,7 +28,7 @@
       }
    },
    "confirmDeleteFolderSubfoldersBookmarks": {
-      "message": "您确定要删除文件夹[$folderName$]（包含 $subFolderCount$ 个子目录和 $bookmarkCount$ 个书签）？",
+      "message": "您确定要删除文件夹'$folderName$'及其中的 $subFolderCount$ 个子文件夹和 $bookmarkCount$ 个书签吗？",
       "placeholders": {
          "bookmarkCount": {
             "content": "$3"
@@ -40,7 +43,7 @@
    },
    "confirmOpenBookmarks": {
       "description": "打开所有书签的确认信息",
-      "message": "您确定要打开 $count$ 个书签？",
+      "message": "您确定要打开全部 $count$ 个书签吗？",
       "placeholders": {
          "count": {
             "content": "$1"
@@ -49,7 +52,7 @@
    },
    "confirmOpenBookmarksNewIncognitoWindow": {
       "description": "在隐身窗口中打开所有书签的确认信息",
-      "message": "您确定要在隐身窗口中打开 $count$ 个书签？",
+      "message": "您确定要在新的隐身窗口中打开全部 $count$ 个书签吗？",
       "placeholders": {
          "count": {
             "content": "$1"
@@ -58,7 +61,7 @@
    },
    "confirmOpenBookmarksNewWindow": {
       "description": "在新窗口中打开所有书签的确认信息",
-      "message": "您确定要在新窗口中打开 $count$ 个书签？",
+      "message": "您确定要在新窗口中打开全部 $count$ 个书签吗？",
       "placeholders": {
          "count": {
             "content": "$1"
@@ -69,27 +72,22 @@
       "message": "自定义图标"
    },
    "customIconText": {
-      "message": "图标尺寸必须为 19*19，否则图标将会被缩放以适应大小"
+      "message": "图标尺寸必须为 19×19 像素，否则将被自动缩放。"
    },
    "customStyles": {
-      "message": "自定义样式"
+      "message": "主题"
    },
-   "customStylesText": {
-      "message": "此处需要你有一些 CSS 知识，请小心行事。你可以通过 $linkGithubGist$ 分享你的代码。",
-      "placeholders": {
-         "linkGithubGist": {
-            "content": "$1"
-         }
-      }
+   "customStylesDesc": {
+      "message": "要自定义主题，请将下方的基础代码复制到文本框中，然后调整颜色值。"
    },
    "delete": {
       "message": "删除"
    },
    "deleteEllipsis": {
-      "message": "删除 ..."
+      "message": "删除..."
    },
    "edit": {
-      "message": "编辑 ..."
+      "message": "编辑..."
    },
    "editBookmark": {
       "message": "编辑书签"
@@ -98,15 +96,15 @@
       "message": "编辑文件夹"
    },
    "errorOccured": {
-      "message": "喔唷，出错了……"
+      "message": "糟糕，发生了错误。"
    },
    "extDesc": {
       "description": "扩展描述",
-      "message": "灵巧实用的弹出书签"
+      "message": "更整洁的书签树弹出窗口。"
    },
    "extName": {
-      "description": "扩展名",
-      "message": "Neater Bookmarks"
+      "description": "扩展名称",
+      "message": "sNeater Bookmarks"
    },
    "general": {
       "message": "常规设置"
@@ -115,18 +113,18 @@
       "message": "忽略"
    },
    "name": {
-      "description": "书签名或文件夹名",
-      "message": "名字"
+      "description": "书签或文件夹的名称",
+      "message": "名称"
    },
    "noTitle": {
-      "description": "没 http(s) 开头的书签或没有命名的文件夹的统一标题",
+      "description": "没有标题的书签（无 http(s) URL）或没有标题的文件夹的标题",
       "message": "（无标题）"
    },
    "nope": {
       "message": "取消"
    },
    "open": {
-      "description": "打开书签的动作",
+      "description": "打开书签的操作",
       "message": "打开"
    },
    "openBookmarks": {
@@ -148,22 +146,22 @@
       "message": "在新窗口中打开"
    },
    "optionClickNewTab": {
-      "message": "左键单击书签即在新标签页中打开"
+      "message": "左键点击在新标签页中打开书签。"
    },
    "optionCloseUnusedFolders": {
-      "message": "展开文件夹时折叠其它已展开的文件夹"
+      "message": "一次只保持一个文件夹打开。"
    },
    "optionConfirmOpenFolder": {
-      "message": "打开多个书签前需确认"
+      "message": "打开超过 10 个书签时显示确认对话框。"
    },
    "optionOpenNewTab": {
-      "message": "鼠标中键或按住 Ctrl 键左击时在后台打开书签"
+      "message": "中键点击（或 Ctrl+点击）在后台标签页中打开书签。"
    },
    "optionPopupStays": {
-      "message": "打开（鼠标左击）书签时不关闭弹出页面"
+      "message": "打开书签时（通过左键点击）弹出窗口保持打开。"
    },
    "optionRememberPrevState": {
-      "message": "记住上次状态（滚动条位置、所打开文件夹）"
+      "message": "弹出窗口记住上次状态（滚动位置和打开的文件夹）。"
    },
    "optionZoom": {
       "message": "缩放"
@@ -171,8 +169,17 @@
    "options": {
       "message": "选项"
    },
+   "optionsPageTitle": {
+      "message": "sNeater Bookmarks 选项"
+   },
+   "popupTheme": {
+      "message": "弹出窗口主题"
+   },
+   "statusSaved": {
+      "message": "已保存"
+   },
    "optionsFooterText1": {
-      "description": "设置页页脚信息",
+      "description": "选项页面的页脚文本",
       "message": "联系开发者：$neaterEmail$",
       "placeholders": {
          "neaterEmail": {
@@ -181,7 +188,7 @@
       }
    },
    "optionsFooterText2": {
-      "message": "$extName$ 是开源的～ 代码在 $neaterGithub$ ，欢迎 Fork 喵～",
+      "message": "$extName$ 是开源的！$neaterGithub$",
       "placeholders": {
          "extName": {
             "content": "$1"
@@ -200,7 +207,7 @@
       }
    },
    "optionsFooterText4": {
-      "message": "查看已知问题或报告新问题：$neaterIssues$",
+      "message": "查看问题或提交新问题：$neaterIssues$",
       "placeholders": {
          "neaterIssues": {
             "content": "$1"
@@ -208,7 +215,7 @@
       }
    },
    "optionsFooterText5": {
-      "message": "查看自定义图标：$neaterIcons$",
+      "message": "浏览自定义图标：$neaterIcons$",
       "placeholders": {
          "neaterIcons": {
             "content": "$1"
@@ -216,7 +223,7 @@
       }
    },
    "optionsFooterText6": {
-      "message": "帮助我们翻译 $extName$ 到你的语言！ $neaterTranslate$",
+      "message": "帮助翻译 $extName$：$neaterTranslate$",
       "placeholders": {
          "extName": {
             "content": "$1"
@@ -227,7 +234,7 @@
       }
    },
    "optionsFooterText7": {
-      "message": "基于 $linkCheeAun$ 的 $neatGithub$ 开发",
+      "message": "基于 $linkCheeAun$ 的 $neatGithub$",
       "placeholders": {
          "linkCheeAun": {
             "content": "$2"
@@ -238,8 +245,8 @@
       }
    },
    "parentFolder": {
-      "description": "搜索结果列表中提示书签所在目录",
-      "message": "所在目录：$folderName$",
+      "description": "在搜索结果列表中书签工具提示显示的父文件夹信息",
+      "message": "所在文件夹：'$folderName$'",
       "placeholders": {
          "folderName": {
             "content": "$1",
@@ -248,11 +255,11 @@
       }
    },
    "reportError": {
-      "message": "报告此错误"
+      "message": "报告错误"
    },
    "reportedToDeveloper": {
-      "description": "此异常已提交给开发者",
-      "message": "已提交给开发者"
+      "description": "表示扩展中发生的错误已报告给开发者的消息",
+      "message": "此问题已报告给开发者。"
    },
    "reset": {
       "message": "重置"
@@ -261,7 +268,7 @@
       "message": "重置设置"
    },
    "resetText": {
-      "message": "重置 $extName$ 的所有设置",
+      "message": "将所有 $extName$ 选项重置为默认值。",
       "placeholders": {
          "extName": {
             "content": "$1"
@@ -272,8 +279,8 @@
       "message": "保存"
    },
    "searchBookmarks": {
-      "description": "搜索框里的提示文字",
-      "message": "书签搜索"
+      "description": "搜索框的占位符文本",
+      "message": "搜索书签"
    },
    "url": {
       "message": "网址"

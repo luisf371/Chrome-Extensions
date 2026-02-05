@@ -2,8 +2,11 @@
    "accessibility": {
       "message": "Configurações de Acessibilidade"
    },
+   "addBookmark": {
+      "message": "Adicionar favorito a esta pasta"
+   },
    "confirmDeleteFolderBookmarks": {
-      "message": "Você tem certeza que quer apagar a pasta $folderName$ e $bookmarkCount$ favorito(s) incluído(s)?",
+      "message": "Tem certeza de que deseja excluir a pasta $folderName$ e os $bookmarkCount$ favorito(s) nela?",
       "placeholders": {
          "bookmarkCount": {
             "content": "$2"
@@ -14,7 +17,7 @@
       }
    },
    "confirmDeleteFolderSubfolders": {
-      "message": "Você tem certeza que quer apagar a pasta $folderName$ e $subFolderCount$ sub-pasta(s) incluída(s)?",
+      "message": "Tem certeza de que deseja excluir a pasta $folderName$ e as $subFolderCount$ subpasta(s) nela?",
       "placeholders": {
          "folderName": {
             "content": "$1"
@@ -25,7 +28,7 @@
       }
    },
    "confirmDeleteFolderSubfoldersBookmarks": {
-      "message": "Você tem certeza que quer apagar a pasta $folderName$, $subFolderCount$ sub-pasta(s) e $bookmarkCount$ favorito(s) incluído(s)?",
+      "message": "Tem certeza de que deseja excluir a pasta $folderName$, as $subFolderCount$ subpasta(s) e os $bookmarkCount$ favorito(s) nela?",
       "placeholders": {
          "bookmarkCount": {
             "content": "$3"
@@ -39,8 +42,8 @@
       }
    },
    "confirmOpenBookmarks": {
-      "description": "Mensagem de confirmação para abertura de todos os favoritos.",
-      "message": "Você tem certeza que quer abrir todos os $count$ favoritos?",
+      "description": "Mensagem de confirmação para abrir todos os favoritos.",
+      "message": "Tem certeza de que deseja abrir todos os $count$ favoritos?",
       "placeholders": {
          "count": {
             "content": "$1"
@@ -48,8 +51,8 @@
       }
    },
    "confirmOpenBookmarksNewIncognitoWindow": {
-      "description": "Mensagem de confirmação para abertura de todos os favoritos em uma nova janela anônima.",
-      "message": "Você tem certeza que quer abrir todos os $count$ favoritos em uma nova janela anônima?",
+      "description": "Mensagem de confirmação para abrir todos os favoritos em uma nova janela anônima.",
+      "message": "Tem certeza de que deseja abrir todos os $count$ favoritos em uma nova janela anônima?",
       "placeholders": {
          "count": {
             "content": "$1"
@@ -57,19 +60,31 @@
       }
    },
    "confirmOpenBookmarksNewWindow": {
-      "description": "Mensagem de confirmação para abertura de todos os favoritos em uma nova janela.",
-      "message": "Você tem certeza que quer abrir todos os $count$ favoritos em uma nova janela?",
+      "description": "Mensagem de confirmação para abrir todos os favoritos em uma nova janela.",
+      "message": "Tem certeza de que deseja abrir todos os $count$ favoritos em uma nova janela?",
       "placeholders": {
          "count": {
             "content": "$1"
          }
       }
    },
+   "customIcon": {
+      "message": "Ícone Personalizado"
+   },
+   "customIconText": {
+      "message": "O ícone deve ter 19×19 pixels, caso contrário será redimensionado."
+   },
+   "customStyles": {
+      "message": "Temas"
+   },
+   "customStylesDesc": {
+      "message": "Para personalizar o tema, copie o código base abaixo para a área de texto e ajuste os valores das cores."
+   },
    "delete": {
-      "message": "Apagar"
+      "message": "Excluir"
    },
    "deleteEllipsis": {
-      "message": "Apagar..."
+      "message": "Excluir..."
    },
    "edit": {
       "message": "Editar..."
@@ -81,10 +96,18 @@
       "message": "Editar pasta"
    },
    "errorOccured": {
-      "message": "Oops, ocorreu um erro."
+      "message": "Ops, ocorreu um erro."
+   },
+   "extDesc": {
+      "description": "Descrição da extensão.",
+      "message": "Uma árvore de favoritos mais organizada em popup."
+   },
+   "extName": {
+      "description": "Nome da extensão.",
+      "message": "sNeater Bookmarks"
    },
    "general": {
-      "message": "Definições Gerais"
+      "message": "Configurações Gerais"
    },
    "ignore": {
       "message": "Ignorar"
@@ -98,47 +121,47 @@
       "message": "(sem título)"
    },
    "nope": {
-      "message": "Nãaoo"
+      "message": "Não"
    },
    "open": {
-      "description": "Ação para abrir favoritos",
+      "description": "Ação para abrir favoritos.",
       "message": "Abrir"
    },
    "openBookmarks": {
-      "message": "Abrir todos os favoritos"
+      "message": "Abrir Todos os Favoritos"
    },
    "openBookmarksIncognitoWindow": {
-      "message": "Abrir todos os favoritos em uma janela anônima"
+      "message": "Abrir Todos os Favoritos em Janela Anônima"
    },
    "openBookmarksNewWindow": {
-      "message": "Abrir todos os favoritos em uma nova janela"
+      "message": "Abrir Todos os Favoritos em Nova Janela"
    },
    "openIncognitoWindow": {
-      "message": "Abrir em uma janela anônima"
+      "message": "Abrir em Janela Anônima"
    },
    "openNewTab": {
-      "message": "Abrir em uma nova guia"
+      "message": "Abrir em Nova Guia"
    },
    "openNewWindow": {
-      "message": "Abrir em uma nova janela"
+      "message": "Abrir em Nova Janela"
    },
    "optionClickNewTab": {
-      "message": "Clique com o botão esquerdo do mouse abre favorito em uma nova guia"
+      "message": "Clique esquerdo abre favoritos em uma nova guia."
    },
    "optionCloseUnusedFolders": {
-      "message": "Fechar pastas não utilizadas quando abrir uma nova pasta."
+      "message": "Manter apenas uma pasta aberta por vez."
    },
    "optionConfirmOpenFolder": {
-      "message": "Mostrar confirmação quando abrir vários favoritos de uma pasta."
+      "message": "Exibir confirmação ao abrir mais de 10 favoritos."
    },
    "optionOpenNewTab": {
-      "message": "Clique com o botão do meio do mouse ou control-clique abre o favorito em um nova guia em 2º plano (em vez de 1º plano)."
+      "message": "Clique do meio (ou Ctrl+clique) abre favoritos em guia de segundo plano."
    },
    "optionPopupStays": {
-      "message": "O pop-up continua aberto quando abrir um favorito (clicando com o botão esquerdo) ."
+      "message": "Popup permanece aberto ao abrir favoritos (via clique esquerdo)."
    },
    "optionRememberPrevState": {
-      "message": "Lembrar do estado anterior (posição e pastas abertas)."
+      "message": "Popup lembra o estado anterior (posição de rolagem e pastas abertas)."
    },
    "optionZoom": {
       "message": "Zoom"
@@ -146,9 +169,84 @@
    "options": {
       "message": "Opções"
    },
+   "optionsPageTitle": {
+      "message": "Opções do sNeater Bookmarks"
+   },
+   "popupTheme": {
+      "message": "Tema do Popup"
+   },
+   "statusSaved": {
+      "message": "Salvo"
+   },
+   "optionsFooterText1": {
+      "description": "Texto de rodapé para a página de Opções",
+      "message": "Entre em contato com o desenvolvedor em $neaterEmail$",
+      "placeholders": {
+         "neaterEmail": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText2": {
+      "message": "$extName$ é código aberto! $neaterGithub$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neaterGithub": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText3": {
+      "message": "Perguntas frequentes: $neaterFaq$",
+      "placeholders": {
+         "neaterFaq": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText4": {
+      "message": "Ver problemas ou reportar um novo: $neaterIssues$",
+      "placeholders": {
+         "neaterIssues": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText5": {
+      "message": "Explorar ícones personalizados: $neaterIcons$",
+      "placeholders": {
+         "neaterIcons": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText6": {
+      "message": "Ajude a traduzir $extName$ em $neaterTranslate$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neaterTranslate": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText7": {
+      "message": "Baseado em $neatGithub$ por $linkCheeAun$",
+      "placeholders": {
+         "linkCheeAun": {
+            "content": "$2"
+         },
+         "neatGithub": {
+            "content": "$1"
+         }
+      }
+   },
    "parentFolder": {
-      "description": "Informação da pasta principal mostrada em dicas dos marcadores nas listas dos resultados das pesquisas.",
-      "message": "Pasta principal: \"$folderName$\"",
+      "description": "Informação da pasta pai exibida na dica de ferramenta dos favoritos na lista de resultados de pesquisa.",
+      "message": "Pasta pai: \"$folderName$\"",
       "placeholders": {
          "folderName": {
             "content": "$1",
@@ -157,14 +255,32 @@
       }
    },
    "reportError": {
-      "message": "Reportar erro"
+      "message": "Reportar Erro"
+   },
+   "reportedToDeveloper": {
+      "description": "Mensagem indicando que um erro na extensão foi reportado ao desenvolvedor.",
+      "message": "Isso foi reportado ao desenvolvedor."
+   },
+   "reset": {
+      "message": "Redefinir"
+   },
+   "resetSettings": {
+      "message": "Redefinir Configurações"
+   },
+   "resetText": {
+      "message": "Redefinir todas as opções do $extName$ para o padrão.",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         }
+      }
    },
    "save": {
       "message": "Salvar"
    },
    "searchBookmarks": {
-      "description": "Texto contido no campo de pesquisa.",
-      "message": "Procurar favoritos"
+      "description": "Texto de placeholder do campo de pesquisa.",
+      "message": "Pesquisar Favoritos"
    },
    "url": {
       "message": "URL"
