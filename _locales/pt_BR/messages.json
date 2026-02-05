@@ -1,0 +1,271 @@
+{
+   "cLog_title": {
+      "message": "Histórico de alterações"
+   },
+   "cred_line1": {
+      "message": "Créditos para Sexy Undo Close Tab, pois sUndoClose é um fork dele."
+   },
+   "cred_line2": {
+      "message": "Também agradecemos ao plugin Undo Close tab, do qual o Sexy Undo Close Tab veio."
+   },
+   "cred_line3": {
+      "message": "Por fim, também agradecemos a todas as outras extensões das quais o plugin Undo Close tab pode ter sido derivado :)"
+   },
+   "cred_line4": {
+      "message": "Créditos adicionais ao Android Design pelos 3 ícones localizados no canto superior direito."
+   },
+   "cred_title": {
+      "message": "Créditos"
+   },
+   "extName": {
+      "message": "sUndoClose",
+      "description": "Extension name"
+   },
+   "statusSaved": {
+      "message": "Salvo",
+      "description": "Toast message when settings are saved"
+   },
+   "ext_font": {
+      "message": "'Segoe UI', Tahoma, sans-serif"
+   },
+   "feed_text1": {
+      "message": "Sinta-se à vontade para deixar uma mensagem sobre bugs, dúvidas ou sugestões."
+   },
+   "feed_text2": {
+      "message": "Deixe seu feedback aqui!"
+   },
+   "feed_title": {
+      "message": "Feedback"
+   },
+   "html_topbtn_tooltip1": {
+      "message": "Configurações"
+   },
+   "html_topbtn_tooltip2": {
+      "message": "Créditos e histórico de alterações"
+   },
+   "html_topbtn_tooltip3": {
+      "message": "Informações"
+   },
+   "manifest_description": {
+      "message": "Um popup simples para desfazer guias fechadas, só isso e um pouco mais."
+   },
+   "manifest_kbshort1": {
+      "message": "Desfazer última guia fechada"
+   },
+   "manifest_toolbarbtn_tooltip": {
+      "message": "Desfazer guias fechadas"
+   },
+   "opera_description": {
+      "message": "Apenas uma maneira simples de desfazer suas guias fechadas. \\n (Não restaura o histórico da guia) \\n Para usar: \\n - clique no botão da barra de ferramentas, um popup mostrando guias fechadas aparece \\n - clique na página fechada que deseja restaurar \\n - navegação por teclado suportada \\n - para excluir uma única entrada, clique no botão excluir no canto inferior direito da área azul focada \\n - pesquise digitando na barra de pesquisa. \\n O histórico de alterações atualizado está nas páginas de opções da extensão. \\n Mantém os recursos da extensão base Sexy Undo Close Tab por J K."
+   },
+   "opt_blogbtn_tooltip": {
+      "message": "Visitar blog"
+   },
+   "opt_func_opt1": {
+      "message": "Pesquisar em:"
+   },
+   "opt_func_opt10": {
+      "message": "Linhas por item:"
+   },
+   "opt_func_opt11": {
+      "message": "Duração do clique longo (s):"
+   },
+   "opt_func_opt12": {
+      "message": "Fechar popup com clique do meio"
+   },
+   "opt_func_opt1_tooltip": {
+      "message": "Determina quais campos são pesquisados no popup."
+   },
+   "opt_func_opt2": {
+      "message": "Título"
+   },
+   "opt_func_opt3": {
+      "message": "URL"
+   },
+   "opt_func_opt4": {
+      "message": "Título e URL"
+   },
+   "opt_func_opt5": {
+      "message": "Atalhos"
+   },
+   "opt_func_opt5_tooltip": {
+      "message": "Gerenciar atalhos da extensão nas configurações do Chrome."
+   },
+   "opt_func_opt5a": {
+      "message": "Configurar"
+   },
+   "opt_func_opt6": {
+      "message": "Desativar recurso de duplo clique"
+   },
+   "opt_func_opt6b": {
+      "message": "Desativar recurso de triplo clique"
+   },
+   "opt_func_opt7": {
+      "message": "Manter histórico após fechar o navegador"
+   },
+   "opt_func_opt8": {
+      "message": "Tamanho do histórico:"
+   },
+   "opt_func_opt9": {
+      "message": "Itens por página:"
+   },
+   "opt_func_title": {
+      "message": "Comportamento"
+   },
+   "opt_looks_opt1": {
+      "message": "Mostrar contador no ícone"
+   },
+   "opt_looks_opt10": {
+      "message": "Largura do popup:"
+   },
+   "opt_looks_opt11": {
+      "message": "Estilo da lista:"
+   },
+   "opt_looks_opt12": {
+      "message": "Tema:"
+   },
+   "opt_looks_opt13": {
+      "message": "Padrão do sistema"
+   },
+   "opt_looks_opt14": {
+      "message": "Claro"
+   },
+   "opt_looks_opt15": {
+      "message": "Escuro"
+   },
+   "opt_looks_opt2": {
+      "message": "Controles no topo"
+   },
+   "opt_looks_opt3": {
+      "message": "Mostrar barra de pesquisa"
+   },
+   "opt_looks_opt4": {
+      "message": "Mostrar botão 'Limpar'"
+   },
+   "opt_looks_opt5": {
+      "message": "Mostrar horário"
+   },
+   "opt_looks_opt6": {
+      "message": "Usar fonte em negrito"
+   },
+   "opt_looks_opt7": {
+      "message": "Dicas mostram título em vez de URL"
+   },
+   "opt_looks_opt8": {
+      "message": "Usar ícone alternativo"
+   },
+   "opt_looks_opt9": {
+      "message": "Alinhar horário à direita"
+   },
+   "opt_looks_title": {
+      "message": "Aparência"
+   },
+   "opt_resetbtn": {
+      "message": "Limpar histórico"
+   },
+   "opt_resetbtn_popupMsg": {
+      "message": "Tem certeza que deseja limpar o histórico?"
+   },
+   "opt_removeHistory": {
+      "message": "Remover entrada do histórico"
+   },
+   "other_text1": {
+      "message": "Visite minha página no DeviantArt para ver mais dos meus trabalhos!"
+   },
+   "other_title": {
+      "message": "Outros trabalhos"
+   },
+   "perm_reason2a": {
+      "message": "Suas guias e atividade de navegação"
+   },
+   "perm_reason2b": {
+      "message": "POR QUÊ: Necessário para usar a API chrome.tabs para detectar o status das guias e obter seus detalhes"
+   },
+   "perm_text1": {
+      "message": "Como informado, sUndoClose pode acessar:"
+   },
+   "perm_text2": {
+      "message": "Solicitações de permissão são necessárias para detectar o status das guias e recuperar seus detalhes."
+   },
+   "perm_title": {
+      "message": "Motivo das solicitações de permissão"
+   },
+   "popup_cancel_tooltip": {
+      "message": "Cancelar"
+   },
+   "popup_clrbtn": {
+      "message": "Limpar"
+   },
+   "popup_clrbtn_tooltip": {
+      "message": "Limpar histórico de guias"
+   },
+   "popup_delbtn": {
+      "message": "Excluir"
+   },
+   "popup_delbtn_tooltip": {
+      "message": "Excluir guias encontradas"
+   },
+   "popup_delete2_tooltip": {
+      "message": "Excluir guias selecionadas"
+   },
+   "popup_noSearchResult": {
+      "message": "Nenhuma guia fechada encontrada contendo"
+   },
+   "popup_noTabsMsg": {
+      "message": "<center>Nenhuma guia fechada</center>"
+   },
+   "popup_nxtbtn_tooltip": {
+      "message": "Próxima página"
+   },
+   "popup_open1_btn": {
+      "message": "Abrir"
+   },
+   "popup_open1_tooltip": {
+      "message": "Abrir selecionadas"
+   },
+   "popup_open2_btn": {
+      "message": "Nova janela"
+   },
+   "popup_open2_tooltip": {
+      "message": "Abrir selecionadas em nova janela"
+   },
+   "popup_prvbtn_tooltip": {
+      "message": "Página anterior"
+   },
+   "popup_search_tooltip": {
+      "message": "Digite palavra-chave de pesquisa"
+   },
+   "tips_tip1": {
+      "message": "Atalho para desfazer última guia fechada"
+   },
+   "tips_tip1_line1": {
+      "message": "COMO: Certifique-se de que a opção está definida e pressione a combinação de teclas"
+   },
+   "tips_tip2": {
+      "message": "Clique duplo no ícone da barra de ferramentas para desfazer última guia fechada"
+   },
+   "tips_tip2_line1": {
+      "message": "COMO: Certifique-se de que a opção não está marcada e clique duas vezes no ícone da barra de ferramentas"
+   },
+   "tips_tip2_line2": {
+      "message": "NOTA: Pode ser necessário cronometrar seu segundo clique"
+   },
+   "tips_tip3": {
+      "message": "Navegação por teclado no popup da extensão"
+   },
+   "tips_tip3_line1": {
+      "message": "COMO: Abra o popup e use as setas para navegar"
+   },
+   "tips_tip3_line2": {
+      "message": "CONTROLES: ←, → = Página anterior, próxima; ↑, ↓ = Percorrer a lista de guias fechadas; Enter = selecionar link"
+   },
+   "tips_tip4": {
+      "message": "Atribuir um atalho de teclado para a extensão"
+   },
+   "tips_tip4_line1": {
+      "message": "COMO: Vá para a página de configurações de Extensões do navegador, role até o final e clique em \"Atalhos de teclado\""
+   },
+   "tips_title": {
+      "message": "Dicas de uso"
+   }
+}

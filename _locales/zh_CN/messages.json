@@ -2,8 +2,16 @@
    "cLog_title": {
       "message": "更新日志"
    },
+   "extName": {
+      "message": "sUndoClose",
+      "description": "Extension name"
+   },
+   "statusSaved": {
+      "message": "已保存",
+      "description": "Toast message when settings are saved"
+   },
    "cred_line1": {
-      "message": "本扩展依据\u003Ca href=\"https://chrome.google.com/webstore/detail/bcennaiejdjpomgmmohhpgnjlmpcjmbg\">Sexy Undo Close Tab\u003C/a>开发。"
+      "message": "本扩展依据Sexy Undo Close Tab开发。"
    },
    "cred_line2": {
       "message": "还要致谢 Sexy Undo Close Tab 来自的 Undo Close 扩展的开发者。"
@@ -12,7 +20,7 @@
       "message": "最后向所有分叉 Undo Close 扩展的作者致谢 :)"
    },
    "cred_line4": {
-      "message": "上角图标来自\u003Ca href=\"https://developer.android.com/design/index.html\">Android Design\u003C/a>。"
+      "message": "上角图标来自Android Design。"
    },
    "cred_title": {
       "message": "声明"
@@ -155,8 +163,11 @@
    "opt_resetbtn": {
       "message": "清除保存的标签？"
    },
-   "opt_resetbtn_popupMsg": {
-      "message": "清除保存的标签吗？"
+"opt_resetbtn_popupMsg": {
+      "message": "确定要清除历史记录吗？"
+   },
+   "opt_removeHistory": {
+      "message": "删除历史记录条目"
    },
    "other_text1": {
       "message": "欢迎到我的DeviantArt来查看个人的其他作品！"
@@ -174,7 +185,7 @@
       "message": "此扩展程序能取得:"
    },
    "perm_text2": {
-      "message": "点击\u003Ca href=\"http://developer.chrome.com/extensions/permission_warnings.html#warnings\">这里\u003C/a>可以查阅更多有关权限的问题"
+      "message": "权限请求用于检测选项卡状态并获取选项卡详细信息。"
    },
    "perm_title": {
       "message": "权限要求"

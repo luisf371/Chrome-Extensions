@@ -1,12 +1,12 @@
-![SimpleUndoClose Icon](icon-128.png)
+![sUndoClose Icon](icon-128.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Language: JavaScript](https://img.shields.io/badge/Language-JavaScript-blue.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![Version: 1.3.11](https://img.shields.io/badge/Version-1.3.11-green.svg)](https://github.com/your-repo/SimpleUndoClose)
+[![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-green.svg)](https://github.com/your-repo/sUndoClose)
 
 🌍 **Supported Languages:** English, Spanish, French, Japanese, Portuguese, Chinese
 
-SimpleUndoClose is a lightweight and efficient Chrome extension designed to help you recover accidentally closed tabs with a single click or keystroke. It provides a clean, searchable interface and customizable settings to ensure your browsing flow remains uninterrupted.
+sUndoClose is a lightweight and efficient Chrome extension designed to help you recover accidentally closed tabs with a single click or keystroke. It provides a clean, searchable interface and customizable settings to ensure your browsing flow remains uninterrupted.
 
 ## Key Features
 
@@ -18,12 +18,12 @@ SimpleUndoClose is a lightweight and efficient Chrome extension designed to help
 
 ## Quick Start
 
-To install SimpleUndoClose for development or manual use:
+To install sUndoClose for development or manual use:
 
 1.  Download or clone this repository to your local machine.
 2.  Open Google Chrome and navigate to `chrome://extensions/`.
 3.  Enable **Developer mode** using the toggle in the top right corner.
-4.  Click **Load unpacked** and select the `SimpleUndoClose` directory.
+4.  Click **Load unpacked** and select the `sUndoClose` directory.
 5.  The extension is now ready to use! Pin it to your toolbar for easy access.
 
 ## Usage
@@ -57,7 +57,7 @@ This extension requires the following permissions to function:
 
 ## Technical Overview
 
-SimpleUndoClose is built on **Manifest V3**, utilizing a modern service worker architecture for background tasks.
+sUndoClose is built on **Manifest V3**, utilizing a modern service worker architecture for background tasks.
 *   **Service Worker (`bg.js`)**: Handles keyboard commands and manages the extension's lifecycle.
 *   **Shared Logic (`common.js`)**: Contains reusable functions for storage and tab management.
 *   **Popup (`popup.html`/`popup.js`)**: The main user interface, optimized for speed and accessibility.

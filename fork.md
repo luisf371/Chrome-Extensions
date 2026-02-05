@@ -1,15 +1,15 @@
-# SimpleUndoClose - Fork Attribution
+# sUndoClose - Fork Attribution
 
 ## Origin
-**SimpleUndoClose** is a fork of **Sexy Undo Close Tab** by J K.
+**sUndoClose** is a fork of **Sexy Undo Close Tab** by J K.
 
 ## Fork History
 1. **Undo Close Tab** - The original extension
 2. **Sexy Undo Close Tab** - Fork by J K (original Chrome Web Store ID: bcennaiejdjpomgmmohhpgnjlmpcjmbg)
-3. **SimpleUndoClose** - Current fork, maintained independently
+3. **sUndoClose** - Current fork, maintained independently
 
 ## Credits
-- **Sexy Undo Close Tab** (J K) - Original extension that SimpleUndoClose forked from
+- **Sexy Undo Close Tab** (J K) - Original extension that sUndoClose forked from
 - **Undo Close Tab** - The extension that Sexy Undo Close Tab came from
 - **Android Design** - Icons used in the options page (top right buttons)
 - All other extensions in the Undo Close tab lineage

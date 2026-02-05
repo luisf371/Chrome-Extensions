@@ -3,7 +3,7 @@
       "message": "Changelog"
    },
    "cred_line1": {
-      "message": "Credits to \u003Ca href=\"https://chrome.google.com/webstore/detail/bcennaiejdjpomgmmohhpgnjlmpcjmbg\">Sexy Undo Close Tab\u003C/a> as SimpleUndoClose is a fork of it."
+      "message": "Credits to Sexy Undo Close Tab as sUndoClose is a fork of it."
    },
    "cred_line2": {
       "message": "Also thanks to Undo Close tab plugin, which Sexy Undo Close Tab came from."
@@ -12,10 +12,18 @@
       "message": "Finally also thanks to all other extensions the Undo Close tab plugin may have forked from :)"
    },
    "cred_line4": {
-      "message": "Additional credits to \u003Ca href=\"https://developer.android.com/design/index.html\">Android Design\u003C/a> for the 3 icons located top right."
+      "message": "Additional credits to Android Design for the 3 icons located top right."
    },
    "cred_title": {
       "message": "Credits"
+   },
+   "extName": {
+      "message": "sUndoClose",
+      "description": "Extension name"
+   },
+   "statusSaved": {
+      "message": "Saved",
+      "description": "Toast message when settings are saved"
    },
    "ext_font": {
       "message": "'Segoe UI', Tahoma, sans-serif"
@@ -174,10 +182,10 @@
       "message": "WHY: Required for use of the chrome.tabs API to detect tab status and to get the tab details"
    },
    "perm_text1": {
-      "message": "As stated SimpleUndoClose can access:"
+      "message": "As stated sUndoClose can access:"
    },
    "perm_text2": {
-      "message": "You can find out more about permission warning triggers \u003Ca href=\"http://developer.chrome.com/extensions/permission_warnings.html#warnings\">here\u003C/a>"
+      "message": "Permission requests are required to detect tab status and retrieve tab details."
    },
    "perm_title": {
       "message": "Reason For Permission Requests"
@@ -204,7 +212,7 @@
       "message": "No closed tabs found containing"
    },
    "popup_noTabsMsg": {
-      "message": "\u003Ccenter>No closed tabs\u003C/center>"
+      "message": "No closed tabs"
    },
    "popup_nxtbtn_tooltip": {
       "message": "Next page"

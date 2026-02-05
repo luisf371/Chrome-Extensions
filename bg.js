@@ -9,7 +9,10 @@ import {
     updateIcon,
     resetData,
     updateSearchIndex,
-    removeFromSearchIndex
+    removeFromSearchIndex,
+    rebuildSearchIndex,
+    TABLIST_PREFIX,
+    CLOSEDTAB_PREFIX
 } from './common.js';
 
 const defaultSettings = {
@@ -22,7 +25,7 @@ const defaultSettings = {
 	"menuTop" : false,
 	"disableDClick" : true,
 	"tooltipText" : true,
-	"numLimit" : 10,
+	"numLimit" : 60,
 	"numItems" : 10,
 	"numLines" : 1,
 	"useAlternateIcon" : false,
@@ -30,58 +33,70 @@ const defaultSettings = {
 	"style" : 1,
 	"longPressDelay" : 3,
 	"mClickClose" : false,
-	"theme" : "1",
+	"theme" : "dark",
     "removeHistory" : false
 };
 
 chrome.runtime.onStartup.addListener(async function() {
-	let data = await getStorage(['settings']);
-	let settings = data.settings;
+    try {
+        let data = await getStorage(['settings']);
+        let settings = data.settings;
 
-    if (!settings) {
-        await initialize();
-        data = await getStorage(['settings']);
-        settings = data.settings;
+        if (!settings) {
+            await ensureDefaults();
+            data = await getStorage(['settings']);
+            settings = data.settings;
+        }
+
+        await chrome.storage.session.set({ restoreCountSession: 0 });
+
+        if (settings && !settings.saveHistory) {
+            await resetData(); 
+        }
+        else if (settings) {
+            await tabListProcessing();
+            await cleanClosedTabs();
+            await setBadge();
+            await regExistingTabs();
+            await updateIcon();
+        }
+    } catch (error) {
+        console.error('sUndoClose: Startup error:', error);
     }
-
-    await chrome.storage.session.set({ restoreCountSession: 0 });
-
-	if (settings && !settings.saveHistory) {
-		await resetData(); 
-	}
-	else if (settings) {
-		await tabListProcessing();
-		await cleanClosedTabs();
-		await setBadge();
-		await regExistingTabs();
-		await updateIcon();
-	}
 });
 
 chrome.runtime.onInstalled.addListener(async function(runInfo) {
-	if (runInfo.reason === "install") {
-		await initialize();
-	}
-	if (runInfo.reason === "update") {
-		await settingsUpdate();
-	}
-    await chrome.storage.session.set({ restoreCountSession: 0 });
-	await setBadge();
-	await updateIcon();
+    try {
+        if (runInfo.reason === "install") {
+            await initializeFreshInstall();
+        }
+        if (runInfo.reason === "update") {
+            await settingsUpdate();
+        }
+        await chrome.storage.session.set({ restoreCountSession: 0 });
+        await setBadge();
+        await updateIcon();
+    } catch (error) {
+        console.error('sUndoClose: Install/update error:', error);
+    }
 });
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
-	if(tab.url){ addNewTab(tab); }
+	if(tab.url){ 
+		addNewTab(tab).catch(e => console.error('sUndoClose: Failed to add tab:', e)); 
+	}
 });
 
 chrome.tabs.onRemoved.addListener(function(tabId, info) {
-	addClosedTab(tabId, 0);
+	addClosedTab(tabId, 0).catch(error => {
+        console.error('sUndoClose: Failed to record closed tab:', error);
+    });
 });
 
 chrome.tabs.onReplaced.addListener(async function(addedTabId, removedTabId) {
-	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
-		const oldKey = "TabList-" + removedTabId;
-		const newKey = "TabList-" + addedTabId;
+	await navigator.locks.request('sUndoClose_data', async (lock) => {
+		const oldKey = TABLIST_PREFIX + removedTabId;
+		const newKey = TABLIST_PREFIX + addedTabId;
 		
 		let data = await getStorage([oldKey, newKey, 'TabListIndex']);
 		
@@ -120,7 +135,8 @@ chrome.commands.onCommand.addListener(function(command) {
 	if(command === "undo-latest") getLatestCTab();
 });
 
-async function initialize(){
+// Only for fresh install - destructive, wipes all data
+async function initializeFreshInstall(){
 	await setStorage({
         settings: defaultSettings,
         TabListIndex: [],
@@ -132,9 +148,29 @@ async function initialize(){
 	await regExistingTabs();
 }
 
+// For startup/update - non-destructive, preserves existing data
+async function ensureDefaults(){
+    const existing = await getStorage([
+        'settings', 'TabListIndex', 'ClosedTabIndex', 
+        'SearchIndex', 'restoreCountAllTime', 'installDate'
+    ]);
+    
+    const updates = {};
+    if (!existing.settings) updates.settings = defaultSettings;
+    if (!existing.TabListIndex) updates.TabListIndex = [];
+    if (!existing.ClosedTabIndex) updates.ClosedTabIndex = [];
+    if (!existing.SearchIndex) updates.SearchIndex = [];
+    if (existing.restoreCountAllTime === undefined) updates.restoreCountAllTime = 0;
+    if (!existing.installDate) updates.installDate = Date.now();
+    
+    if (Object.keys(updates).length > 0) {
+        await setStorage(updates);
+    }
+}
+
 async function settingsUpdate(){
     let needsInit = false;
-	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+	await navigator.locks.request('sUndoClose_data', async (lock) => {
 		let data = await getStorage(['settings']);
 		
 		if(!data.settings){ 
@@ -175,47 +211,42 @@ async function settingsUpdate(){
         if(!checks.restoreCountAllTime && checks.restoreCountAllTime !== 0){ await setStorage({ restoreCountAllTime: 0 }); }
         if(!checks.installDate){ await setStorage({ installDate: Date.now() }); }
         
-        // Migration: Build SearchIndex if missing but items exist
         if(!checks.SearchIndex && checks.ClosedTabIndex && checks.ClosedTabIndex.length > 0){
-             let newIndex = [];
-             const ids = checks.ClosedTabIndex;
-             const keys = ids.map(id => "ClosedTab-" + id);
-             const tabsData = await getStorage(keys);
-             
-             for(let id of ids){
-                 const t = tabsData["ClosedTab-"+id];
-                 if(t){
-                     newIndex.push({ id: id, t: t.title, u: t.url });
-                 }
-             }
-             await setStorage({ SearchIndex: newIndex });
+            await rebuildSearchIndex();
         } else if (!checks.SearchIndex) {
-             await setStorage({ SearchIndex: [] });
+            await setStorage({ SearchIndex: [] });
         }
 	});
 
     if (needsInit) {
-        await initialize();
+        await ensureDefaults();
     }
 }
 
 async function addClosedTab(tabId, mode){
-    await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+    await navigator.locks.request('sUndoClose_data', async (lock) => {
         await addClosedTabInternal(tabId, mode);
     });
 }
 
 async function addClosedTabInternal(tabId, mode){
-	const key = "TabList-" + tabId;
+	const key = TABLIST_PREFIX + tabId;
 	let data = await getStorage([key, 'settings', 'ClosedTabIndex', 'TabListIndex']);
 
 	if(data[key] != undefined){
 		const settings = data.settings || defaultSettings;
 		const closedTabIndex = data.ClosedTabIndex || [];
+		const tabListIndex = data.TabListIndex || [];
 		
 		let storageUpdates = {};
 		let keysToRemove = [key];
         let idsToRemoveIndex = [];
+
+		const tIdx = tabListIndex.indexOf(tabId);
+		if (tIdx > -1) {
+			tabListIndex.splice(tIdx, 1);
+			storageUpdates.TabListIndex = tabListIndex;
+		}
 
         const tabData = data[key];
 		const url = tabData.url;
@@ -223,11 +254,11 @@ async function addClosedTabInternal(tabId, mode){
 		
 		if (url && re.test(url)) {
 			let exists = -1;
-			const closedTabKeys = closedTabIndex.map(id => "ClosedTab-" + id);
+			const closedTabKeys = closedTabIndex.map(id => CLOSEDTAB_PREFIX + id);
 			const closedTabsData = await getStorage(closedTabKeys);
 
 			for(let i = closedTabIndex.length-1; i>=0; i--){
-				const closedTab = closedTabsData["ClosedTab-" + closedTabIndex[i]];
+				const closedTab = closedTabsData[CLOSEDTAB_PREFIX + closedTabIndex[i]];
 				if (closedTab){
                     const cTab = closedTab;
 					if (cTab.url === url){
@@ -244,27 +275,19 @@ async function addClosedTabInternal(tabId, mode){
             };
 
 			if (exists!=-1){
-				keysToRemove.push("ClosedTab-"+exists);
+				keysToRemove.push(CLOSEDTAB_PREFIX+exists);
                 idsToRemoveIndex.push(exists);
 				closedTabIndex.splice(closedTabIndex.indexOf(exists),1);
 			}
 
 			const rId = crypto.randomUUID();
-			storageUpdates["ClosedTab-"+rId] = createObj;
+			storageUpdates[CLOSEDTAB_PREFIX+rId] = createObj;
 			closedTabIndex.push(rId);
 
 			if (closedTabIndex.length > settings.numLimit){
-				for(let i = 0; i<closedTabIndex.length; i++){
-					const cTabKey = "ClosedTab-" + closedTabIndex[i];
-					const closedTab = closedTabsData[cTabKey]; 
-					
-					if (closedTab || closedTabsData[cTabKey] === undefined){ 
-						keysToRemove.push(cTabKey);
-                        idsToRemoveIndex.push(closedTabIndex[i]);
-						closedTabIndex.splice(closedTabIndex.indexOf(closedTabIndex[i]),1);
-						break;
-					}
-				}
+				const evictId = closedTabIndex.shift();
+				keysToRemove.push(CLOSEDTAB_PREFIX + evictId);
+				idsToRemoveIndex.push(evictId);
 			}
 			storageUpdates.ClosedTabIndex = closedTabIndex;
             
@@ -280,29 +303,20 @@ async function addClosedTabInternal(tabId, mode){
             // Add new to index
             await updateSearchIndex(rId, createObj.title, createObj.url);
 		}
-		
-		const tabListIndex = data.TabListIndex || [];
-		const tIdx = tabListIndex.indexOf(tabId);
-		if (tIdx > -1) {
-			tabListIndex.splice(tIdx, 1);
-			storageUpdates.TabListIndex = tabListIndex;
-            // Note: we might set TabListIndex twice in updates, but that's fine, last one wins or merge
-            await setStorage({ TabListIndex: tabListIndex });
-		}
 
 		await setBadge();
 	}
 }
 
 async function tabListProcessing() {
-    await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+    await navigator.locks.request('sUndoClose_data', async (lock) => {
         let allData = await getStorage(null);
         let tabListIndex = allData.TabListIndex || [];
         
         for (const key in allData) {
-            if(key.indexOf("TabList-")!=-1) {
-                const tabListId = parseInt(key.substr(8));
-                if(tabListIndex.indexOf(tabListId)!=-1){
+            if(key.startsWith(TABLIST_PREFIX)) {
+                const tabListId = parseInt(key.substring(TABLIST_PREFIX.length), 10);
+                if(tabListIndex.includes(tabListId)){
                     await addClosedTabInternal(tabListId,1);
                 }else{
                     await removeStorage([key]);
@@ -313,7 +327,7 @@ async function tabListProcessing() {
 }
 
 async function cleanClosedTabs() {
-    await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+    await navigator.locks.request('sUndoClose_data', async (lock) => {
         let data = await getStorage(['ClosedTabIndex']);
         const indexList = data.ClosedTabIndex || [];
         const db = {};
@@ -324,16 +338,18 @@ async function cleanClosedTabs() {
         let allData = await getStorage(null);
         
         for (let key in allData) {
-            const parts = key.split('-');
-            if (parts[0] === 'ClosedTab' && !db.hasOwnProperty(parts[1])) {
-                await removeStorage([key]);
+            if (key.startsWith(CLOSEDTAB_PREFIX)) {
+                const uuid = key.substring(CLOSEDTAB_PREFIX.length);
+                if (!db.hasOwnProperty(uuid)) {
+                    await removeStorage([key]);
+                }
             }
         }
 
         let newIndexList = [];
         let indexChanged = false;
         for (let i = 0; i < indexList.length; i++) {
-            if (allData["ClosedTab-" + indexList[i]]) {
+            if (allData[CLOSEDTAB_PREFIX + indexList[i]]) {
                 newIndexList.push(indexList[i]);
             } else {
                 indexChanged = true;
@@ -342,15 +358,15 @@ async function cleanClosedTabs() {
 
         if (indexChanged) {
             await setStorage({ ClosedTabIndex: newIndexList });
-        }
-        
-        // Sync SearchIndex
-        let searchData = await getStorage(['SearchIndex']);
-        let searchIndex = searchData.SearchIndex || [];
-        let newSearchIndex = searchIndex.filter(item => db[item.id]); // Keep only if in valid ID list
-        
-        if (newSearchIndex.length !== searchIndex.length) {
-            await setStorage({ SearchIndex: newSearchIndex });
+            await rebuildSearchIndex();
+        } else {
+            let searchData = await getStorage(['SearchIndex']);
+            let searchIndex = searchData.SearchIndex || [];
+            let newSearchIndex = searchIndex.filter(item => db[item.id]);
+            
+            if (newSearchIndex.length !== searchIndex.length) {
+                await setStorage({ SearchIndex: newSearchIndex });
+            }
         }
     });
 }

@@ -1,23 +1,77 @@
-// Helper for storage
+export const TABLIST_PREFIX = 'TabList-';
+export const CLOSEDTAB_PREFIX = 'ClosedTab-';
+const SETTINGS_CACHE_KEY = 'settings_cache';
+const SETTINGS_VERSION_KEY = 'settings_version';
+
+function getSettingsWithVersion(syncSettings, syncVersion, cacheSettings, cacheVersion) {
+    if (!syncSettings && !cacheSettings) return null;
+    if (!syncSettings) return cacheSettings;
+    if (!cacheSettings) return syncSettings;
+    
+    const syncV = syncVersion || 0;
+    const cacheV = cacheVersion || 0;
+    
+    return cacheV > syncV ? cacheSettings : syncSettings;
+}
+
 export const getStorage = async (keys) => {
     if (keys === null) {
         const [local, sync] = await Promise.all([
             chrome.storage.local.get(null),
-            chrome.storage.sync.get(null)
+            chrome.storage.sync.get(null).catch(() => ({}))
         ]);
-        return { ...local, ...sync };
+        const merged = { ...local, ...sync };
+        
+        merged.settings = getSettingsWithVersion(
+            sync.settings, sync[SETTINGS_VERSION_KEY],
+            local[SETTINGS_CACHE_KEY], local[SETTINGS_VERSION_KEY]
+        );
+        
+        delete merged[SETTINGS_CACHE_KEY];
+        delete merged[SETTINGS_VERSION_KEY];
+        return merged;
     }
 
     const keysArray = Array.isArray(keys) ? keys : [keys];
+    const needsSettings = keysArray.includes('settings');
     const syncKeys = keysArray.filter(k => k === 'settings');
     const localKeys = keysArray.filter(k => k !== 'settings');
 
     const promises = [];
-    if (syncKeys.length > 0) promises.push(chrome.storage.sync.get(syncKeys));
-    if (localKeys.length > 0) promises.push(chrome.storage.local.get(localKeys));
+    let syncResult = {};
+    let localResult = {};
+    
+    if (syncKeys.length > 0) {
+        promises.push(
+            chrome.storage.sync.get(['settings', SETTINGS_VERSION_KEY])
+                .then(r => { syncResult = r; })
+                .catch(() => {})
+        );
+    }
+    if (localKeys.length > 0 || needsSettings) {
+        const localFetchKeys = needsSettings 
+            ? [...localKeys, SETTINGS_CACHE_KEY, SETTINGS_VERSION_KEY] 
+            : localKeys;
+        promises.push(
+            chrome.storage.local.get(localFetchKeys)
+                .then(r => { localResult = r; })
+        );
+    }
 
-    const results = await Promise.all(promises);
-    return Object.assign({}, ...results);
+    await Promise.all(promises);
+    const merged = { ...localResult, ...syncResult };
+    
+    if (needsSettings) {
+        merged.settings = getSettingsWithVersion(
+            syncResult.settings, syncResult[SETTINGS_VERSION_KEY],
+            localResult[SETTINGS_CACHE_KEY], localResult[SETTINGS_VERSION_KEY]
+        );
+    }
+    
+    delete merged[SETTINGS_CACHE_KEY];
+    delete merged[SETTINGS_VERSION_KEY];
+    
+    return merged;
 };
 
 export const setStorage = async (items) => {
@@ -28,8 +82,13 @@ export const setStorage = async (items) => {
 
     for (const key in items) {
         if (key === 'settings') {
+            const version = Date.now();
             syncItems[key] = items[key];
+            syncItems[SETTINGS_VERSION_KEY] = version;
+            localItems[SETTINGS_CACHE_KEY] = items[key];
+            localItems[SETTINGS_VERSION_KEY] = version;
             hasSync = true;
+            hasLocal = true;
         } else {
             localItems[key] = items[key];
             hasLocal = true;
@@ -37,7 +96,11 @@ export const setStorage = async (items) => {
     }
 
     const promises = [];
-    if (hasSync) promises.push(chrome.storage.sync.set(syncItems));
+    if (hasSync) {
+        promises.push(chrome.storage.sync.set(syncItems).catch(err => {
+            console.warn('sUndoClose: Sync storage unavailable, using local cache:', err.message);
+        }));
+    }
     if (hasLocal) promises.push(chrome.storage.local.set(localItems));
 
     await Promise.all(promises);
@@ -64,16 +127,7 @@ export const setSessionStorage = async (items) => {
     await chrome.storage.session.set(items);
 };
 
-// Robust HTML escaping
-export function encodeHtml(str) {
-    if (!str) return "";
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
+
 
 export function stripVowelAccent(str) {
     if (!str) return "";
@@ -93,7 +147,7 @@ export function multiFind(data, strings, settings) {
 
     let foundAmount = 0;
     for (const s of strings) {
-        if (target.indexOf(s) !== -1) foundAmount++;
+        if (target.includes(s)) foundAmount++;
     }
     return (foundAmount === strings.length);
 }
@@ -108,7 +162,7 @@ export function multiReplace(strReal, strings) {
         str = stripVowelAccent(workingStr).toLowerCase();
         const position = str.indexOf(strings[i]);
         if (position !== -1) {
-            workingStr = workingStr.substr(0, position) + startTag + workingStr.substr(position, strings[i].length) + endTag + workingStr.substr(position + strings[i].length); 
+            workingStr = workingStr.substring(0, position) + startTag + workingStr.substring(position, position + strings[i].length) + endTag + workingStr.substring(position + strings[i].length); 
         }
     }
     
@@ -118,9 +172,9 @@ export function multiReplace(strReal, strings) {
 // --- Business Logic Functions ---
 
 export async function createTab(id, selected) {
-	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
-		const data = await getStorage(["ClosedTab-" + id]);
-		const entry = data["ClosedTab-" + id];
+	await navigator.locks.request('sUndoClose_data', async (lock) => {
+		const data = await getStorage([CLOSEDTAB_PREFIX + id]);
+		const entry = data[CLOSEDTAB_PREFIX + id];
         
 		if (!entry) return;
 
@@ -139,9 +193,9 @@ export async function createTab(id, selected) {
 }
 
 export async function createTabWindow(id, wId) {
-	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
-		const data = await getStorage(["ClosedTab-" + id]);
-		const entry = data["ClosedTab-" + id];
+	await navigator.locks.request('sUndoClose_data', async (lock) => {
+		const data = await getStorage([CLOSEDTAB_PREFIX + id]);
+		const entry = data[CLOSEDTAB_PREFIX + id];
         
 		if (!entry) return;
 
@@ -157,11 +211,11 @@ export async function createTabWindow(id, wId) {
 export async function addNewTab(tab) {
 	const re = /^(http:|https:|chrome-extension:|file:)/;
 	if (re.test(tab.url)) {
-		await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+		await navigator.locks.request('sUndoClose_data', async (lock) => {
 			if (await chkNewTab(tab)) {
 				let insertThis = { url: tab.url, title: tab.title };
 
-				const listKey = "TabList-" + tab.id;
+				const listKey = TABLIST_PREFIX + tab.id;
 				let data = await getStorage(["TabListIndex"]);
 				let tabListIndex = data.TabListIndex || [];
 
@@ -183,7 +237,7 @@ export async function addNewTab(tab) {
 
 export async function chkNewTab(tab) {
 	let pass = false;
-	const key = "TabList-" + tab.id;
+	const key = TABLIST_PREFIX + tab.id;
 	const data = await getStorage([key]);
 	const inList = data[key];
 
@@ -196,9 +250,9 @@ export async function chkNewTab(tab) {
 }
 
 export async function removeClosedTab(id) {
-	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
-        const data = await getStorage(["ClosedTab-" + id, "settings"]);
-		const entry = data["ClosedTab-" + id];
+	await navigator.locks.request('sUndoClose_data', async (lock) => {
+        const data = await getStorage([CLOSEDTAB_PREFIX + id, "settings"]);
+		const entry = data[CLOSEDTAB_PREFIX + id];
         const settings = data.settings || {};
 
         if (settings.removeHistory && entry && entry.url) {
@@ -217,7 +271,7 @@ export async function removeClosedTabInternal(id) {
 	let data = await getStorage(["ClosedTabIndex"]);
 	let closedTabIndex = data.ClosedTabIndex || [];
 
-	await removeStorage(["ClosedTab-" + id]);
+	await removeStorage([CLOSEDTAB_PREFIX + id]);
     
     // Sync Index
     await removeFromSearchIndex([id]);
@@ -233,16 +287,15 @@ export async function removeClosedTabInternal(id) {
 export async function removeClosedTabBatch(ids) {
 	if (!ids || ids.length === 0) return;
 	
-	await navigator.locks.request('simpleUndoClose_data', async (lock) => {
-        // Fetch settings and potential history items to delete
-        let keysToFetch = ids.map(id => "ClosedTab-" + id);
+	await navigator.locks.request('sUndoClose_data', async (lock) => {
+        let keysToFetch = ids.map(id => CLOSEDTAB_PREFIX + id);
         keysToFetch.push("settings");
         let fetchData = await getStorage(keysToFetch);
         let settings = fetchData.settings || {};
 
         if (settings.removeHistory) {
              for(let id of ids) {
-                 let entry = fetchData["ClosedTab-" + id];
+                 let entry = fetchData[CLOSEDTAB_PREFIX + id];
                  if(entry && entry.url) {
                      try {
                         await chrome.history.deleteUrl({ url: entry.url });
@@ -254,7 +307,7 @@ export async function removeClosedTabBatch(ids) {
 		let data = await getStorage(["ClosedTabIndex"]);
 		let closedTabIndex = data.ClosedTabIndex || [];
 		
-		let keysToRemove = ids.map(id => "ClosedTab-" + id);
+		let keysToRemove = ids.map(id => CLOSEDTAB_PREFIX + id);
 		await removeStorage(keysToRemove);
         
         // Sync Index
@@ -270,21 +323,23 @@ export async function removeClosedTabBatch(ids) {
 }
 
 export async function setBadge() {
-	let data = await getStorage(["settings", "ClosedTabIndex"]);
-	let settings = data.settings || {};
+	await navigator.locks.request('sUndoClose_badge', async (lock) => {
+		let data = await getStorage(["settings", "ClosedTabIndex"]);
+		let settings = data.settings || {};
 
-	if (settings.showBadge) {
-		let closedTabIndex = data.ClosedTabIndex || [];
-		const n = closedTabIndex.length;
-		if (n > 0) {
-			chrome.action.setBadgeBackgroundColor({ color: [15, 161, 211, 255] });
-			chrome.action.setBadgeText({ text: n.toString() });
+		if (settings.showBadge) {
+			let closedTabIndex = data.ClosedTabIndex || [];
+			const n = closedTabIndex.length;
+			if (n > 0) {
+				chrome.action.setBadgeBackgroundColor({ color: [15, 161, 211, 255] });
+				chrome.action.setBadgeText({ text: n.toString() });
+			} else {
+				chrome.action.setBadgeText({ text: "" });
+			}
 		} else {
 			chrome.action.setBadgeText({ text: "" });
 		}
-	} else {
-		chrome.action.setBadgeText({ text: "" });
-	}
+	});
 }
 
 export async function resetData() {
@@ -322,7 +377,6 @@ export async function removeFromSearchIndex(ids) {
     let data = await getStorage(['SearchIndex']);
     let index = data.SearchIndex || [];
     
-    // Convert single ID to array check just in case, though usually array passed
     const idSet = new Set(Array.isArray(ids) ? ids : [ids]);
 
     let newIndex = index.filter(item => !idSet.has(item.id));
@@ -332,48 +386,91 @@ export async function removeFromSearchIndex(ids) {
     }
 }
 
+export async function rebuildSearchIndex() {
+    let data = await getStorage(['ClosedTabIndex']);
+    const closedTabIndex = data.ClosedTabIndex || [];
+    
+    if (closedTabIndex.length === 0) {
+        await setStorage({ SearchIndex: [] });
+        return;
+    }
+    
+    const keys = closedTabIndex.map(id => CLOSEDTAB_PREFIX + id);
+    const tabsData = await getStorage(keys);
+    
+    const newIndex = [];
+    for (const id of closedTabIndex) {
+        const entry = tabsData[CLOSEDTAB_PREFIX + id];
+        if (entry) {
+            newIndex.push({ id: id, t: entry.title, u: entry.url });
+        }
+    }
+    
+    await setStorage({ SearchIndex: newIndex });
+}
+
+
+// Debounce timer for updateIcon to prevent race conditions
+let updateIconTimer = null;
 
 export async function updateIcon() {
-	let data = await getStorage(["settings"]);
-	let settings = data.settings || {};
+    // Debounce rapid calls
+    if (updateIconTimer) {
+        clearTimeout(updateIconTimer);
+    }
+    
+    return new Promise((resolve) => {
+        updateIconTimer = setTimeout(async () => {
+            await updateIconInternal();
+            updateIconTimer = null;
+            resolve();
+        }, 50);
+    });
+}
 
-	if (settings.useAlternateIcon) {
-		chrome.action.setIcon({ path: { "19": "icon-19-0.png", "38": "icon-38-0.png" } });
-	} else {
-		let isDark = false;
-		if (settings.theme == "3") {
-			isDark = true;
-		} else if (settings.theme == "2") {
-			isDark = false;
-		} else {
-			if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-				isDark = true;
-			}
-		}
+async function updateIconInternal() {
+    let data = await getStorage(["settings"]);
+    let settings = data.settings || {};
 
-		if (isDark) { 
-			chrome.action.setIcon({
-				path: {
-					"19": "icon-19-2.png",
-					"38": "icon-38-2.png"
-				}
-			});
-		} else { 
-			chrome.action.setIcon({
-				path: {
-					"19": "icon-19-1.png", 
-					"38": "icon-38-1.png"  
-				}
-			});
-		}
-	}
+    if (settings.useAlternateIcon) {
+        chrome.action.setIcon({ path: { "19": "icon-19-0.png", "38": "icon-38-0.png" } });
+    } else {
+        let isDark = false;
+        
+        const themeData = await new Promise(resolve => chrome.storage.local.get(['theme'], resolve));
+        const theme = themeData.theme;
+        
+        if (theme === "dark") {
+            isDark = true;
+        } else if (theme === "light") {
+            isDark = false;
+        } else if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            isDark = true;
+        }
+
+        if (isDark) { 
+            chrome.action.setIcon({
+                path: {
+                    "19": "icon-19-2.png",
+                    "38": "icon-38-2.png"
+                }
+            });
+        } else { 
+            chrome.action.setIcon({
+                path: {
+                    "19": "icon-19-1.png", 
+                    "38": "icon-38-1.png"  
+                }
+            });
+        }
+    }
 }
 
 export async function regExistingTabs() {
     const tabs = await chrome.tabs.query({ "url": "*://*/*" });
     if (tabs.length === 0) return;
 
-    await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+    await navigator.locks.request('sUndoClose_data', async (lock) => {
         const data = await getStorage(["TabListIndex"]);
         let tabListIndex = data.TabListIndex || [];
         let updates = {};
@@ -383,7 +480,7 @@ export async function regExistingTabs() {
         
         for (const tab of tabs) {
              if (re.test(tab.url)) {
-                 const listKey = "TabList-" + tab.id;
+                 const listKey = TABLIST_PREFIX + tab.id;
                  let insertThis = { url: tab.url, title: tab.title };
                  
                  updates[listKey] = insertThis;

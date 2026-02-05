@@ -1,66 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SimpleUndoClose Options</title>
-    <link href="options.css" rel="stylesheet" type="text/css">
-    <!-- Removed separate dark css link, will handle via CSS variables in options.css -->
-    <script type="module" src="options.js"></script>
-    <script type="module" src="theme.js"></script>
-    <script src="i18n.js"></script>
-    <script src="feedback.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="extName">sUndoClose Options</title>
+    <link rel="stylesheet" href="options.css">
 </head>
 <body>
-    <div class="app-layout">
-        <aside class="sidebar" id="sidebar">
-            <div class="brand">
-                <button id="sidebarToggle" class="icon-btn" title="Toggle Menu">
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
+    <div class="container">
+        <header>
+            <h1 data-i18n="extName">sUndoClose</h1>
+            <div class="header-actions">
+                <span class="version-badge">v1.3.11</span>
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <svg class="icon-sun" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
                 </button>
-                <div class="brand-logo-text">
-                    <img src="icon-128.png" alt="Logo" class="logo">
-                    <h1>SimpleUndoClose</h1>
-                </div>
             </div>
-            <nav class="nav-menu">
-                <button class="nav-item active" data-section="general">
-                    <span class="icon">⚙️</span> <span i18n="opt_func_title">Behavior</span>
-                </button>
-                <button class="nav-item" data-section="appearance">
-                    <span class="icon">🎨</span> <span i18n="opt_looks_title">Appearance</span>
-                </button>
-                <button class="nav-item" data-section="about">
-                    <span class="icon">ℹ️</span> <span>About</span>
-                </button>
-                <button class="nav-item" data-section="credits">
-                    <span class="icon">❤️</span> <span i18n="cred_title">Credits</span>
-                </button>
-            </nav>
-            <div class="sidebar-footer">
-                <small>v1.3.11</small>
-            </div>
-        </aside>
+        </header>
 
-        <main class="main-content">
-            <!-- GENERAL SETTINGS -->
-            <section id="general" class="content-section active">
-                <h2 i18n="opt_func_title">Behavior</h2>
-
-                <!-- NEW: Stats Card -->
+        <main>
+            <!-- Stats Dashboard -->
+            <section class="section">
+                <h2 class="section-title">Tabs Recovered</h2>
                 <div class="stats-card">
-                    <div class="stats-header">
-                        <span class="stats-title">Restored Tabs</span>
-                    </div>
                     <div class="stats-grid">
                         <div class="stat-item">
                             <div class="stat-value" id="stat-session">0</div>
                             <div class="stat-label">This Session</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value" id="stat-closed">0</div>
+                            <div class="stat-value" id="stat-alltime">0</div>
                             <div class="stat-label">All Time</div>
                         </div>
                         <div class="stat-item">
@@ -68,409 +50,226 @@
                             <div class="stat-label">Days Active</div>
                         </div>
                     </div>
+                    <div class="stats-footer" id="stats-install-date"></div>
                 </div>
+            </section>
 
-                <div class="card">
-                    <h3>History & Storage</h3>
-                    
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <label for="saveHistory" i18n="opt_func_opt7">Keep history after closing browser</label>
-                                <span class="info-icon" data-tooltip="Keeps closed-tab history across browser restarts.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <label class="switch">
-                                <input type="checkbox" id="saveHistory">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+            <!-- Behavior Section -->
+            <section class="section">
+                <h2 class="section-title" data-i18n="opt_func_title">Behavior</h2>
+                <div class="settings-card">
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_func_opt7">Keep history after closing browser</span>
+                            <span class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltiptext">Keeps closed-tab history across browser restarts.</span>
+                            </span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="saveHistory">
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <span i18n="opt_func_opt8">History size:</span>
-                                <span class="info-icon" data-tooltip="Maximum number of closed tabs to store.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control range-control">
-                            <input type="range" min="20" max="200" step="5" id="numLimit">
-                            <span id="numLimit-value" class="range-value"></span>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_removeHistory">Remove history entry</span>
+                            <span class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltiptext">Deleting from popup also removes from Chrome history.</span>
+                            </span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="removeHistory">
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <label for="removeHistory" i18n="opt_removeHistory">Remove history entry</label>
-                                <span class="info-icon" data-tooltip="When enabled, deleting an item from the popup list will also remove it from Chrome's history.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <label class="switch">
-                                <input type="checkbox" id="removeHistory">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_func_opt8">History size:</label>
+                        <select id="numLimit">
+                            <option value="20">20</option>
+                            <option value="40">40</option>
+                            <option value="60">60</option>
+                            <option value="80">80</option>
+                            <option value="100">100</option>
+                            <option value="120">120</option>
+                            <option value="140">140</option>
+                            <option value="160">160</option>
+                            <option value="180">180</option>
+                            <option value="200">200</option>
+                        </select>
                     </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <span class="label">Reset Counter</span>
-                                <span class="info-icon" data-tooltip="Sets this session's restored tab counter to zero.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                             <button id="resetSessionButton" class="btn warning btn-wide">Reset Counter</button>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_func_opt9">Items per page:</label>
+                        <select id="numItems">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                            <option value="25">25</option>
+                            <option value="30">30</option>
+                            <option value="40">40</option>
+                            <option value="50">50</option>
+                            <option value="60">60</option>
+                            <option value="80">80</option>
+                        </select>
                     </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <span class="label">Clear Data</span>
-                                <span class="info-icon" data-tooltip="Deletes all stored closed-tab history.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                             <button id="resetButton" class="btn danger btn-wide" i18n="opt_resetbtn">Clear History</button>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_func_opt1">Search in:</label>
+                        <select id="searchMode">
+                            <option value="1" data-i18n="opt_func_opt2">Title</option>
+                            <option value="2" data-i18n="opt_func_opt3">URL</option>
+                            <option value="3" data-i18n="opt_func_opt4">Title & URL</option>
+                        </select>
                     </div>
-                </div>
-
-                <div class="card">
-                    <h3>Search & Interactions</h3>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <span i18n="opt_func_opt1">Search in:</span>
-                                <span class="info-icon" data-tooltip="Choose which fields are searched in the popup.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <div class="select-group">
-                                <label><input type="radio" id="searchIn1" name="searchIn" value="1"><span i18n="opt_func_opt2">Title</span></label>
-                                <label><input type="radio" id="searchIn2" name="searchIn" value="2"><span i18n="opt_func_opt3">URL</span></label>
-                                <label><input type="radio" id="searchIn3" name="searchIn" value="3"><span i18n="opt_func_opt4">Title & URL</span></label>
-                            </div>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_func_opt12">Close popup on middle-click</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="mClickClose">
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <label for="mClickClose" i18n="opt_func_opt12">Close popup on middle-click</label>
-                                <span class="info-icon" data-tooltip="Middle-click restores a tab and closes the popup.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <label class="switch">
-                                <input type="checkbox" id="mClickClose">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <span i18n="opt_func_opt11">Long click duration (s):</span>
-                                <span class="info-icon" data-tooltip="Hold time to enter multi-select mode.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <input id="longPressDelay" type="number" min="1" class="input-number">
-                        </div>
-                    </div>
-
-                     <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <span i18n="opt_func_opt5">Shortcuts:</span>
-                                <span class="info-icon" data-tooltip="Open Chrome shortcut settings for the extension.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <button id="openKBshort" class="btn secondary" i18n="opt_func_opt5a">Configure</button>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_func_opt11">Long click duration (s):</label>
+                        <input type="number" id="longPressDelay" min="1" max="10" class="input-number">
                     </div>
                 </div>
             </section>
 
-            <!-- APPEARANCE SETTINGS -->
-            <section id="appearance" class="content-section">
-                <h2 i18n="opt_looks_title">Appearance</h2>
-                
-                <div class="card">
-                    <h3>Theme & Style</h3>
-                    
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <span i18n="opt_looks_opt12">Theme:</span>
-                                <span class="info-icon" data-tooltip="Use system, force light, or force dark theme.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                             <div class="select-group">
-                                <label><input type="radio" id="theme1" name="theme" value="1"><span i18n="opt_looks_opt13">System</span></label>
-                                <label><input type="radio" id="theme2" name="theme" value="2"><span i18n="opt_looks_opt14">Light</span></label>
-                                <label><input type="radio" id="theme3" name="theme" value="3"><span i18n="opt_looks_opt15">Dark</span></label>
-                            </div>
-                        </div>
+            <!-- Appearance Section -->
+            <section class="section">
+                <h2 class="section-title" data-i18n="opt_looks_title">Appearance</h2>
+                <div class="settings-card">
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt1">Show count badge on icon</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="showBadge">
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <span i18n="opt_looks_opt11">Popup style:</span>
-                                <span class="info-icon" data-tooltip="Choose the visual layout for list items.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <div class="select-group">
-                                <label><input type="radio" id="styleIn1" name="styleIn" value="1"><span>Classic</span></label>
-                                <label><input type="radio" id="styleIn2" name="styleIn" value="2"><span>Studio</span></label>
-                                <label><input type="radio" id="styleIn3" name="styleIn" value="3"><span>Minimalist</span></label>
-                                <label><input type="radio" id="styleIn4" name="styleIn" value="4"><span>Beacon</span></label>
-                            </div>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt8">Use alternate icon</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="useAlternateIcon">
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <span i18n="opt_looks_opt10">Popup width:</span>
-                                <span class="info-icon" data-tooltip="Sets the popup width in pixels.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control range-control">
-                            <input type="range" min="300" max="700" step="10" id="popupWidth">
-                            <span id="popupWidth-value" class="range-value"></span>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt2">Controls at top</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="menuTop">
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
-                </div>
-
-                <div class="card">
-                    <h3>Display Options</h3>
-                    
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <label for="showBadge" i18n="opt_looks_opt1">Show count badge on icon</label>
-                                <span class="info-icon" data-tooltip="Shows the number of stored closed tabs on the icon.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <label class="switch">
-                                <input type="checkbox" id="showBadge">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt3">Show search bar</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="showSearch">
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <label for="useAlternateIcon" i18n="opt_looks_opt8">Use alternate icon</label>
-                                <span class="info-icon" data-tooltip="Switches to the alternate toolbar icon set.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <label class="switch">
-                                <input type="checkbox" id="useAlternateIcon">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt4">Show 'Clear' button</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="showClear">
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <label for="menuTop" i18n="opt_looks_opt2">Controls at top</label>
-                                <span class="info-icon" data-tooltip="Moves the control bar above the list.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <label class="switch">
-                                <input type="checkbox" id="menuTop">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt5">Show timestamp</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="showTime">
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <label for="showSearch" i18n="opt_looks_opt3">Show search bar</label>
-                                <span class="info-icon" data-tooltip="Shows the search field in the popup.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <label class="switch">
-                                <input type="checkbox" id="showSearch">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt7">Tooltips show title instead of URL</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="tooltipText">
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <label for="showClear" i18n="opt_looks_opt4">Show 'Clear' button</label>
-                                <span class="info-icon" data-tooltip="Shows the Clear History button in the popup.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <label class="switch">
-                                <input type="checkbox" id="showClear">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_looks_opt10">Popup width:</label>
+                        <select id="popupWidth">
+                            <option value="300">300px</option>
+                            <option value="340">340px</option>
+                            <option value="380">380px</option>
+                            <option value="420">420px</option>
+                            <option value="460">460px</option>
+                            <option value="500">500px</option>
+                            <option value="540">540px</option>
+                            <option value="580">580px</option>
+                            <option value="620">620px</option>
+                            <option value="660">660px</option>
+                            <option value="700">700px</option>
+                        </select>
                     </div>
-
-                     <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <label for="tooltipText" i18n="opt_looks_opt7">Tooltips show title instead of URL</label>
-                                <span class="info-icon" data-tooltip="Hover tooltips show the tab title instead of the URL.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <label class="switch">
-                                <input type="checkbox" id="tooltipText">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_looks_opt11">Popup style:</label>
+                        <select id="popupStyle">
+                            <option value="1">Classic</option>
+                            <option value="2">Studio</option>
+                            <option value="3">Minimalist</option>
+                            <option value="4">Beacon</option>
+                        </select>
                     </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <label for="showTime" i18n="opt_looks_opt5">Show timestamp</label>
-                                <span class="info-icon" data-tooltip="Shows time since a tab was closed.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control">
-                            <label class="switch">
-                                <input type="checkbox" id="showTime">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <span i18n="opt_func_opt9">Items per page:</span>
-                                <span class="info-icon" data-tooltip="Number of entries shown per page.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control range-control">
-                            <input type="range" min="3" max="80" step="1" id="numItems">
-                            <span id="numItems-value" class="range-value"></span>
-                        </div>
-                    </div>
-
-                    <div class="option-row">
-                        <div class="option-info">
-                            <div class="option-label">
-                                <span i18n="opt_func_opt10">Lines per item:</span>
-                                <span class="info-icon" data-tooltip="Clamp each title to a set number of lines.">i</span>
-                            </div>
-                        </div>
-                        <div class="option-control range-control">
-                            <input type="range" min="1" max="3" step="1" id="numLines">
-                            <span id="numLines-value" class="range-value"></span>
-                        </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_func_opt10">Lines per item:</label>
+                        <select id="numLines">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                        </select>
                     </div>
                 </div>
             </section>
 
-             <!-- ABOUT -->
-            <section id="about" class="content-section">
-                <h2>About</h2>
-                <div class="card">
-                    <h3 i18n="tips_title">Usage Tips</h3>
-                    <div class="tip-item">
-                        <h4 i18n="tips_tip1">Undo latest closed tab</h4>
-                        <p i18n="tips_tip1_line1">HOW: Check the hotkey option in Settings, then use the configured shortcut <span class="kbd">Alt</span><span class="kbd-separator">+</span><span class="kbd">Z</span>.</p>
+            <!-- Actions Section -->
+            <section class="section">
+                <h2 class="section-title">Actions</h2>
+                <div class="settings-card">
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_func_opt5">Keyboard shortcuts:</label>
+                        <button class="btn btn-secondary" id="openKBshort" data-i18n="opt_func_opt5a">Configure</button>
                     </div>
-                    <div class="tip-item">
-                        <h4 i18n="tips_tip3">Keyboard navigation in popup</h4>
-                        <p i18n="tips_tip3_line1">HOW: Open the popup and use arrow keys to navigate.</p>
-                        <p i18n="tips_tip3_line2">CONTROLS: <span class="kbd">←</span><span class="kbd">→</span> = Previous, Next page; <span class="kbd">↑</span><span class="kbd">↓</span> = Select items; <span class="kbd">Enter</span> = Restore.</p>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_resetbtn">Clear History</label>
+                        <button class="btn btn-danger" id="resetButton">Clear</button>
                     </div>
-                    <div class="tip-item">
-                        <h4 i18n="tips_tip4">Assign browser shortcut</h4>
-                        <p i18n="tips_tip4_line1">HOW: Go to Extensions settings and click "Keyboard shortcuts" at the bottom.</p>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3 i18n="perm_title">Permissions</h3>
-                    <p i18n="perm_text1">SimpleUndoClose requires the following permissions:</p>
-                    <div class="tip-item">
-                        <h4 i18n="perm_reason2a">Your tabs and browsing activity</h4>
-                        <p i18n="perm_reason2b">WHY: Required to detect when tabs are closed and to store their titles/URLs for restoration.</p>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3 i18n="feed_title">Feedback</h3>
-                    <p i18n="feed_text1">Feel free to leave a message in regards to bugs, questions or suggestions.</p>
-                    <button id="feedbkLnk" class="btn secondary">Feedback here!</button>
                 </div>
             </section>
 
-             <!-- CREDITS -->
-            <section id="credits" class="content-section">
-                <h2 i18n="cred_title">Credits</h2>
-                
-                <div class="card">
-                     <ul class="credits-list">
-                        <li i18n="cred_line1">Credits to Sexy Undo Close Tab as SimpleUndoClose is a fork of it.</li>
-                        <li i18n="cred_line2">Also thanks to Undo Close tab plugin, which Sexy Undo Close Tab came from.</li>
-                        <li i18n="cred_line3">Finally also thanks to all other extensions the Undo Close tab plugin may have forked from :)</li>
-                        <li i18n="cred_line4">Additional credits to Android Design for the 3 icons located top right.</li>
-                    </ul>
-                </div>
-
-                <h3 i18n="cLog_title" style="margin-top: 2rem;">Changelog</h3>
-                <div class="card">
-                    <div class="changelog-item">
-                        <h4 class="version">v1.3.11 (13/11/2020) <span class="highlight-badge pulse">Latest</span></h4>
-                        <ul>
-                            <li>Added support for dark mode with theme selection</li>
-                        </ul>
-                    </div>
-                    <div class="changelog-item">
-                        <h4 class="version">v1.3.10 (13/2/2018)</h4>
-                        <ul>
-                            <li>Updated traditional Chinese translation</li>
-                            <li>General localization edits</li>
-                        </ul>
-                    </div>
-                    <div class="changelog-item">
-                        <h4 class="version">v1.3.9 (19/1/2018)</h4>
-                        <ul>
-                            <li>Optimized long press UI logic</li>
-                            <li>Security and validation updates for options</li>
-                        </ul>
-                    </div>
-                    <p class="history-note">Full history available on the Chrome Web Store.</p>
-                </div>
-            </section>
+            <!-- Footer -->
+            <div class="footer">
+                <span>Contact: <a href="mailto:extension@tekky.cc">extension@tekky.cc</a></span>
+                <span>Developer: <a href="https://tekky.cc">tekky.cc</a></span>
+            </div>
         </main>
     </div>
 
-    <!-- NEW: Toast Notification Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span class="toast-icon">✓</span>
+        <span class="toast-message">Saved</span>
+    </div>
 
-    <!-- NEW: Save Indicator -->
-    <div class="save-indicator" id="saveIndicator">Settings Saved</div>
+    <script type="module" src="options.js"></script>
 </body>
 </html>
