@@ -1,92 +1,55 @@
-![sGestures Icon](icon-128.png)
+![Project Banner](path/to/image.png)
+<!-- Replace with actual banner if available -->
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Language](https://img.shields.io/badge/language-JavaScript-yellow.svg)
-![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![Language: JavaScript](https://img.shields.io/badge/Language-JavaScript-F7DF1E.svg)
+![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-green.svg)
 
 🌍 **Supported Languages:** English, Spanish, French, Japanese, Portuguese (Brazil), Chinese (Simplified)
 
-sGestures is a lightweight, bloat-free Chrome extension that brings intuitive mouse gestures to your browser. It allows you to execute common navigation tasks through simple mouse movements and rocker combinations without the overhead of complex configurations.
+sGestures is a simple and fast way to control your browser with mouse movements. It adds intuitive gestures and "rocker" clicks to your mouse, making navigation feel natural and efficient.
 
 ## Key Features
 
-*   **Mouse Gestures**: Execute actions by moving the mouse in four directions (Up, Down, Left, Right) while holding the right button.
-*   **Rocker Gestures**: Perform quick actions by clicking one mouse button while holding the other.
-*   **Visual Feedback**: Customizable gesture trails with adjustable color and width.
-*   **Comprehensive Actions**: Map gestures to New Tab, Close Tab, Reload, Back/Forward, Scroll to Top/Bottom, and more.
-*   **Dark/Light Themes**: A clean options interface that respects your system's theme preferences.
+*   **Mouse Gestures**: Hold the right button and move your mouse to trigger actions like closing tabs or going back.
+*   **Rocker Gestures**: Click one mouse button while holding another for quick "Opera-style" navigation.
+*   **Visual Trails**: See your movements with a customizable trail that shows you exactly what you're doing.
+*   **Action Mapping**: Pick from many actions like Reload, New Tab, Scroll to Top, or Re-open closed tabs.
+*   **Modern Design**: A clean, easy-to-use settings page with support for both Light and Dark themes.
 
 ## Quick Start
 
-To install sGestures manually:
+### Install from Chrome Web Store
+1. Visit the [Chrome Web Store](https://chrome.google.com/webstore) (Coming Soon).
+2. Click **Add to Chrome**.
 
-1.  Download or clone this repository.
-2.  Open Chrome and navigate to `chrome://extensions/`.
-3.  Enable **Developer mode** in the top right corner.
-4.  Click **Load unpacked** and select the `sGesture` directory.
-
-## Usage
-
-### Mouse Gestures
-1.  **Hold** the right mouse button.
-2.  **Move** the mouse in a specific direction (e.g., move Left to go back).
-3.  **Release** the button to trigger the action.
-
-### Rocker Gestures
-1.  **Hold** one mouse button (e.g., Right).
-2.  **Click** the other mouse button (e.g., Left).
-3.  **Release** to trigger the action.
-
-**Default Rocker Mappings:**
-| Combination | Default Action |
-|-------------|----------------|
-| Right + Left (hold Right, click Left) | History Back |
-| Left + Right (hold Left, click Right) | History Forward |
-
-*Rocker actions are fully customizable in the Options page.*
+### Manual Installation
+1. Download this repository as a ZIP and extract it.
+2. Open Chrome and go to `chrome://extensions/`.
+3. Enable **Developer mode**.
+4. Click **Load unpacked** and select the extension folder.
 
 ## Overview
 
-sGestures is built on **Manifest Version 3**, ensuring modern security and performance standards. It utilizes a `mouseTrack.js` content script to intercept movements on web pages and communicates with a `background.js` service worker to execute tab-level actions. Configuration is handled via the `chrome.storage` API and managed through a sleek `options.html` page.
-
-## Configuration
-
-You can customize sGestures by right-clicking the extension icon and selecting **Options**.
-
-*   **Actions**: Rebind each direction or rocker combination to your preferred command.
-*   **Appearance**: Change the gesture trail color and thickness.
-*   **Exclusions**: (Optional) Manage where the extension should or shouldn't run.
-
-## Permissions Explanation
-
-sGestures requests the following permissions:
-
-*   **tabs**: To open, close, and navigate between your browser tabs.
-*   **storage**: To save your custom gesture mappings and visual preferences.
-*   **activeTab**: To interact with the current page when a gesture is performed.
-*   **sessions**: To restore recently closed tabs via gestures.
+This extension uses a content script to track mouse movements and a Service Worker to execute commands, fully compatible with Manifest V3. It is designed to be lightweight, ensuring that your browser stays fast while adding powerful new controls.
 
 ## FAQ
 
-**Q: How do I perform a gesture?**
-A: Hold the right mouse button and move the mouse in a direction, then release.
+**Q: What does the 's' in the name mean?**
+A: It stands for simple and lightweight application with no bloat, tracking, or ads.
 
-**Q: What are rocker gestures?**
-A: Rocker gestures let you navigate by holding one mouse button and clicking the other. By default: Hold Right + Click Left = Back, Hold Left + Click Right = Forward. These follow the Opera browser convention and are fully customizable.
+**Q: How do I use a mouse gesture?**
+A: Just hold your right mouse button, move the mouse in a direction (like Left to go back), and release.
 
-**Q: Can I change the color of the gesture trail?**
-A: Yes, the trail color and width can be fully customized in the settings.
+**Q: What are Rocker Gestures?**
+A: These are combinations like holding the right button and clicking the left button to quickly go back in your history.
 
-**Q: Why doesn't it work on some pages?**
-A: Chrome restricts extensions from running on internal `chrome://` pages and the Chrome Web Store for security reasons.
+**Q: Can I change the colors?**
+A: Yes, you can change the color and thickness of the gesture trail in the settings.
 
-**Q: Is sGestures privacy-friendly?**
-A: Absolutely. All processing happens locally on your machine, and no data is ever sent to external servers.
-
-## Credits
-
-sGestures is part of the "s" extension series. Thanks to the contributors and the open-source community for their support and resources.
+**Q: Does it work on all websites?**
+A: It works on almost all sites, but Chrome blocks extensions on internal pages like `chrome://settings` for safety.
 
 ## License
 
-This project is licensed under the **MIT License**.
+MIT License
