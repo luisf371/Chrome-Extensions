@@ -1,0 +1,123 @@
+{
+  "extName": {
+    "message": "sTabControl",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Take control of your tabs. Choose where new tabs appear, handle focus after closing, and block duplicate tabs.",
+    "description": "Extension description"
+  },
+  "popupDescription": {
+    "message": "Managing your tabs in the background.",
+    "description": "Popup description text"
+  },
+  "btnOpenSettings": {
+    "message": "Open Settings",
+    "description": "Button to open options page"
+  },
+  "optionsTitle": {
+    "message": "Configuration",
+    "description": "Options page title"
+  },
+  "sectionSettings": {
+    "message": "Settings",
+    "description": "Settings section header"
+  },
+  "optTabsBehaviour": {
+    "message": "Position of a new tab",
+    "description": "New tab position option label"
+  },
+  "optTabsActivate": {
+    "message": "After closing go to",
+    "description": "After closing tab behavior option label"
+  },
+  "optTabsOpenMethod": {
+    "message": "Open a new tab in",
+    "description": "Open new tab method option label"
+  },
+  "valDefault": {
+    "message": "*** default ***",
+    "description": "Default option value"
+  },
+  "valFirst": {
+    "message": "first",
+    "description": "First position option"
+  },
+  "valNextLeft": {
+    "message": "next left",
+    "description": "Next left position option"
+  },
+  "valNextRight": {
+    "message": "next right",
+    "description": "Next right position option"
+  },
+  "valLast": {
+    "message": "last",
+    "description": "Last position option"
+  },
+  "valLastUsed": {
+    "message": "last used tab",
+    "description": "Last used tab option"
+  },
+  "valLeftTab": {
+    "message": "left tab",
+    "description": "Left tab option"
+  },
+  "valRightTab": {
+    "message": "right tab",
+    "description": "Right tab option"
+  },
+  "valForeground": {
+    "message": "foreground",
+    "description": "Foreground option"
+  },
+  "valBackground": {
+    "message": "background",
+    "description": "Background option"
+  },
+    "statusSaved": {
+    "message": "Configuration Saved",
+    "description": "Save success message"
+  },
+  "footerContact": {
+    "message": "Contact:",
+    "description": "Footer contact label"
+  },
+  "footerDeveloper": {
+    "message": "Developer:",
+    "description": "Footer developer label"
+  },
+  "footerExtensionName": {
+    "message": "Extension Name:",
+    "description": "Footer extension name label"
+  },
+  "themeToggle": {
+    "message": "Theme",
+    "description": "Theme toggle button"
+  },
+  "optPreventDuplicates": {
+    "message": "Prevent duplicate tabs",
+    "description": "Checkbox label for duplicate tab prevention"
+  },
+    "optPreventDuplicatesHint": {
+    "message": "\"Duplicate Tab\" action is still allowed",
+    "description": "Hint text explaining the smart behavior"
+  },
+  "optDuplicateMode": {
+    "message": "Duplicate handling",
+    "description": "Label for duplicate handling mode"
+  },
+  "valCloseNew": {
+    "message": "close new, focus old",
+    "description": "Option to close the new tab and focus the existing one"
+  },
+  "valCloseOld": {
+    "message": "close old, stay on new",
+    "description": "Option to close the existing tab and stay on the new one"
+  },
+  "valTeleport": {
+    "message": "teleport old to new (Best)",
+    "description": "Option to move existing tab to new position and focus"
+  }
+}
+

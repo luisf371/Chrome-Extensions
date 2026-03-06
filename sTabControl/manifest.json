@@ -1,0 +1,35 @@
+{
+   "manifest_version": 3,
+   "name": "__MSG_extName__",
+   "version": "1.1",
+   "description": "__MSG_extDescription__",
+   "default_locale": "en",
+   "homepage_url": "https://tekky.cc",
+   "author": {
+      "email": "extension@tekky.cc"
+   },
+   "icons": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+   },
+   "background": {
+      "service_worker": "background.js"
+   },
+   "permissions": [
+      "storage",
+      "tabs",
+      "webNavigation"
+   ],
+   "action": {
+      "default_title": "__MSG_extName__",
+      "default_popup": "options.html?popup=1",
+      "default_icon": {
+         "16": "icons/icon16.png",
+         "32": "icons/icon32.png",
+         "48": "icons/icon48.png",
+         "128": "icons/icon128.png"
+      }
+   }
+}

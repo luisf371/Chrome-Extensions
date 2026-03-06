@@ -1,0 +1,122 @@
+{
+  "extName": {
+    "message": "sTabControl",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "タブを完全にコントロール。新しいタブの表示位置を選択し、閉じた後のフォーカスを管理し、重複タブをブロックします。",
+    "description": "Extension description"
+  },
+  "popupDescription": {
+    "message": "バックグラウンドでタブを管理しています。",
+    "description": "Popup description text"
+  },
+  "btnOpenSettings": {
+    "message": "設定を開く",
+    "description": "Button to open options page"
+  },
+  "optionsTitle": {
+    "message": "設定",
+    "description": "Options page title"
+  },
+  "sectionSettings": {
+    "message": "設定",
+    "description": "Settings section header"
+  },
+  "optTabsBehaviour": {
+    "message": "新しいタブの位置",
+    "description": "New tab position option label"
+  },
+  "optTabsActivate": {
+    "message": "閉じた後の移動先",
+    "description": "After closing tab behavior option label"
+  },
+  "optTabsOpenMethod": {
+    "message": "新しいタブを開く場所",
+    "description": "Open new tab method option label"
+  },
+  "valDefault": {
+    "message": "*** デフォルト ***",
+    "description": "Default option value"
+  },
+  "valFirst": {
+    "message": "最初",
+    "description": "First position option"
+  },
+  "valNextLeft": {
+    "message": "左隣",
+    "description": "Next left position option"
+  },
+  "valNextRight": {
+    "message": "右隣",
+    "description": "Next right position option"
+  },
+  "valLast": {
+    "message": "最後",
+    "description": "Last position option"
+  },
+  "valLastUsed": {
+    "message": "最後に使用したタブ",
+    "description": "Last used tab option"
+  },
+  "valLeftTab": {
+    "message": "左のタブ",
+    "description": "Left tab option"
+  },
+  "valRightTab": {
+    "message": "右のタブ",
+    "description": "Right tab option"
+  },
+  "valForeground": {
+    "message": "フォアグラウンド",
+    "description": "Foreground option"
+  },
+  "valBackground": {
+    "message": "バックグラウンド",
+    "description": "Background option"
+  },
+  "statusSaved": {
+    "message": "設定を保存しました",
+    "description": "Save success message"
+  },
+  "themeToggle": {
+    "message": "テーマ",
+    "description": "Theme toggle button"
+  },
+  "optPreventDuplicates": {
+    "message": "重複タブを防止",
+    "description": "Checkbox label for duplicate tab prevention"
+  },
+  "optPreventDuplicatesHint": {
+    "message": "「タブを複製」は引き続き使用可能",
+    "description": "Hint text explaining the smart behavior"
+  },
+  "optDuplicateMode": {
+    "message": "重複処理",
+    "description": "Label for duplicate handling mode"
+  },
+  "valCloseNew": {
+    "message": "新規を閉じて既存を表示",
+    "description": "Option to close the new tab and focus the existing one"
+  },
+  "valCloseOld": {
+    "message": "既存を閉じて新規に留まる",
+    "description": "Option to close the existing tab and stay on the new one"
+  },
+  "valTeleport": {
+    "message": "既存を新規位置に移動（最適）",
+    "description": "Option to move existing tab to new position and focus"
+  },
+  "footerContact": {
+    "message": "お問い合わせ：",
+    "description": "Footer contact label"
+  },
+  "footerDeveloper": {
+    "message": "開発者：",
+    "description": "Footer developer label"
+  },
+  "footerExtensionName": {
+    "message": "拡張機能名：",
+    "description": "Footer extension name label"
+  }
+}

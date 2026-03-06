@@ -1,0 +1,122 @@
+{
+  "extName": {
+    "message": "sTabControl",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Toma el control de tus pestañas. Elige dónde aparecen las nuevas pestañas, gestiona el enfoque al cerrar y bloquea las pestañas duplicadas.",
+    "description": "Extension description"
+  },
+  "popupDescription": {
+    "message": "Gestionando tus pestañas en segundo plano.",
+    "description": "Popup description text"
+  },
+  "btnOpenSettings": {
+    "message": "Abrir configuración",
+    "description": "Button to open options page"
+  },
+  "optionsTitle": {
+    "message": "Configuración",
+    "description": "Options page title"
+  },
+  "sectionSettings": {
+    "message": "Ajustes",
+    "description": "Settings section header"
+  },
+  "optTabsBehaviour": {
+    "message": "Posición de una nueva pestaña",
+    "description": "New tab position option label"
+  },
+  "optTabsActivate": {
+    "message": "Después de cerrar ir a",
+    "description": "After closing tab behavior option label"
+  },
+  "optTabsOpenMethod": {
+    "message": "Abrir nueva pestaña en",
+    "description": "Open new tab method option label"
+  },
+  "valDefault": {
+    "message": "*** por defecto ***",
+    "description": "Default option value"
+  },
+  "valFirst": {
+    "message": "primera",
+    "description": "First position option"
+  },
+  "valNextLeft": {
+    "message": "siguiente a la izquierda",
+    "description": "Next left position option"
+  },
+  "valNextRight": {
+    "message": "siguiente a la derecha",
+    "description": "Next right position option"
+  },
+  "valLast": {
+    "message": "última",
+    "description": "Last position option"
+  },
+  "valLastUsed": {
+    "message": "última pestaña usada",
+    "description": "Last used tab option"
+  },
+  "valLeftTab": {
+    "message": "pestaña izquierda",
+    "description": "Left tab option"
+  },
+  "valRightTab": {
+    "message": "pestaña derecha",
+    "description": "Right tab option"
+  },
+  "valForeground": {
+    "message": "primer plano",
+    "description": "Foreground option"
+  },
+  "valBackground": {
+    "message": "segundo plano",
+    "description": "Background option"
+  },
+  "statusSaved": {
+    "message": "Configuración guardada",
+    "description": "Save success message"
+  },
+  "themeToggle": {
+    "message": "Tema",
+    "description": "Theme toggle button"
+  },
+  "optPreventDuplicates": {
+    "message": "Evitar pestañas duplicadas",
+    "description": "Checkbox label for duplicate tab prevention"
+  },
+  "optPreventDuplicatesHint": {
+    "message": "La acción \"Duplicar pestaña\" sigue permitida",
+    "description": "Hint text explaining the smart behavior"
+  },
+  "optDuplicateMode": {
+    "message": "Manejo de duplicados",
+    "description": "Label for duplicate handling mode"
+  },
+  "valCloseNew": {
+    "message": "cerrar nueva, enfocar anterior",
+    "description": "Option to close the new tab and focus the existing one"
+  },
+  "valCloseOld": {
+    "message": "cerrar anterior, quedarse en nueva",
+    "description": "Option to close the existing tab and stay on the new one"
+  },
+  "valTeleport": {
+    "message": "teletransportar anterior a nueva (Mejor)",
+    "description": "Option to move existing tab to new position and focus"
+  },
+  "footerContact": {
+    "message": "Contacto:",
+    "description": "Footer contact label"
+  },
+  "footerDeveloper": {
+    "message": "Desarrollador:",
+    "description": "Footer developer label"
+  },
+  "footerExtensionName": {
+    "message": "Nombre de la extensión:",
+    "description": "Footer extension name label"
+  }
+}

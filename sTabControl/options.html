@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="extName">sTabControl Options</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 data-i18n="optionsTitle">Configuration</h1>
+            <div class="header-actions">
+                <span class="version-badge">v1.0.0</span>
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <svg class="icon-sun" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <section class="section">
+                <h2 class="section-title" data-i18n="sectionSettings">Settings</h2>
+                <div class="settings-card">
+                    <div class="form-row">
+                        <label class="form-label" for="tabsBehaviour" data-i18n="optTabsBehaviour">Position of a new tab</label>
+                        <select id="tabsBehaviour">
+                            <option value="default" data-i18n="valDefault">*** default ***</option>
+                            <option value="first" data-i18n="valFirst">first</option>
+                            <option value="left" data-i18n="valNextLeft">next left</option>
+                            <option value="right" data-i18n="valNextRight">next right</option>
+                            <option value="last" data-i18n="valLast">last</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" for="tabsActivate" data-i18n="optTabsActivate">After closing go to</label>
+                        <select id="tabsActivate">
+                            <option value="default" data-i18n="valDefault">*** default ***</option>
+                            <option value="last_used" data-i18n="valLastUsed">last used tab</option>
+                            <option value="left" data-i18n="valLeftTab">left tab</option>
+                            <option value="right" data-i18n="valRightTab">right tab</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" for="tabsOpenMethod" data-i18n="optTabsOpenMethod">Open a new tab in</label>
+                        <select id="tabsOpenMethod">
+                            <option value="default" data-i18n="valDefault">*** default ***</option>
+                            <option value="foreground" data-i18n="valForeground">foreground</option>
+                            <option value="background" data-i18n="valBackground">background</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-label-group">
+                            <label class="form-label" for="preventDuplicates" data-i18n="optPreventDuplicates">Prevent duplicate tabs</label>
+                            <span class="form-hint" data-i18n="optPreventDuplicatesHint">"Duplicate Tab" action is still allowed</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="preventDuplicates">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div id="duplicateModeRow" class="form-row" style="display: none;">
+                        <label class="form-label" for="duplicateMode" data-i18n="optDuplicateMode">Duplicate handling</label>
+                        <select id="duplicateMode">
+                            <option value="close_new" data-i18n="valCloseNew">close new, focus old</option>
+                            <option value="close_old" data-i18n="valCloseOld">close old, stay on new</option>
+                            <option value="teleport" data-i18n="valTeleport">teleport old to new (Best)</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <div class="footer">
+                <span><span data-i18n="footerExtensionName">Extension Name:</span> <span id="extension-name-display">sTabControl</span></span>
+                <span><span data-i18n="footerContact">Contact:</span> <a href="mailto:extension@tekky.cc">extension@tekky.cc</a></span>
+                <span><span data-i18n="footerDeveloper">Developer:</span> <a href="https://tekky.cc">tekky.cc</a></span>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span class="toast-icon">✓</span>
+        <span class="toast-message" data-i18n="statusSaved">Saved</span>
+    </div>
+
+    <script src="options.js"></script>
+</body>
+</html>
