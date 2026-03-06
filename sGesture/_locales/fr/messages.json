@@ -1,0 +1,174 @@
+{
+  "extName": {
+    "message": "sGestures",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Un programme de gestes souris simple sans fonctionnalités superflues.",
+    "description": "Extension description"
+  },
+  "optionsTitle": {
+    "message": "Configuration",
+    "description": "Options page title"
+  },
+  "themeToggle": {
+    "message": "Thème",
+    "description": "Theme toggle button"
+  },
+  "sectionSettings": {
+    "message": "Paramètres",
+    "description": "Settings section header"
+  },
+  "sectionGestures": {
+    "message": "Actions des gestes",
+    "description": "Gestures section header"
+  },
+  "optTrail": {
+    "message": "Traînée des gestes",
+    "description": "Trail option label"
+  },
+  "optTrailDesc": {
+    "message": "Activer ou désactiver les traînées de gestes.",
+    "description": "Trail option tooltip"
+  },
+  "optRocker": {
+    "message": "Gestes de bascule",
+    "description": "Rocker option label"
+  },
+  "optRockerDesc": {
+    "message": "Naviguez en arrière/avant en cliquant sur un bouton de souris tout en maintenant l'autre (style Opera).",
+    "description": "Rocker option tooltip"
+  },
+  "rockerHint": {
+    "message": "Maintenez le premier bouton, puis cliquez sur le second pour déclencher.",
+    "description": "Rocker gesture hint text"
+  },
+  "rockerRightLeft": {
+    "message": "Droit + Gauche",
+    "description": "Right hold then left click rocker gesture"
+  },
+  "rockerLeftRight": {
+    "message": "Gauche + Droit",
+    "description": "Left hold then right click rocker gesture"
+  },
+  "optColor": {
+    "message": "Couleur du geste",
+    "description": "Color option label"
+  },
+  "optWidth": {
+    "message": "Largeur du geste",
+    "description": "Width option label"
+  },
+  "colorRed": {
+    "message": "Rouge",
+    "description": "Red color option"
+  },
+  "colorGreen": {
+    "message": "Vert",
+    "description": "Green color option"
+  },
+  "colorBlue": {
+    "message": "Bleu",
+    "description": "Blue color option"
+  },
+  "colorYellow": {
+    "message": "Jaune",
+    "description": "Yellow color option"
+  },
+  "colorBlack": {
+    "message": "Noir",
+    "description": "Black color option"
+  },
+  "colGesture": {
+    "message": "Geste",
+    "description": "Gesture column header"
+  },
+  "colAction": {
+    "message": "Action",
+    "description": "Action column header"
+  },
+  "gestureUp": {
+    "message": "Souris vers le haut",
+    "description": "Up gesture label"
+  },
+  "gestureDown": {
+    "message": "Souris vers le bas",
+    "description": "Down gesture label"
+  },
+  "gestureLeft": {
+    "message": "Souris vers la gauche",
+    "description": "Left gesture label"
+  },
+  "gestureRight": {
+    "message": "Souris vers la droite",
+    "description": "Right gesture label"
+  },
+  "actionNewTab": {
+    "message": "Ouvrir un nouvel onglet",
+    "description": "New tab action"
+  },
+  "actionCloseTab": {
+    "message": "Fermer l'onglet actuel",
+    "description": "Close tab action"
+  },
+  "actionReload": {
+    "message": "Recharger",
+    "description": "Reload action"
+  },
+  "actionBack": {
+    "message": "Retour en arrière",
+    "description": "Back action"
+  },
+  "actionForward": {
+    "message": "Avancer",
+    "description": "Forward action"
+  },
+  "actionStop": {
+    "message": "Arrêter le chargement",
+    "description": "Stop action"
+  },
+  "actionCloseBackground": {
+    "message": "Fermer les onglets en arrière-plan",
+    "description": "Close background tabs action"
+  },
+  "actionCloseWindow": {
+    "message": "Fermer la fenêtre",
+    "description": "Close window action"
+  },
+  "actionReloadAll": {
+    "message": "Recharger tous les onglets",
+    "description": "Reload all action"
+  },
+  "actionNextTab": {
+    "message": "Onglet suivant",
+    "description": "Next tab action"
+  },
+  "actionPrevTab": {
+    "message": "Onglet précédent",
+    "description": "Previous tab action"
+  },
+  "actionScrollTop": {
+    "message": "Aller en haut",
+    "description": "Scroll top action"
+  },
+  "actionScrollBottom": {
+    "message": "Aller en bas",
+    "description": "Scroll bottom action"
+  },
+  "actionLastTab": {
+    "message": "Rouvrir le dernier onglet fermé",
+    "description": "Reopen last tab action"
+  },
+  "btnSave": {
+    "message": "Enregistrer la configuration",
+    "description": "Save button text"
+  },
+  "statusSaved": {
+    "message": "Configuration enregistrée",
+    "description": "Save success message"
+  },
+  "statusError": {
+    "message": "Erreur lors de l'enregistrement",
+    "description": "Save error message"
+  }
+}

@@ -1,0 +1,174 @@
+{
+  "extName": {
+    "message": "sGestures",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "一款简洁的鼠标手势程序，无冗余功能。",
+    "description": "Extension description"
+  },
+  "optionsTitle": {
+    "message": "配置",
+    "description": "Options page title"
+  },
+  "themeToggle": {
+    "message": "主题",
+    "description": "Theme toggle button"
+  },
+  "sectionSettings": {
+    "message": "设置",
+    "description": "Settings section header"
+  },
+  "sectionGestures": {
+    "message": "手势操作",
+    "description": "Gestures section header"
+  },
+  "optTrail": {
+    "message": "手势轨迹",
+    "description": "Trail option label"
+  },
+  "optTrailDesc": {
+    "message": "启用或禁用手势轨迹。",
+    "description": "Trail option tooltip"
+  },
+  "optRocker": {
+    "message": "摇摆手势",
+    "description": "Rocker option label"
+  },
+  "optRockerDesc": {
+    "message": "按住一个鼠标键的同时点击另一个鼠标键来前进/后退（Opera风格）。",
+    "description": "Rocker option tooltip"
+  },
+  "rockerHint": {
+    "message": "先按住第一个按钮，再点击第二个按钮触发。",
+    "description": "Rocker gesture hint text"
+  },
+  "rockerRightLeft": {
+    "message": "右键 + 左键",
+    "description": "Right hold then left click rocker gesture"
+  },
+  "rockerLeftRight": {
+    "message": "左键 + 右键",
+    "description": "Left hold then right click rocker gesture"
+  },
+  "optColor": {
+    "message": "手势颜色",
+    "description": "Color option label"
+  },
+  "optWidth": {
+    "message": "手势宽度",
+    "description": "Width option label"
+  },
+  "colorRed": {
+    "message": "红色",
+    "description": "Red color option"
+  },
+  "colorGreen": {
+    "message": "绿色",
+    "description": "Green color option"
+  },
+  "colorBlue": {
+    "message": "蓝色",
+    "description": "Blue color option"
+  },
+  "colorYellow": {
+    "message": "黄色",
+    "description": "Yellow color option"
+  },
+  "colorBlack": {
+    "message": "黑色",
+    "description": "Black color option"
+  },
+  "colGesture": {
+    "message": "手势",
+    "description": "Gesture column header"
+  },
+  "colAction": {
+    "message": "操作",
+    "description": "Action column header"
+  },
+  "gestureUp": {
+    "message": "鼠标上滑",
+    "description": "Up gesture label"
+  },
+  "gestureDown": {
+    "message": "鼠标下滑",
+    "description": "Down gesture label"
+  },
+  "gestureLeft": {
+    "message": "鼠标左滑",
+    "description": "Left gesture label"
+  },
+  "gestureRight": {
+    "message": "鼠标右滑",
+    "description": "Right gesture label"
+  },
+  "actionNewTab": {
+    "message": "打开新标签页",
+    "description": "New tab action"
+  },
+  "actionCloseTab": {
+    "message": "关闭当前标签页",
+    "description": "Close tab action"
+  },
+  "actionReload": {
+    "message": "刷新",
+    "description": "Reload action"
+  },
+  "actionBack": {
+    "message": "后退",
+    "description": "Back action"
+  },
+  "actionForward": {
+    "message": "前进",
+    "description": "Forward action"
+  },
+  "actionStop": {
+    "message": "停止加载",
+    "description": "Stop action"
+  },
+  "actionCloseBackground": {
+    "message": "关闭后台标签页",
+    "description": "Close background tabs action"
+  },
+  "actionCloseWindow": {
+    "message": "关闭窗口",
+    "description": "Close window action"
+  },
+  "actionReloadAll": {
+    "message": "刷新所有标签页",
+    "description": "Reload all action"
+  },
+  "actionNextTab": {
+    "message": "下一个标签页",
+    "description": "Next tab action"
+  },
+  "actionPrevTab": {
+    "message": "上一个标签页",
+    "description": "Previous tab action"
+  },
+  "actionScrollTop": {
+    "message": "滚动到顶部",
+    "description": "Scroll top action"
+  },
+  "actionScrollBottom": {
+    "message": "滚动到底部",
+    "description": "Scroll bottom action"
+  },
+  "actionLastTab": {
+    "message": "重新打开最近关闭的标签页",
+    "description": "Reopen last tab action"
+  },
+  "btnSave": {
+    "message": "保存配置",
+    "description": "Save button text"
+  },
+  "statusSaved": {
+    "message": "配置已保存",
+    "description": "Save success message"
+  },
+  "statusError": {
+    "message": "保存配置时出错",
+    "description": "Save error message"
+  }
+}

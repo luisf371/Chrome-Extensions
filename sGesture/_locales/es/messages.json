@@ -1,0 +1,174 @@
+{
+  "extName": {
+    "message": "sGestures",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Un programa simple de gestos del ratón sin extras innecesarios.",
+    "description": "Extension description"
+  },
+  "optionsTitle": {
+    "message": "Configuración",
+    "description": "Options page title"
+  },
+  "themeToggle": {
+    "message": "Tema",
+    "description": "Theme toggle button"
+  },
+  "sectionSettings": {
+    "message": "Ajustes",
+    "description": "Settings section header"
+  },
+  "sectionGestures": {
+    "message": "Acciones de gestos",
+    "description": "Gestures section header"
+  },
+  "optTrail": {
+    "message": "Rastro de gestos",
+    "description": "Trail option label"
+  },
+  "optTrailDesc": {
+    "message": "Activar o desactivar el rastro de gestos.",
+    "description": "Trail option tooltip"
+  },
+  "optRocker": {
+    "message": "Gestos de balanceo",
+    "description": "Rocker option label"
+  },
+  "optRockerDesc": {
+    "message": "Navega atrás/adelante haciendo clic con un botón del ratón mientras mantienes el otro (estilo Opera).",
+    "description": "Rocker option tooltip"
+  },
+  "rockerHint": {
+    "message": "Mantén el primer botón, luego haz clic en el segundo para activar.",
+    "description": "Rocker gesture hint text"
+  },
+  "rockerRightLeft": {
+    "message": "Derecho + Izquierdo",
+    "description": "Right hold then left click rocker gesture"
+  },
+  "rockerLeftRight": {
+    "message": "Izquierdo + Derecho",
+    "description": "Left hold then right click rocker gesture"
+  },
+  "optColor": {
+    "message": "Color del gesto",
+    "description": "Color option label"
+  },
+  "optWidth": {
+    "message": "Ancho del gesto",
+    "description": "Width option label"
+  },
+  "colorRed": {
+    "message": "Rojo",
+    "description": "Red color option"
+  },
+  "colorGreen": {
+    "message": "Verde",
+    "description": "Green color option"
+  },
+  "colorBlue": {
+    "message": "Azul",
+    "description": "Blue color option"
+  },
+  "colorYellow": {
+    "message": "Amarillo",
+    "description": "Yellow color option"
+  },
+  "colorBlack": {
+    "message": "Negro",
+    "description": "Black color option"
+  },
+  "colGesture": {
+    "message": "Gesto",
+    "description": "Gesture column header"
+  },
+  "colAction": {
+    "message": "Acción",
+    "description": "Action column header"
+  },
+  "gestureUp": {
+    "message": "Ratón arriba",
+    "description": "Up gesture label"
+  },
+  "gestureDown": {
+    "message": "Ratón abajo",
+    "description": "Down gesture label"
+  },
+  "gestureLeft": {
+    "message": "Ratón izquierda",
+    "description": "Left gesture label"
+  },
+  "gestureRight": {
+    "message": "Ratón derecha",
+    "description": "Right gesture label"
+  },
+  "actionNewTab": {
+    "message": "Abrir nueva pestaña",
+    "description": "New tab action"
+  },
+  "actionCloseTab": {
+    "message": "Cerrar pestaña actual",
+    "description": "Close tab action"
+  },
+  "actionReload": {
+    "message": "Recargar",
+    "description": "Reload action"
+  },
+  "actionBack": {
+    "message": "Retroceder en historial",
+    "description": "Back action"
+  },
+  "actionForward": {
+    "message": "Avanzar en historial",
+    "description": "Forward action"
+  },
+  "actionStop": {
+    "message": "Detener carga",
+    "description": "Stop action"
+  },
+  "actionCloseBackground": {
+    "message": "Cerrar pestañas en segundo plano",
+    "description": "Close background tabs action"
+  },
+  "actionCloseWindow": {
+    "message": "Cerrar ventana",
+    "description": "Close window action"
+  },
+  "actionReloadAll": {
+    "message": "Recargar todas las pestañas",
+    "description": "Reload all action"
+  },
+  "actionNextTab": {
+    "message": "Siguiente pestaña",
+    "description": "Next tab action"
+  },
+  "actionPrevTab": {
+    "message": "Pestaña anterior",
+    "description": "Previous tab action"
+  },
+  "actionScrollTop": {
+    "message": "Ir al inicio",
+    "description": "Scroll top action"
+  },
+  "actionScrollBottom": {
+    "message": "Ir al final",
+    "description": "Scroll bottom action"
+  },
+  "actionLastTab": {
+    "message": "Reabrir última pestaña cerrada",
+    "description": "Reopen last tab action"
+  },
+  "btnSave": {
+    "message": "Guardar configuración",
+    "description": "Save button text"
+  },
+  "statusSaved": {
+    "message": "Configuración guardada",
+    "description": "Save success message"
+  },
+  "statusError": {
+    "message": "Error al guardar configuración",
+    "description": "Save error message"
+  }
+}

@@ -1,0 +1,174 @@
+{
+  "extName": {
+    "message": "sGestures",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "シンプルで余計な機能のないマウスジェスチャープログラム。",
+    "description": "Extension description"
+  },
+  "optionsTitle": {
+    "message": "設定",
+    "description": "Options page title"
+  },
+  "themeToggle": {
+    "message": "テーマ",
+    "description": "Theme toggle button"
+  },
+  "sectionSettings": {
+    "message": "設定",
+    "description": "Settings section header"
+  },
+  "sectionGestures": {
+    "message": "ジェスチャーアクション",
+    "description": "Gestures section header"
+  },
+  "optTrail": {
+    "message": "ジェスチャー軌跡",
+    "description": "Trail option label"
+  },
+  "optTrailDesc": {
+    "message": "ジェスチャー軌跡を有効または無効にします。",
+    "description": "Trail option tooltip"
+  },
+  "optRocker": {
+    "message": "ロッカージェスチャー",
+    "description": "Rocker option label"
+  },
+  "optRockerDesc": {
+    "message": "一方のマウスボタンを押しながらもう一方をクリックして進む/戻る（Opera風）。",
+    "description": "Rocker option tooltip"
+  },
+  "rockerHint": {
+    "message": "最初のボタンを押したまま、2番目のボタンをクリックしてトリガー。",
+    "description": "Rocker gesture hint text"
+  },
+  "rockerRightLeft": {
+    "message": "右 + 左",
+    "description": "Right hold then left click rocker gesture"
+  },
+  "rockerLeftRight": {
+    "message": "左 + 右",
+    "description": "Left hold then right click rocker gesture"
+  },
+  "optColor": {
+    "message": "ジェスチャーの色",
+    "description": "Color option label"
+  },
+  "optWidth": {
+    "message": "ジェスチャーの幅",
+    "description": "Width option label"
+  },
+  "colorRed": {
+    "message": "赤",
+    "description": "Red color option"
+  },
+  "colorGreen": {
+    "message": "緑",
+    "description": "Green color option"
+  },
+  "colorBlue": {
+    "message": "青",
+    "description": "Blue color option"
+  },
+  "colorYellow": {
+    "message": "黄",
+    "description": "Yellow color option"
+  },
+  "colorBlack": {
+    "message": "黒",
+    "description": "Black color option"
+  },
+  "colGesture": {
+    "message": "ジェスチャー",
+    "description": "Gesture column header"
+  },
+  "colAction": {
+    "message": "アクション",
+    "description": "Action column header"
+  },
+  "gestureUp": {
+    "message": "マウス上",
+    "description": "Up gesture label"
+  },
+  "gestureDown": {
+    "message": "マウス下",
+    "description": "Down gesture label"
+  },
+  "gestureLeft": {
+    "message": "マウス左",
+    "description": "Left gesture label"
+  },
+  "gestureRight": {
+    "message": "マウス右",
+    "description": "Right gesture label"
+  },
+  "actionNewTab": {
+    "message": "新しいタブを開く",
+    "description": "New tab action"
+  },
+  "actionCloseTab": {
+    "message": "現在のタブを閉じる",
+    "description": "Close tab action"
+  },
+  "actionReload": {
+    "message": "再読み込み",
+    "description": "Reload action"
+  },
+  "actionBack": {
+    "message": "戻る",
+    "description": "Back action"
+  },
+  "actionForward": {
+    "message": "進む",
+    "description": "Forward action"
+  },
+  "actionStop": {
+    "message": "読み込みを停止",
+    "description": "Stop action"
+  },
+  "actionCloseBackground": {
+    "message": "バックグラウンドタブを閉じる",
+    "description": "Close background tabs action"
+  },
+  "actionCloseWindow": {
+    "message": "ウィンドウを閉じる",
+    "description": "Close window action"
+  },
+  "actionReloadAll": {
+    "message": "すべてのタブを再読み込み",
+    "description": "Reload all action"
+  },
+  "actionNextTab": {
+    "message": "次のタブ",
+    "description": "Next tab action"
+  },
+  "actionPrevTab": {
+    "message": "前のタブ",
+    "description": "Previous tab action"
+  },
+  "actionScrollTop": {
+    "message": "ページ先頭へ",
+    "description": "Scroll top action"
+  },
+  "actionScrollBottom": {
+    "message": "ページ末尾へ",
+    "description": "Scroll bottom action"
+  },
+  "actionLastTab": {
+    "message": "最後に閉じたタブを再度開く",
+    "description": "Reopen last tab action"
+  },
+  "btnSave": {
+    "message": "設定を保存",
+    "description": "Save button text"
+  },
+  "statusSaved": {
+    "message": "設定を保存しました",
+    "description": "Save success message"
+  },
+  "statusError": {
+    "message": "設定の保存中にエラーが発生しました",
+    "description": "Save error message"
+  }
+}
