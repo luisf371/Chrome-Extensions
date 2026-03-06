@@ -1,0 +1,254 @@
+{
+  "extName": {
+    "message": "sBookmarkCleaner",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "シンプルなブックマーククリーナー：整理、壊れたリンクの検出、重複の特定。",
+    "description": "Extension description"
+  },
+  "optionsTitle": {
+    "message": "ブックマーククリーナー設定",
+    "description": "Options page title"
+  },
+  "optionsSubtitle": {
+    "message": "スキャンと並べ替えの設定を行います",
+    "description": "Options page subtitle"
+  },
+  "sectionGeneral": {
+    "message": "一般",
+    "description": "General section tag"
+  },
+  "sectionAppearance": {
+    "message": "外観",
+    "description": "Appearance section header"
+  },
+  "sectionAppearanceDesc": {
+    "message": "拡張機能の見た目をカスタマイズします。",
+    "description": "Appearance section description"
+  },
+  "optTheme": {
+    "message": "テーマ",
+    "description": "Theme option label"
+  },
+  "optThemeHelp": {
+    "message": "お好みのカラーテーマを選択してください。",
+    "description": "Theme option help text"
+  },
+  "themeDark": {
+    "message": "ダーク",
+    "description": "Dark theme option"
+  },
+  "themeLight": {
+    "message": "ライト",
+    "description": "Light theme option"
+  },
+  "sectionScanning": {
+    "message": "スキャン",
+    "description": "Scanning section tag"
+  },
+  "sectionConnection": {
+    "message": "接続設定",
+    "description": "Connection section header"
+  },
+  "sectionConnectionDesc": {
+    "message": "クリーナーがウェブサイトに接続してステータスを確認する方法を調整します。",
+    "description": "Connection section description"
+  },
+  "optTimeout": {
+    "message": "接続タイムアウト（秒）",
+    "description": "Timeout option label"
+  },
+  "optTimeoutHelp": {
+    "message": "サイトの応答を待つ時間。デフォルト：5秒。低い値はスキャンが速くなりますが、遅いサイトで誤検出が発生する可能性があります。推奨：3秒〜10秒。",
+    "description": "Timeout option help text"
+  },
+  "sectionSorting": {
+    "message": "並べ替え",
+    "description": "Sorting section tag"
+  },
+  "sectionOrganization": {
+    "message": "整理",
+    "description": "Organization section header"
+  },
+  "sectionOrganizationDesc": {
+    "message": "スキャン前のブックマークの並べ替え方法を管理します。",
+    "description": "Organization section description"
+  },
+  "optAutoSort": {
+    "message": "スキャン前に自動で並べ替え",
+    "description": "Auto sort option label"
+  },
+  "optAutoSortHelp": {
+    "message": "有効にすると、スキャン開始時にブックマークがアルファベット順に並べ替えられます。",
+    "description": "Auto sort option help text"
+  },
+  "optSortScope": {
+    "message": "並べ替え範囲",
+    "description": "Sort scope option label"
+  },
+  "scopeParent": {
+    "message": "親フォルダのみ",
+    "description": "Parent scope option"
+  },
+  "scopeRecursive": {
+    "message": "フォルダと内容（再帰的）",
+    "description": "Recursive scope option"
+  },
+  "scopeHelp": {
+    "message": "「親フォルダのみ」はバー/メニュー構造に表示されているフォルダのみを並べ替えます。「再帰的」はすべてのフォルダとその中のブックマークを並べ替えます。",
+    "description": "Scope option help text"
+  },
+  "statusSaved": {
+    "message": "保存しました",
+    "description": "Status message when saved"
+  },
+  "popupTitle": {
+    "message": "ブックマーククリーナー",
+    "description": "Popup title"
+  },
+  "btnFindBroken": {
+    "message": "壊れたリンクを検索",
+    "description": "Find broken links button"
+  },
+  "btnFindDuplicates": {
+    "message": "重複を検索",
+    "description": "Find duplicates button"
+  },
+  "btnSortBookmarks": {
+    "message": "ブックマークを並べ替え",
+    "description": "Sort bookmarks button"
+  },
+  "statusReady": {
+    "message": "スキャン準備完了。",
+    "description": "Ready status message"
+  },
+  "statusPaused": {
+    "message": "スキャン一時停止中。",
+    "description": "Paused status message"
+  },
+  "statBrokenShort": {
+    "message": "壊れたリンク",
+    "description": "Broken count label"
+  },
+  "statDuplicates": {
+    "message": "重複",
+    "description": "Statistic label"
+  },
+  "statusScanning": {
+    "message": "スキャン中...",
+    "description": "Generic scanning status"
+  },
+  "statusScanningBroken": {
+    "message": "壊れたリンクをスキャン中...",
+    "description": "Scanning broken links status"
+  },
+  "statusScanningDuplicates": {
+    "message": "重複をスキャン中...",
+    "description": "Scanning duplicates status"
+  },
+  "statusPausing": {
+    "message": "一時停止中...",
+    "description": "Pausing status"
+  },
+  "statusResuming": {
+    "message": "再開中...",
+    "description": "Resuming status"
+  },
+  "statusCancelling": {
+    "message": "キャンセル中...",
+    "description": "Cancelling status"
+  },
+  "statusStartingBroken": {
+    "message": "壊れたリンクのスキャンを開始中...",
+    "description": "Starting broken scan status"
+  },
+  "statusStartingDuplicates": {
+    "message": "重複スキャンを開始中...",
+    "description": "Starting duplicate scan status"
+  },
+  "statusSorting": {
+    "message": "並べ替え中...",
+    "description": "Sorting status"
+  },
+  "statusSortingComplete": {
+    "message": "並べ替え完了。",
+    "description": "Sorting complete status"
+  },
+  "reportTitle": {
+    "message": "スキャンレポート",
+    "description": "Report page title"
+  },
+  "scanHistoryBroken": {
+    "message": "壊れたリンクのスキャン",
+    "description": "Broken links scan label"
+  },
+  "scanHistoryDup": {
+    "message": "重複スキャン",
+    "description": "Duplicates scan label"
+  },
+  "sectionBroken": {
+    "message": "壊れたリンク",
+    "description": "Broken links section header"
+  },
+  "sectionDuplicates": {
+    "message": "重複リンク",
+    "description": "Duplicates section header"
+  },
+  "btnDeleteSelected": {
+    "message": "選択項目を削除",
+    "description": "Delete selected button"
+  },
+  "btnOpenSelected": {
+    "message": "選択項目を開く",
+    "description": "Open selected button"
+  },
+  "btnIgnoreSelected": {
+    "message": "選択項目を無視",
+    "description": "Ignore selected button"
+  },
+  "btnRecheckSelected": {
+    "message": "選択項目を再確認",
+    "description": "Recheck selected button"
+  },
+  "thBookmark": {
+    "message": "ブックマーク",
+    "description": "Table header bookmark"
+  },
+  "thURL": {
+    "message": "URL",
+    "description": "Table header URL"
+  },
+  "thStatus": {
+    "message": "ステータス",
+    "description": "Table header status"
+  },
+  "emptyBroken": {
+    "message": "壊れたリンクは見つかりませんでした。",
+    "description": "Empty state broken"
+  },
+  "emptyDuplicates": {
+    "message": "重複は見つかりませんでした。",
+    "description": "Empty state duplicates"
+  },
+  "dupInstruction": {
+    "message": "削除するコピーを選択してください。有効なコピーを1つ残すことをお勧めします。",
+    "description": "Duplicate instruction"
+  },
+  "dangerZone": {
+    "message": "危険ゾーン",
+    "description": "Danger zone header"
+  },
+  "dangerDesc": {
+    "message": "すべてのスキャン結果と履歴を消去します。この操作は元に戻せません。",
+    "description": "Danger zone description"
+  },
+  "btnClearReport": {
+    "message": "レポートデータを消去",
+    "description": "Clear report button"
+  },
+  "textNever": {
+    "message": "未スキャン",
+    "description": "Never scanned text"
+  }
+}

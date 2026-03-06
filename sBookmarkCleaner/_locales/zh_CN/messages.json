@@ -1,0 +1,254 @@
+{
+  "extName": {
+    "message": "sBookmarkCleaner",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "简洁的书签清理器：排序、查找失效链接并识别重复项。",
+    "description": "Extension description"
+  },
+  "optionsTitle": {
+    "message": "书签清理器设置",
+    "description": "Options page title"
+  },
+  "optionsSubtitle": {
+    "message": "配置您的扫描和排序偏好",
+    "description": "Options page subtitle"
+  },
+  "sectionGeneral": {
+    "message": "常规",
+    "description": "General section tag"
+  },
+  "sectionAppearance": {
+    "message": "外观",
+    "description": "Appearance section header"
+  },
+  "sectionAppearanceDesc": {
+    "message": "自定义扩展的外观和风格。",
+    "description": "Appearance section description"
+  },
+  "optTheme": {
+    "message": "主题",
+    "description": "Theme option label"
+  },
+  "optThemeHelp": {
+    "message": "选择您喜欢的颜色主题。",
+    "description": "Theme option help text"
+  },
+  "themeDark": {
+    "message": "深色",
+    "description": "Dark theme option"
+  },
+  "themeLight": {
+    "message": "浅色",
+    "description": "Light theme option"
+  },
+  "sectionScanning": {
+    "message": "扫描",
+    "description": "Scanning section tag"
+  },
+  "sectionConnection": {
+    "message": "连接设置",
+    "description": "Connection section header"
+  },
+  "sectionConnectionDesc": {
+    "message": "调整清理器连接网站以检查其状态的方式。",
+    "description": "Connection section description"
+  },
+  "optTimeout": {
+    "message": "连接超时（秒）",
+    "description": "Timeout option label"
+  },
+  "optTimeoutHelp": {
+    "message": "等待网站响应的时间。默认：5秒。较低的值扫描更快，但可能对慢速网站报告误报。建议：3秒 - 10秒。",
+    "description": "Timeout option help text"
+  },
+  "sectionSorting": {
+    "message": "排序",
+    "description": "Sorting section tag"
+  },
+  "sectionOrganization": {
+    "message": "整理",
+    "description": "Organization section header"
+  },
+  "sectionOrganizationDesc": {
+    "message": "管理扫描前书签的排序方式。",
+    "description": "Organization section description"
+  },
+  "optAutoSort": {
+    "message": "扫描前自动排序",
+    "description": "Auto sort option label"
+  },
+  "optAutoSortHelp": {
+    "message": "如果启用，扫描开始时将按字母顺序对书签进行排序。",
+    "description": "Auto sort option help text"
+  },
+  "optSortScope": {
+    "message": "排序范围",
+    "description": "Sort scope option label"
+  },
+  "scopeParent": {
+    "message": "仅父文件夹",
+    "description": "Parent scope option"
+  },
+  "scopeRecursive": {
+    "message": "文件夹及内容（递归）",
+    "description": "Recursive scope option"
+  },
+  "scopeHelp": {
+    "message": "'仅父文件夹'只排序您在栏/菜单结构中看到的文件夹。'递归'排序所有文件夹及其中的所有书签。",
+    "description": "Scope option help text"
+  },
+  "statusSaved": {
+    "message": "已保存",
+    "description": "Status message when saved"
+  },
+  "popupTitle": {
+    "message": "书签清理器",
+    "description": "Popup title"
+  },
+  "btnFindBroken": {
+    "message": "查找失效链接",
+    "description": "Find broken links button"
+  },
+  "btnFindDuplicates": {
+    "message": "查找重复项",
+    "description": "Find duplicates button"
+  },
+  "btnSortBookmarks": {
+    "message": "排序书签",
+    "description": "Sort bookmarks button"
+  },
+  "statusReady": {
+    "message": "准备扫描。",
+    "description": "Ready status message"
+  },
+  "statusPaused": {
+    "message": "扫描已暂停。",
+    "description": "Paused status message"
+  },
+  "statBrokenShort": {
+    "message": "失效",
+    "description": "Broken count label"
+  },
+  "statDuplicates": {
+    "message": "重复项",
+    "description": "Statistic label"
+  },
+  "statusScanning": {
+    "message": "正在扫描...",
+    "description": "Generic scanning status"
+  },
+  "statusScanningBroken": {
+    "message": "正在扫描失效链接...",
+    "description": "Scanning broken links status"
+  },
+  "statusScanningDuplicates": {
+    "message": "正在扫描重复项...",
+    "description": "Scanning duplicates status"
+  },
+  "statusPausing": {
+    "message": "正在暂停...",
+    "description": "Pausing status"
+  },
+  "statusResuming": {
+    "message": "正在恢复...",
+    "description": "Resuming status"
+  },
+  "statusCancelling": {
+    "message": "正在取消...",
+    "description": "Cancelling status"
+  },
+  "statusStartingBroken": {
+    "message": "正在开始失效链接扫描...",
+    "description": "Starting broken scan status"
+  },
+  "statusStartingDuplicates": {
+    "message": "正在开始重复项扫描...",
+    "description": "Starting duplicate scan status"
+  },
+  "statusSorting": {
+    "message": "正在排序...",
+    "description": "Sorting status"
+  },
+  "statusSortingComplete": {
+    "message": "排序完成。",
+    "description": "Sorting complete status"
+  },
+  "reportTitle": {
+    "message": "扫描报告",
+    "description": "Report page title"
+  },
+  "scanHistoryBroken": {
+    "message": "失效链接扫描",
+    "description": "Broken links scan label"
+  },
+  "scanHistoryDup": {
+    "message": "重复项扫描",
+    "description": "Duplicates scan label"
+  },
+  "sectionBroken": {
+    "message": "失效链接",
+    "description": "Broken links section header"
+  },
+  "sectionDuplicates": {
+    "message": "重复链接",
+    "description": "Duplicates section header"
+  },
+  "btnDeleteSelected": {
+    "message": "删除选中项",
+    "description": "Delete selected button"
+  },
+  "btnOpenSelected": {
+    "message": "打开选中项",
+    "description": "Open selected button"
+  },
+  "btnIgnoreSelected": {
+    "message": "忽略选中项",
+    "description": "Ignore selected button"
+  },
+  "btnRecheckSelected": {
+    "message": "重新检查选中项",
+    "description": "Recheck selected button"
+  },
+  "thBookmark": {
+    "message": "书签",
+    "description": "Table header bookmark"
+  },
+  "thURL": {
+    "message": "网址",
+    "description": "Table header URL"
+  },
+  "thStatus": {
+    "message": "状态",
+    "description": "Table header status"
+  },
+  "emptyBroken": {
+    "message": "未找到失效链接。",
+    "description": "Empty state broken"
+  },
+  "emptyDuplicates": {
+    "message": "未找到重复项。",
+    "description": "Empty state duplicates"
+  },
+  "dupInstruction": {
+    "message": "选择要删除的副本。建议保留一个有效副本。",
+    "description": "Duplicate instruction"
+  },
+  "dangerZone": {
+    "message": "危险区域",
+    "description": "Danger zone header"
+  },
+  "dangerDesc": {
+    "message": "清除所有扫描结果和历史记录。此操作无法撤销。",
+    "description": "Danger zone description"
+  },
+  "btnClearReport": {
+    "message": "清除报告数据",
+    "description": "Clear report button"
+  },
+  "textNever": {
+    "message": "从未",
+    "description": "Never scanned text"
+  }
+}

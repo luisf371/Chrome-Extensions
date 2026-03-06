@@ -1,0 +1,256 @@
+{
+  "extName": {
+    "message": "sBookmarkCleaner",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Simple Bookmark Cleaner: Sorts, finds broken links, and identifies duplicates.",
+    "description": "Extension description"
+  },
+  "optionsTitle": {
+    "message": "Bookmark Cleaner Settings",
+    "description": "Options page title"
+  },
+  "optionsSubtitle": {
+    "message": "Configure your scanning and sorting preferences",
+    "description": "Options page subtitle"
+  },
+  "sectionGeneral": {
+    "message": "General",
+    "description": "General section tag"
+  },
+  "sectionAppearance": {
+    "message": "Appearance",
+    "description": "Appearance section header"
+  },
+  "sectionAppearanceDesc": {
+    "message": "Customize the extension's look and feel.",
+    "description": "Appearance section description"
+  },
+  "optTheme": {
+    "message": "Theme",
+    "description": "Theme option label"
+  },
+  "optThemeHelp": {
+    "message": "Select your preferred color theme.",
+    "description": "Theme option help text"
+  },
+  "themeDark": {
+    "message": "Dark",
+    "description": "Dark theme option"
+  },
+  "themeLight": {
+    "message": "Light",
+    "description": "Light theme option"
+  },
+  "sectionScanning": {
+    "message": "Scanning",
+    "description": "Scanning section tag"
+  },
+  "sectionConnection": {
+    "message": "Connection Settings",
+    "description": "Connection section header"
+  },
+  "sectionConnectionDesc": {
+    "message": "Adjust how the cleaner connects to websites to check their status.",
+    "description": "Connection section description"
+  },
+  "optTimeout": {
+    "message": "Connection Timeout (seconds)",
+    "description": "Timeout option label"
+  },
+  "optTimeoutHelp": {
+    "message": "Time to wait for a site to respond. Default: 5s. Lower values scan faster but may report false positives for slow sites. Recommended: 3s - 10s.",
+    "description": "Timeout option help text"
+  },
+  "sectionSorting": {
+    "message": "Sorting",
+    "description": "Sorting section tag"
+  },
+  "sectionOrganization": {
+    "message": "Organization",
+    "description": "Organization section header"
+  },
+  "sectionOrganizationDesc": {
+    "message": "Manage how your bookmarks are sorted before scanning.",
+    "description": "Organization section description"
+  },
+  "optAutoSort": {
+    "message": "Sort automatically before scanning",
+    "description": "Auto sort option label"
+  },
+  "optAutoSortHelp": {
+    "message": "If enabled, bookmarks will be sorted alphabetically when a scan starts.",
+    "description": "Auto sort option help text"
+  },
+  "optSortScope": {
+    "message": "Sort Scope",
+    "description": "Sort scope option label"
+  },
+  "scopeParent": {
+    "message": "Parent Folders Only",
+    "description": "Parent scope option"
+  },
+  "scopeRecursive": {
+    "message": "Folders & Content (Recursive)",
+    "description": "Recursive scope option"
+  },
+  "scopeHelp": {
+    "message": "'Parent Folders Only' sorts just the folders you see in the bar/menu structure. 'Recursive' sorts all folders and all bookmarks within them.",
+    "description": "Scope option help text"
+  },
+  "statusSaved": {
+    "message": "Saved",
+    "description": "Status message when saved"
+  },
+  "popupTitle": {
+    "message": "Bookmark Cleaner",
+    "description": "Popup title"
+  },
+  "btnFindBroken": {
+    "message": "Find Broken Links",
+    "description": "Find broken links button"
+  },
+  "btnFindDuplicates": {
+    "message": "Find Duplicates",
+    "description": "Find duplicates button"
+  },
+  "btnSortBookmarks": {
+    "message": "Sort Bookmarks",
+    "description": "Sort bookmarks button"
+  },
+  "statusReady": {
+    "message": "Ready to scan.",
+    "description": "Ready status message"
+  },
+  "statusPaused": {
+    "message": "Scan Paused.",
+    "description": "Paused status message"
+  },
+  "statBrokenShort": {
+    "message": "Broken",
+    "description": "Broken count label"
+  },
+  "statDuplicates": {
+    "message": "Duplicates",
+    "description": "Statistic label"
+  },
+  "statusScanning": {
+    "message": "Scanning...",
+    "description": "Generic scanning status"
+  },
+  "statusScanningBroken": {
+    "message": "Scanning for Broken Links...",
+    "description": "Scanning broken links status"
+  },
+  "statusScanningDuplicates": {
+    "message": "Scanning for Duplicates...",
+    "description": "Scanning duplicates status"
+  },
+  "statusPausing": {
+    "message": "Pausing...",
+    "description": "Pausing status"
+  },
+  "statusResuming": {
+    "message": "Resuming...",
+    "description": "Resuming status"
+  },
+  "statusCancelling": {
+    "message": "Cancelling...",
+    "description": "Cancelling status"
+  },
+  "statusStartingBroken": {
+    "message": "Starting Broken Link Scan...",
+    "description": "Starting broken scan status"
+  },
+  "statusStartingDuplicates": {
+    "message": "Starting Duplicate Scan...",
+    "description": "Starting duplicate scan status"
+  },
+  "statusSorting": {
+    "message": "Sorting...",
+    "description": "Sorting status"
+  },
+  "statusSortingComplete": {
+    "message": "Sorting complete.",
+    "description": "Sorting complete status"
+  },
+  "reportTitle": {
+    "message": "Scan Report",
+    "description": "Report page title"
+  },
+  "scanHistoryBroken": {
+    "message": "Broken Links Scan",
+    "description": "Broken links scan label"
+  },
+  "scanHistoryDup": {
+    "message": "Duplicates Scan",
+    "description": "Duplicates scan label"
+  },
+  "sectionBroken": {
+    "message": "Broken Links",
+    "description": "Broken links section header"
+  },
+  "sectionDuplicates": {
+    "message": "Duplicate Links",
+    "description": "Duplicates section header"
+  },
+  "btnDeleteSelected": {
+    "message": "Delete Selected",
+    "description": "Delete selected button"
+  },
+  "btnOpenSelected": {
+    "message": "Open Selected",
+    "description": "Open selected button"
+  },
+  "btnIgnoreSelected": {
+    "message": "Ignore Selected",
+    "description": "Ignore selected button"
+  },
+  "btnRecheckSelected": {
+    "message": "Recheck Selected",
+    "description": "Recheck selected button"
+  },
+  "thBookmark": {
+    "message": "Bookmark",
+    "description": "Table header bookmark"
+  },
+  "thURL": {
+    "message": "URL",
+    "description": "Table header URL"
+  },
+  "thStatus": {
+    "message": "Status",
+    "description": "Table header status"
+  },
+  "emptyBroken": {
+    "message": "No broken links found.",
+    "description": "Empty state broken"
+  },
+  "emptyDuplicates": {
+    "message": "No duplicates found.",
+    "description": "Empty state duplicates"
+  },
+  "dupInstruction": {
+    "message": "Select copies to delete. We recommend keeping one valid copy.",
+    "description": "Duplicate instruction"
+  },
+  "dangerZone": {
+    "message": "Danger Zone",
+    "description": "Danger zone header"
+  },
+  "dangerDesc": {
+    "message": "Clear all scan results and history. This cannot be undone.",
+    "description": "Danger zone description"
+  },
+  "btnClearReport": {
+    "message": "Clear Report Data",
+    "description": "Clear report button"
+  },
+  "textNever": {
+    "message": "Never",
+    "description": "Never scanned text"
+  }
+}
+
+

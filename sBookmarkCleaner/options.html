@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="optionsTitle">Bookmark Cleaner Settings</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="dark">
+  <div class="container">
+    <header>
+      <h1 data-i18n="optionsTitle">Bookmark Cleaner Settings</h1>
+      <div class="header-actions">
+          <span class="version-badge">v1.0.0</span>
+          <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+              <svg class="icon-sun" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg class="icon-moon" viewBox="0 0 24 24">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+          </button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Settings Card -->
+      <div class="settings-card">
+        
+        <!-- Scanning Section -->
+        <div class="form-section">
+          <div class="section-header">
+            <h2 data-i18n="sectionConnection">Connection Settings</h2>
+          </div>
+          
+          <div class="form-group">
+            <label for="timeout-input">
+              <span data-i18n="optTimeout">Connection Timeout (seconds)</span>
+              <span class="tooltip">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltiptext" data-i18n="optTimeoutHelp">Time to wait for a site to respond. Default: 5s.</span>
+              </span>
+            </label>
+            <input type="number" id="timeout-input" min="1" max="60" step="1" placeholder="5">
+          </div>
+        </div>
+
+        <!-- Sorting Section -->
+        <div class="form-section">
+          <div class="section-header">
+            <h2 data-i18n="sectionOrganization">Organization</h2>
+          </div>
+          
+          <div class="form-group">
+            <label for="sort-check">
+              <span data-i18n="optAutoSort">Sort automatically before scanning</span>
+            </label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="sort-check">
+              <label class="slider" for="sort-check"></label>
+            </div>
+          </div>
+
+          <!-- Sort Scope (Conditional) -->
+          <div id="sort-scope-container" class="sub-option">
+            <div class="radio-group">
+              <label>
+                <input type="radio" name="sort-scope" value="parent" checked>
+                <span data-i18n="scopeParent">Parent Folders Only</span>
+              </label>
+              <label>
+                <input type="radio" name="sort-scope" value="recursive">
+                <span data-i18n="scopeRecursive">Folders &amp; Content (Recursive)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+          <span>Contact: <a href="mailto:extension@tekky.cc">extension@tekky.cc</a></span>
+          <span>Developer: <a href="https://tekky.cc">tekky.cc</a></span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">
+      <span class="toast-icon">✓</span>
+      <span class="toast-message" data-i18n="statusSaved">Saved</span>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
