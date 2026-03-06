@@ -1,0 +1,260 @@
+{
+   "cLog_title": {
+      "message": "更新記錄"
+   },
+   "cred_line1": {
+      "message": "本擴展依據 \u003Ca href=\"https://chrome.google.com/webstore/detail/bcennaiejdjpomgmmohhpgnjlmpcjmbg\">Sexy Undo Close Tab\u003C/a> 開發。"
+   },
+   "cred_line2": {
+      "message": "還要致謝 Sexy Undo Close Tab 來自的 Undo Close 擴展的開發者。"
+   },
+   "cred_line3": {
+      "message": "最後向所有分叉 Undo Close 擴展的作者致謝 :)"
+   },
+   "cred_line4": {
+      "message": "特別致謝 \u003Ca href=\"https://developer.android.com/design/index.html\">Android Design\u003C/a> 設計右上角的 3 個圖示。"
+   },
+   "cred_title": {
+      "message": "致謝"
+   },
+   "ext_font": {
+      "message": "'Segoe UI', Arial, 'Microsoft Yahei', Simsun, sans-serif"
+   },
+   "feed_text1": {
+      "message": "如果有bug，問題或建議可以在以下網站連結留言。"
+   },
+   "feed_text2": {
+      "message": "意見回饋連結！"
+   },
+   "feed_title": {
+      "message": "意見回饋"
+   },
+   "html_topbtn_tooltip1": {
+      "message": "設定"
+   },
+   "html_topbtn_tooltip2": {
+      "message": "致謝與更新記錄"
+   },
+   "html_topbtn_tooltip3": {
+      "message": "資訊"
+   },
+   "manifest_description": {
+      "message": "簡單的彈出式視窗，讓您輕鬆地還原已關閉的分頁。"
+   },
+   "manifest_kbshort1": {
+      "message": "還原上次關閉的分頁"
+   },
+   "manifest_toolbarbtn_tooltip": {
+      "message": "還原已關閉分頁"
+   },
+   "opera_description": {
+      "message": "一個簡單還原關閉的分頁的方法。 \n （可是不能帶回該分頁的歷程記錄） \n 使用方法： \n - 點選工具列按鈕後會出現一個彈出式視窗顯示已關閉的分頁 \n - 點選想要還原的分頁 \n - 支援鍵盤導覽，請參考說明頁面 \n - 如果要刪除單個項目，點選在藍色區域右下角的刪除按鈕 \n - 可在搜尋列搜尋。 \n 更新記錄可以在擴充功能的選項頁面中找到。 \n 保留著JK 寫的Sexy Undo Close 擴充功能的功能"
+   },
+   "opt_blogbtn_tooltip": {
+      "message": "前往我的部落格"
+   },
+   "opt_func_opt1": {
+      "message": "搜尋關鍵字："
+   },
+   "opt_func_opt10": {
+      "message": "每個分頁顯示的文字最多行數："
+   },
+   "opt_func_opt11": {
+      "message": "長時間點選持續時間"
+   },
+   "opt_func_opt12": {
+      "message": "中鍵點選後關閉彈出式視窗"
+   },
+   "opt_func_opt1_tooltip": {
+      "message": "影響彈出式視窗中搜尋列的搜尋結果。"
+   },
+   "opt_func_opt2": {
+      "message": "僅分頁標題"
+   },
+   "opt_func_opt3": {
+      "message": "僅分頁網址"
+   },
+   "opt_func_opt4": {
+      "message": "分頁標題與網址"
+   },
+   "opt_func_opt5": {
+      "message": "編輯自訂快速鍵"
+   },
+   "opt_func_opt5_tooltip": {
+      "message": "快速鍵的使用僅作用於一般網頁，而非瀏覽器設定頁面、新分頁或 Chrome 線上應用程式商店的頁面。"
+   },
+   "opt_func_opt5a": {
+      "message": "編輯"
+   },
+   "opt_func_opt6": {
+      "message": "停用按兩下開啟最後關閉頁面的功能"
+   },
+   "opt_func_opt6b": {
+      "message": "停用按三下開啟最後關閉頁面的功能"
+   },
+   "opt_func_opt7": {
+      "message": "即使關閉瀏覽器，依然儲存已關閉分頁"
+   },
+   "opt_func_opt8": {
+      "message": "儲存已關閉分頁的最多數量："
+   },
+   "opt_func_opt9": {
+      "message": "彈出式視窗中每頁顯示已關閉分頁的最多數量："
+   },
+   "opt_func_title": {
+      "message": "功能"
+   },
+   "opt_looks_opt1": {
+      "message": "顯示已關閉的分頁數量於工作列圖示上"
+   },
+   "opt_looks_opt10": {
+      "message": "彈出式視窗寬度："
+   },
+   "opt_looks_opt11": {
+      "message": "選擇樣式:"
+   },
+   "opt_looks_opt12": {
+      "message": "主題:"
+   },
+   "opt_looks_opt13": {
+      "message": "系統默認"
+   },
+   "opt_looks_opt14": {
+      "message": "亮"
+   },
+   "opt_looks_opt15": {
+      "message": "暗"
+   },
+   "opt_looks_opt2": {
+      "message": "搜尋列與按鈕置於最上層"
+   },
+   "opt_looks_opt3": {
+      "message": "顯示搜尋列"
+   },
+   "opt_looks_opt4": {
+      "message": "顯示「清除」按鈕"
+   },
+   "opt_looks_opt5": {
+      "message": "顯示時間"
+   },
+   "opt_looks_opt6": {
+      "message": "粗體文字"
+   },
+   "opt_looks_opt7": {
+      "message": "顯示頁面標題而不顯示網址於工具提示"
+   },
+   "opt_looks_opt8": {
+      "message": "使用另一個工具列按鈕圖示"
+   },
+   "opt_looks_opt9": {
+      "message": "將時間顯示於右側"
+   },
+   "opt_looks_title": {
+      "message": "外觀"
+   },
+   "opt_resetbtn": {
+      "message": "清除已儲存的分頁"
+   },
+   "opt_resetbtn_popupMsg": {
+      "message": "確定要清除已儲存的分頁？"
+   },
+   "other_text1": {
+      "message": "歡迎到我的 DeviantArt 頁面欣賞更多作品!"
+   },
+   "other_title": {
+      "message": "其它作品"
+   },
+   "perm_reason2a": {
+      "message": "您的分頁瀏覽記錄"
+   },
+   "perm_reason2b": {
+      "message": "說明：需要使用 chrome.tabs API 偵測分頁狀態並取得其分頁資訊"
+   },
+   "perm_text1": {
+      "message": "如同顯示 SimpleUndoClose 將存取："
+   },
+   "perm_text2": {
+      "message": "按下 \u003Ca href=\"http://developer.chrome.com/extensions/permission_warnings.html#warnings\">這裡\u003C/a> 您可以找到更多關於權限的問題"
+   },
+   "perm_title": {
+      "message": "權限要求"
+   },
+   "popup_cancel_tooltip": {
+      "message": "取消"
+   },
+   "popup_clrbtn": {
+      "message": "清除"
+   },
+   "popup_clrbtn_tooltip": {
+      "message": "清除分頁歷程記錄"
+   },
+   "popup_delbtn": {
+      "message": "刪除"
+   },
+   "popup_delbtn_tooltip": {
+      "message": "刪除已找到的分頁"
+   },
+   "popup_delete2_tooltip": {
+      "message": "刪除選定的分頁"
+   },
+   "popup_noSearchResult": {
+      "message": "未找到已關閉分頁中含有"
+   },
+   "popup_noTabsMsg": {
+      "message": "\u003Ccenter>沒有已關閉的分頁\u003C/center>"
+   },
+   "popup_nxtbtn_tooltip": {
+      "message": "下一頁"
+   },
+   "popup_open1_btn": {
+      "message": "開啟"
+   },
+   "popup_open1_tooltip": {
+      "message": "開啟選定的分頁"
+   },
+   "popup_open2_btn": {
+      "message": "在新視窗"
+   },
+   "popup_open2_tooltip": {
+      "message": "在新視窗中開啟選擇的"
+   },
+   "popup_prvbtn_tooltip": {
+      "message": "上一頁"
+   },
+   "popup_search_tooltip": {
+      "message": "輸入欲搜尋關鍵字"
+   },
+   "tips_tip1": {
+      "message": "按下快速鍵還原最後關閉的分頁"
+   },
+   "tips_tip1_line1": {
+      "message": "說明：選項設定然後按下快速鍵組合"
+   },
+   "tips_tip2": {
+      "message": "工具列圖示按兩下還原最後關閉的分頁"
+   },
+   "tips_tip2_line1": {
+      "message": "說明：確認選項未勾選，然後在工具列圖示上按兩下"
+   },
+   "tips_tip2_line2": {
+      "message": "注意：請快速按兩下不要中斷"
+   },
+   "tips_tip3": {
+      "message": "彈出式視窗鍵盤導覽"
+   },
+   "tips_tip3_line1": {
+      "message": "說明：開啟彈出式視窗後使用方向鍵導覽"
+   },
+   "tips_tip3_line2": {
+      "message": "控制方式：←、→ = 上一頁、下一頁；↑、↓ = 捲動已關閉的分頁清單；Enter = 選擇連結"
+   },
+   "tips_tip4": {
+      "message": "指定開啟擴充功能的快速鍵"
+   },
+   "tips_tip4_line1": {
+      "message": "說明：前往瀏覽器的擴充功能頁面拉到最底下並按下「鍵盤快速鍵」設定"
+   },
+   "tips_title": {
+      "message": "使用說明"
+   }
+}

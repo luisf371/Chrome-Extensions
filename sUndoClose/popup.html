@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link href="popup.css" rel="stylesheet" type="text/css" />
+<link href="scrollbar.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" href="popup-dark.css" id="dark">
+<script type="module" src="popup.js"> </script>
+<script type="module" src="theme.js"></script>
+</head>
+<body>
+  <div id="content" class="contentDiv"> </div>
+  <table id="controls" class="table" cellspacing="0" cellpadding="0" border="0" frame="void">
+    <tr id="row1">
+	  <td id="clrholder">
+        <button id="clr" title="Clear tab history">Clear</button>
+      </td>
+	  <td id="searchholder">
+        <input type="search" title="Enter search keyword" id="searchQ" spellcheck="false"/>
+      </td>
+	  <td id="lpholder">
+		<button id="open1" class="lpBtn" title="Open selected">Open</button>
+		<button id="open2" class="lpBtn" title="Open in new window">New window</button>
+		<button id="delete2" class="lpBtn" title="Delete selected tabs">Delete</button>
+		<button id="cancel" class="lpBtn" title="Cancel">X</button>
+	  </td>
+      <td id="tailenders">
+		<button id="delete" title="Delete found tabs">Delete</button>
+        <button id="prev" title="Previous page">&lt;</button><button id="next" title="Next page">&gt;</button>
+      </td>
+    </tr>
+  </table>
+  <div id="content2" class="contentDiv"> </div>
+</body>
+</html>

@@ -1,0 +1,271 @@
+{
+   "cLog_title": {
+      "message": "更新日志"
+   },
+   "extName": {
+      "message": "sUndoClose",
+      "description": "Extension name"
+   },
+   "statusSaved": {
+      "message": "已保存",
+      "description": "Toast message when settings are saved"
+   },
+   "cred_line1": {
+      "message": "本扩展依据Sexy Undo Close Tab开发。"
+   },
+   "cred_line2": {
+      "message": "还要致谢 Sexy Undo Close Tab 来自的 Undo Close 扩展的开发者。"
+   },
+   "cred_line3": {
+      "message": "最后向所有分叉 Undo Close 扩展的作者致谢 :)"
+   },
+   "cred_line4": {
+      "message": "上角图标来自Android Design。"
+   },
+   "cred_title": {
+      "message": "声明"
+   },
+   "ext_font": {
+      "message": "'Segoe UI', Arial, 'Microsoft Yahei', Simsun, sans-serif"
+   },
+   "feed_text1": {
+      "message": "如果有bug，问题或建议可以在以下网站链接留言。"
+   },
+   "feed_text2": {
+      "message": "反馈链接！"
+   },
+   "feed_title": {
+      "message": "反馈"
+   },
+   "html_topbtn_tooltip1": {
+      "message": "设置"
+   },
+   "html_topbtn_tooltip2": {
+      "message": "声明及更新日志"
+   },
+   "html_topbtn_tooltip3": {
+      "message": "帮助"
+   },
+   "manifest_description": {
+      "message": "这个简单的弹出可让您轻而易举的撤销关闭的标签！"
+   },
+   "manifest_kbshort1": {
+      "message": "复原上次关闭的标签"
+   },
+   "manifest_toolbarbtn_tooltip": {
+      "message": "复原关闭的标签"
+   },
+   "opera_description": {
+      "message": "一个简单撤消关闭的标签的方法。 \n （可是不能带回该标签的历史） \n 使用方法： \n - 单击工具栏按钮后会出现一个弹出显示关闭的标签 \n - 单击想要恢复的关闭标签 \n - 支持键盘导航，请参考帮助页面 \n - 如果要删除单个条目，点击在蓝色区域右下角的删除按钮 \n - 可在搜索栏搜索。 \n 更新日志可以在扩展的选项页面里找到。 \n 保留着源码J K的Sexy Undo Close扩展的功能。"
+   },
+   "opt_blogbtn_tooltip": {
+      "message": "访问我的博客"
+   },
+   "opt_func_opt1": {
+      "message": "搜索关键字："
+   },
+   "opt_func_opt10": {
+      "message": "最大可用标签显示文本行数："
+   },
+   "opt_func_opt11": {
+      "message": "长时间点击持续时间"
+   },
+   "opt_func_opt12": {
+      "message": "中间点击后关闭弹出窗口"
+   },
+   "opt_func_opt1_tooltip": {
+      "message": "影响在弹出的搜索栏搜索的结果。"
+   },
+   "opt_func_opt2": {
+      "message": "仅标题"
+   },
+   "opt_func_opt3": {
+      "message": "仅链接"
+   },
+   "opt_func_opt4": {
+      "message": "标题和连接"
+   },
+   "opt_func_opt5": {
+      "message": "编辑自定义热键"
+   },
+   "opt_func_opt5_tooltip": {
+      "message": "只在普通网页有效,在浏览器内置页面和Chrome网络商店无效。"
+   },
+   "opt_func_opt5a": {
+      "message": "编辑"
+   },
+   "opt_func_opt6": {
+      "message": "禁用双击图标打开最后关闭标签功能"
+   },
+   "opt_func_opt6b": {
+      "message": "禁用三击图标打开最后关闭标签功能"
+   },
+   "opt_func_opt7": {
+      "message": "保存关闭的标签，即使关闭浏览器"
+   },
+   "opt_func_opt8": {
+      "message": "最大可用记录保存标签数目："
+   },
+   "opt_func_opt9": {
+      "message": "最大可用每页显示标签数目："
+   },
+   "opt_func_title": {
+      "message": "功能类选项"
+   },
+   "opt_looks_opt1": {
+      "message": "显示关闭的标签数目于图标"
+   },
+   "opt_looks_opt10": {
+      "message": "弹出的宽度："
+   },
+   "opt_looks_opt11": {
+      "message": "选择风格:"
+   },
+   "opt_looks_opt12": {
+      "message": "主题:"
+   },
+   "opt_looks_opt13": {
+      "message": "系统默认"
+   },
+   "opt_looks_opt14": {
+      "message": "亮"
+   },
+   "opt_looks_opt15": {
+      "message": "暗"
+   },
+   "opt_looks_opt2": {
+      "message": "搜索栏和按钮置于顶部"
+   },
+   "opt_looks_opt3": {
+      "message": "显示搜索栏"
+   },
+   "opt_looks_opt4": {
+      "message": "显示“清除”按钮"
+   },
+   "opt_looks_opt5": {
+      "message": "显示时间"
+   },
+   "opt_looks_opt6": {
+      "message": "字体加粗"
+   },
+   "opt_looks_opt7": {
+      "message": "仅显示标签标题而不显示链接"
+   },
+   "opt_looks_opt8": {
+      "message": "使用另一个工具栏按钮图标"
+   },
+   "opt_looks_opt9": {
+      "message": "把时间移到右端"
+   },
+   "opt_looks_title": {
+      "message": "容貌类选项"
+   },
+   "opt_resetbtn": {
+      "message": "清除保存的标签？"
+   },
+"opt_resetbtn_popupMsg": {
+      "message": "确定要清除历史记录吗？"
+   },
+   "opt_removeHistory": {
+      "message": "删除历史记录条目"
+   },
+   "other_text1": {
+      "message": "欢迎到我的DeviantArt来查看个人的其他作品！"
+   },
+   "other_title": {
+      "message": "其他作品"
+   },
+   "perm_reason2a": {
+      "message": "您的标签浏览记录"
+   },
+   "perm_reason2b": {
+      "message": "原因：需要先使用Chrome内置的API检测选项卡状态来获得标签页的详细信息"
+   },
+   "perm_text1": {
+      "message": "此扩展程序能取得:"
+   },
+   "perm_text2": {
+      "message": "权限请求用于检测选项卡状态并获取选项卡详细信息。"
+   },
+   "perm_title": {
+      "message": "权限要求"
+   },
+   "popup_cancel_tooltip": {
+      "message": "取消"
+   },
+   "popup_clrbtn": {
+      "message": "清除"
+   },
+   "popup_clrbtn_tooltip": {
+      "message": "清除标签记录历史"
+   },
+   "popup_delbtn": {
+      "message": "删除"
+   },
+   "popup_delbtn_tooltip": {
+      "message": "删除查找到的标签"
+   },
+   "popup_delete2_tooltip": {
+      "message": "删除选定的标签"
+   },
+   "popup_noSearchResult": {
+      "message": "关闭标签当中没发现含有"
+   },
+   "popup_noTabsMsg": {
+      "message": "\u003Ccenter>没有关闭的标签\u003C/center>"
+   },
+   "popup_nxtbtn_tooltip": {
+      "message": "下一页"
+   },
+   "popup_open1_btn": {
+      "message": "打开"
+   },
+   "popup_open1_tooltip": {
+      "message": "打开选定的标签"
+   },
+   "popup_open2_btn": {
+      "message": "在新窗口"
+   },
+   "popup_open2_tooltip": {
+      "message": "在新窗口中打开选择"
+   },
+   "popup_prvbtn_tooltip": {
+      "message": "上一页"
+   },
+   "popup_search_tooltip": {
+      "message": "输入搜索关键字"
+   },
+   "tips_tip1": {
+      "message": "使用热键来恢复最后打开的标签页"
+   },
+   "tips_tip1_line1": {
+      "message": "使用方法：选项设置然后按下热键组合"
+   },
+   "tips_tip2": {
+      "message": "双击图标打开最近关闭的标签页"
+   },
+   "tips_tip2_line1": {
+      "message": "使用方法：确保在选项中启动本功能"
+   },
+   "tips_tip2_line2": {
+      "message": "注意事项：你需要尽快的完成第二次点击"
+   },
+   "tips_tip3": {
+      "message": "在弹出的扩展中使用键盘进行导航"
+   },
+   "tips_tip3_line1": {
+      "message": "使用方法：触发弹出式窗口，然后使用箭头键导航"
+   },
+   "tips_tip3_line2": {
+      "message": "控制选项：左右方向键进行翻页，上下方向键在列表中进行滑动，Enter键表示选择链接"
+   },
+   "tips_tip4": {
+      "message": "为扩展建立快捷键"
+   },
+   "tips_tip4_line1": {
+      "message": "使用方法：在浏览器的“扩展程序”页面上，滚动到末尾，单击“键盘快捷键”"
+   },
+   "tips_title": {
+      "message": "使用说明"
+   }
+}

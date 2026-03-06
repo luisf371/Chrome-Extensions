@@ -1,0 +1,260 @@
+{
+   "cLog_title": {
+      "message": "Измене"
+   },
+   "cred_line1": {
+      "message": "Захвалност за \u003Ca href=\"https://chrome.google.com/webstore/detail/bcennaiejdjpomgmmohhpgnjlmpcjmbg\">Sexy Undo Close Tab\u003C/a> јер је SimpleUndoClose његов изданак."
+   },
+   "cred_line2": {
+      "message": "Такође хвала Undo Close tab додатној компоненти, од које долази Sexy Undo Close Tab"
+   },
+   "cred_line3": {
+      "message": "На крају хвала свим осталим проширењима од којих је Undo Close tab додатна компонента могла проистећи."
+   },
+   "cred_line4": {
+      "message": "Додатна захвалност за \u003Ca href=\"https://developer.android.com/design/index.html\">Android Design\u003C/a> за три иконице у горњем десном углу странице."
+   },
+   "cred_title": {
+      "message": "Захвалности"
+   },
+   "ext_font": {
+      "message": "'Segoe UI', Tahoma, sans-serif"
+   },
+   "feed_text1": {
+      "message": "Слободно нам оставите поруку у вези са грешкама, питањима и сугестијама."
+   },
+   "feed_text2": {
+      "message": "Пошаљите повратне информације овде!"
+   },
+   "feed_title": {
+      "message": "Повратне информације"
+   },
+   "html_topbtn_tooltip1": {
+      "message": "Подешавања"
+   },
+   "html_topbtn_tooltip2": {
+      "message": "Захвалности и измене"
+   },
+   "html_topbtn_tooltip3": {
+      "message": "Информације"
+   },
+   "manifest_description": {
+      "message": "Једноставно проширење за враћање затворених картица и мало више од тога."
+   },
+   "manifest_kbshort1": {
+      "message": "Врати последњи затворено картицу"
+   },
+   "manifest_toolbarbtn_tooltip": {
+      "message": "Врати затворене картице"
+   },
+   "opera_description": {
+      "message": "Једноставан начин за враћање затворених картица.\n(Иако не враћа историју картица)\nУпотреба:\n- кликните на иконицу на алатној траци, појавиће се прозор са затвореним картицама\n- кликните на затворену страницу коју желите повратити\n- навигација тастатуром је подржана\n- за брисање појединачне ставке, кликните дугме за брисање у доњем десном углу означеног плавог поља\n- претражујте куцањем на траци за претрагу\nАжурирана листа измена се налази на страницама за опције проширења.\nЗадржава основне карактеристике Sexy Undo Close Tab проширења од J K."
+   },
+   "opt_blogbtn_tooltip": {
+      "message": "Посетите почетну страницу"
+   },
+   "opt_func_opt1": {
+      "message": "Тражи кључне речи за претрагу у:"
+   },
+   "opt_func_opt10": {
+      "message": "Број линија текста за приказ за сваку картцу:"
+   },
+   "opt_func_opt11": {
+      "message": "трајање дуго клик"
+   },
+   "opt_func_opt12": {
+      "message": "Затвори скочну након средњи клик"
+   },
+   "opt_func_opt1_tooltip": {
+      "message": "Утиче на резултате претраге преко траке за претрагу у искачућем прозору."
+   },
+   "opt_func_opt2": {
+      "message": "само назив картице"
+   },
+   "opt_func_opt3": {
+      "message": "само адреса картице"
+   },
+   "opt_func_opt4": {
+      "message": "заједно назив картице и адреса"
+   },
+   "opt_func_opt5": {
+      "message": "Едит обичај Брзи тастер"
+   },
+   "opt_func_opt5_tooltip": {
+      "message": "Ради само када користите пречицу на нормалној веб страници, не и на страници за подешавања прегледача, брзом бирању или страници за набавку проширења."
+   },
+   "opt_func_opt5a": {
+      "message": "Едит"
+   },
+   "opt_func_opt6": {
+      "message": "Онемогући дупли клик"
+   },
+   "opt_func_opt6b": {
+      "message": "Онемогући троструки клик"
+   },
+   "opt_func_opt7": {
+      "message": "Сачувај затворене картице при затварању прегледача"
+   },
+   "opt_func_opt8": {
+      "message": "Број затворених картица за чување:"
+   },
+   "opt_func_opt9": {
+      "message": "Број затворених картица за приказ по страници:"
+   },
+   "opt_func_title": {
+      "message": "Функције"
+   },
+   "opt_looks_opt1": {
+      "message": "Прикажи ознаку са бројем затворених картица на иконици на алатној траци"
+   },
+   "opt_looks_opt10": {
+      "message": "Ширина искачућег прозора"
+   },
+   "opt_looks_opt11": {
+      "message": "Изаберите неки стил :"
+   },
+   "opt_looks_opt12": {
+      "message": "Тема:"
+   },
+   "opt_looks_opt13": {
+      "message": "Подразумевани систем"
+   },
+   "opt_looks_opt14": {
+      "message": "светло"
+   },
+   "opt_looks_opt15": {
+      "message": "тамно"
+   },
+   "opt_looks_opt2": {
+      "message": "Трака за претрагу &amp; дугмад на врху"
+   },
+   "opt_looks_opt3": {
+      "message": "Прикажи траку за претрагу"
+   },
+   "opt_looks_opt4": {
+      "message": "Прикажи дугме 'Очисти'"
+   },
+   "opt_looks_opt5": {
+      "message": "Прикажи време"
+   },
+   "opt_looks_opt6": {
+      "message": "Подебљани текст"
+   },
+   "opt_looks_opt7": {
+      "message": "Прикажи назив странице уместо адресе у објашњењима"
+   },
+   "opt_looks_opt8": {
+      "message": "Прикажи резервну иконицу дугмета на алатној траци"
+   },
+   "opt_looks_opt9": {
+      "message": "Помери време на десни крај"
+   },
+   "opt_looks_title": {
+      "message": "Изглед"
+   },
+   "opt_resetbtn": {
+      "message": "Очистити сачуване картице?"
+   },
+   "opt_resetbtn_popupMsg": {
+      "message": "Очистити сачуване картице?"
+   },
+   "other_text1": {
+      "message": "Свратите на моју DeviantArt страницу да видите још мојих радова!"
+   },
+   "other_title": {
+      "message": "Остали радови"
+   },
+   "perm_reason2a": {
+      "message": "Ваше картице и активност прегледања"
+   },
+   "perm_reason2b": {
+      "message": "ЗАШТО: Потребно је за употребу chrome.tabs API  да би се детектовало стање картица и добили детаљи о картицама"
+   },
+   "perm_text1": {
+      "message": "Као што је наведено SimpleUndoClose може приступити:"
+   },
+   "perm_text2": {
+      "message": "Можете сазнати више о дозволама и упозорењима \u003Ca href=\"http://developer.chrome.com/extensions/permission_warnings.html#warnings\">овде\u003C/a>"
+   },
+   "perm_title": {
+      "message": "Разлог за захтевање дозвола"
+   },
+   "popup_cancel_tooltip": {
+      "message": "Откажи"
+   },
+   "popup_clrbtn": {
+      "message": "Очисти"
+   },
+   "popup_clrbtn_tooltip": {
+      "message": "Очисти историју картица"
+   },
+   "popup_delbtn": {
+      "message": "Избриши"
+   },
+   "popup_delbtn_tooltip": {
+      "message": "Избриши пронађене картице"
+   },
+   "popup_delete2_tooltip": {
+      "message": "Обриши одабране језичке"
+   },
+   "popup_noSearchResult": {
+      "message": "Нема пронађених затворених картица које садрже"
+   },
+   "popup_noTabsMsg": {
+      "message": "\u003Ccenter>Нема затворених картица\u003C/center>"
+   },
+   "popup_nxtbtn_tooltip": {
+      "message": "Следећа страница"
+   },
+   "popup_open1_btn": {
+      "message": "Отвори"
+   },
+   "popup_open1_tooltip": {
+      "message": "Отвори одабране језичке"
+   },
+   "popup_open2_btn": {
+      "message": "Нови прозор"
+   },
+   "popup_open2_tooltip": {
+      "message": "Отвори одабране језичке у новом прозору"
+   },
+   "popup_prvbtn_tooltip": {
+      "message": "Претходна страница"
+   },
+   "popup_search_tooltip": {
+      "message": "Унесите кључну реч за претрагу"
+   },
+   "tips_tip1": {
+      "message": "Пречица за повратак последње затворене картице"
+   },
+   "tips_tip1_line1": {
+      "message": "КАКО: конфигурисати опција затим притисните комбинацију Брзи тастер"
+   },
+   "tips_tip2": {
+      "message": "Дупли клик на иконицу на алатној траци за повратак задње затворене картице"
+   },
+   "tips_tip2_line1": {
+      "message": "КАКО: Будите сигурни да опција није чекирана, затим два пута кликните на иконицу на алатној траци"
+   },
+   "tips_tip2_line2": {
+      "message": "ОПАСКА: Можда је потребно време за други притисак"
+   },
+   "tips_tip3": {
+      "message": "Навигација помоћу тастатуре у прозору проширења"
+   },
+   "tips_tip3_line1": {
+      "message": "КАКО: Активирајте прозор проширења затим користите тастере са стрелицама за навигацију"
+   },
+   "tips_tip3_line2": {
+      "message": "КОНТРОЛЕ: ←, → = Претходна, следећа страница; ↑, ↓ = Кретање кроз листу затворених картица; Enter = одабрати линк"
+   },
+   "tips_tip4": {
+      "message": "Доделите тастерске пречице за проширење"
+   },
+   "tips_tip4_line1": {
+      "message": "КАКО: Отворите управљач проширењима, спустите се до краја странице и притисните \"Тастерске пречице за екстензије\""
+   },
+   "tips_title": {
+      "message": "Савети за коришћење"
+   }
+}

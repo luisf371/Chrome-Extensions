@@ -1,0 +1,271 @@
+{
+   "cLog_title": {
+      "message": "Historial de cambios"
+   },
+   "cred_line1": {
+      "message": "Créditos a Sexy Undo Close Tab, ya que sUndoClose es una derivación (fork) de esta."
+   },
+   "cred_line2": {
+      "message": "También gracias al complemento Undo Close tab, del cual surgió Sexy Undo Close Tab."
+   },
+   "cred_line3": {
+      "message": "Finalmente, gracias a todas las demás extensiones de las cuales Undo Close tab pudo haber derivado :)"
+   },
+   "cred_line4": {
+      "message": "Créditos adicionales a Android Design por los 3 iconos en la parte superior derecha."
+   },
+   "cred_title": {
+      "message": "Créditos"
+   },
+   "extName": {
+      "message": "sUndoClose",
+      "description": "Extension name"
+   },
+   "statusSaved": {
+      "message": "Guardado",
+      "description": "Toast message when settings are saved"
+   },
+   "ext_font": {
+      "message": "'Segoe UI', Tahoma, sans-serif"
+   },
+   "feed_text1": {
+      "message": "No dudes en dejar un mensaje sobre errores, preguntas o sugerencias."
+   },
+   "feed_text2": {
+      "message": "¡Envía tus comentarios aquí!"
+   },
+   "feed_title": {
+      "message": "Comentarios"
+   },
+   "html_topbtn_tooltip1": {
+      "message": "Configuración"
+   },
+   "html_topbtn_tooltip2": {
+      "message": "Créditos e Historial de cambios"
+   },
+   "html_topbtn_tooltip3": {
+      "message": "Información"
+   },
+   "manifest_description": {
+      "message": "Una sencilla ventana emergente para restaurar pestañas cerradas, solo eso y un poco más."
+   },
+   "manifest_kbshort1": {
+      "message": "Restaurar última pestaña cerrada"
+   },
+   "manifest_toolbarbtn_tooltip": {
+      "message": "Restaurar pestañas cerradas"
+   },
+   "opt_blogbtn_tooltip": {
+      "message": "Visitar el blog"
+   },
+   "opt_func_opt1": {
+      "message": "Buscar en:"
+   },
+   "opt_func_opt10": {
+      "message": "Líneas por elemento:"
+   },
+   "opt_func_opt11": {
+      "message": "Duración del clic largo (s):"
+   },
+   "opt_func_opt12": {
+      "message": "Cerrar ventana emergente al hacer clic central"
+   },
+   "opt_func_opt1_tooltip": {
+      "message": "Determina qué campos se buscan en la ventana emergente."
+   },
+   "opt_func_opt2": {
+      "message": "Título"
+   },
+   "opt_func_opt3": {
+      "message": "URL"
+   },
+   "opt_func_opt4": {
+      "message": "Título y URL"
+   },
+   "opt_func_opt5": {
+      "message": "Atajos"
+   },
+   "opt_func_opt5_tooltip": {
+      "message": "Administrar los atajos de la extensión en la configuración de Chrome."
+   },
+   "opt_func_opt5a": {
+      "message": "Configurar"
+   },
+   "opt_func_opt6": {
+      "message": "Desactivar función de doble clic"
+   },
+   "opt_func_opt6b": {
+      "message": "Desactivar función de triple clic"
+   },
+   "opt_func_opt7": {
+      "message": "Mantener historial después de cerrar el navegador"
+   },
+   "opt_func_opt8": {
+      "message": "Tamaño del historial:"
+   },
+   "opt_func_opt9": {
+      "message": "Elementos por página:"
+   },
+   "opt_func_title": {
+      "message": "Comportamiento"
+   },
+   "opt_looks_opt1": {
+      "message": "Mostrar contador en el icono"
+   },
+   "opt_looks_opt10": {
+      "message": "Ancho de la ventana emergente:"
+   },
+   "opt_looks_opt11": {
+      "message": "Estilo de lista:"
+   },
+   "opt_looks_opt12": {
+      "message": "Tema:"
+   },
+   "opt_looks_opt13": {
+      "message": "Predeterminado del sistema"
+   },
+   "opt_looks_opt14": {
+      "message": "Claro"
+   },
+   "opt_looks_opt15": {
+      "message": "Oscuro"
+   },
+   "opt_looks_opt2": {
+      "message": "Controles en la parte superior"
+   },
+   "opt_looks_opt3": {
+      "message": "Mostrar barra de búsqueda"
+   },
+   "opt_looks_opt4": {
+      "message": "Mostrar botón 'Limpiar'"
+   },
+   "opt_looks_opt5": {
+      "message": "Mostrar marca de tiempo"
+   },
+   "opt_looks_opt6": {
+      "message": "Usar fuente en negrita"
+   },
+   "opt_looks_opt7": {
+      "message": "Las descripciones muestran el título en lugar de la URL"
+   },
+   "opt_looks_opt8": {
+      "message": "Usar icono alternativo"
+   },
+   "opt_looks_opt9": {
+      "message": "Alinear marca de tiempo a la derecha"
+   },
+   "opt_looks_title": {
+      "message": "Apariencia"
+   },
+   "opt_resetbtn": {
+      "message": "Limpiar Historial"
+   },
+   "opt_resetbtn_popupMsg": {
+      "message": "¿Estás seguro de que deseas limpiar el historial?"
+   },
+   "opt_removeHistory": {
+      "message": "Eliminar entrada del historial"
+   },
+   "opera_description": {
+      "message": "Solo una forma sencilla de restaurar tus pestañas cerradas. \\n (No recupera el historial de la pestaña) \\n Para usar: \\n - haz clic en el botón de la barra de herramientas, aparecerá una lista de pestañas cerradas \\n - haz clic en la página que deseas restaurar \\n - compatible con navegación por teclado \\n - para eliminar una entrada, haz clic en el botón de borrar en la esquina inferior derecha del área resaltada \\n - busca escribiendo en la barra de búsqueda. \\n El historial de cambios actualizado se encuentra en las páginas de opciones de la extensión. \\n Mantiene las características de la extensión base Sexy Undo Close Tab por J K."
+   },
+   "other_text1": {
+      "message": "¡Visita mi página de DeviantArt para ver más de mis trabajos!"
+   },
+   "other_title": {
+      "message": "Otros trabajos"
+   },
+   "perm_reason2a": {
+      "message": "Tus pestañas y actividad de navegación"
+   },
+   "perm_reason2b": {
+      "message": "POR QUÉ: Requerido para usar la API chrome.tabs para detectar el estado de las pestañas y obtener sus detalles."
+   },
+   "perm_text1": {
+      "message": "Como se indica, sUndoClose puede acceder a:"
+   },
+   "perm_text2": {
+      "message": "Se requieren permisos para detectar el estado de las pestañas y recuperar sus detalles."
+   },
+   "perm_title": {
+      "message": "Motivo de las solicitudes de permisos"
+   },
+   "popup_cancel_tooltip": {
+      "message": "Cancelar"
+   },
+   "popup_clrbtn": {
+      "message": "Limpiar"
+   },
+   "popup_clrbtn_tooltip": {
+      "message": "Limpiar historial de pestañas"
+   },
+   "popup_delbtn": {
+      "message": "Eliminar"
+   },
+   "popup_delbtn_tooltip": {
+      "message": "Eliminar pestañas encontradas"
+   },
+   "popup_delete2_tooltip": {
+      "message": "Eliminar pestañas seleccionadas"
+   },
+   "popup_noSearchResult": {
+      "message": "No se encontraron pestañas cerradas que contengan"
+   },
+   "popup_noTabsMsg": {
+      "message": "\u003Ccenter>No hay pestañas cerradas\u003C/center>"
+   },
+   "popup_nxtbtn_tooltip": {
+      "message": "Página siguiente"
+   },
+   "popup_open1_btn": {
+      "message": "Abrir"
+   },
+   "popup_open1_tooltip": {
+      "message": "Abrir selección"
+   },
+   "popup_open2_btn": {
+      "message": "Nueva ventana"
+   },
+   "popup_open2_tooltip": {
+      "message": "Abrir selección en una ventana nueva"
+   },
+   "popup_prvbtn_tooltip": {
+      "message": "Página anterior"
+   },
+   "popup_search_tooltip": {
+      "message": "Ingresa una palabra clave de búsqueda"
+   },
+   "tips_tip1": {
+      "message": "Atajo para restaurar la última pestaña cerrada"
+   },
+   "tips_tip1_line1": {
+      "message": "CÓMO: Asegúrate de que la opción esté configurada y presiona la combinación de teclas"
+   },
+   "tips_tip2": {
+      "message": "Haz doble clic en el icono de la barra de herramientas para restaurar la última pestaña cerrada"
+   },
+   "tips_tip2_line1": {
+      "message": "CÓMO: Asegúrate de que la opción esté activada y haz doble clic en el icono de la barra de herramientas"
+   },
+   "tips_tip2_line2": {
+      "message": "NOTA: Es posible que debas coordinar el tiempo de tu segundo clic"
+   },
+   "tips_tip3": {
+      "message": "Navegación por teclado en la ventana emergente"
+   },
+   "tips_tip3_line1": {
+      "message": "CÓMO: Abre la ventana emergente y usa las teclas de dirección para navegar"
+   },
+   "tips_tip3_line2": {
+      "message": "CONTROLES: ←, → = Página anterior, siguiente; ↑, ↓ = Desplazarse por la lista; Enter = seleccionar enlace"
+   },
+   "tips_tip4": {
+      "message": "Asignar un atajo de teclado a la extensión"
+   },
+   "tips_tip4_line1": {
+      "message": "CÓMO: Ve a la página de configuración de Extensiones del navegador, desplázate hasta el final y haz clic en \"Atajos de teclado\""
+   },
+   "tips_title": {
+      "message": "Consejos de uso"
+   }
+}

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="extName">sUndoClose Options</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 data-i18n="extName">sUndoClose</h1>
+            <div class="header-actions">
+                <span class="version-badge">v1.3.11</span>
+                <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                    <svg class="icon-sun" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Stats Dashboard -->
+            <section class="section">
+                <h2 class="section-title">Tabs Recovered</h2>
+                <div class="stats-card">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-session">0</div>
+                            <div class="stat-label">This Session</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-alltime">0</div>
+                            <div class="stat-label">All Time</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-days">0</div>
+                            <div class="stat-label">Days Active</div>
+                        </div>
+                    </div>
+                    <div class="stats-footer" id="stats-install-date"></div>
+                </div>
+            </section>
+
+            <!-- Behavior Section -->
+            <section class="section">
+                <h2 class="section-title" data-i18n="opt_func_title">Behavior</h2>
+                <div class="settings-card">
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_func_opt7">Keep history after closing browser</span>
+                            <span class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltiptext">Keeps closed-tab history across browser restarts.</span>
+                            </span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="saveHistory">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_removeHistory">Remove history entry</span>
+                            <span class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltiptext">Deleting from popup also removes from Chrome history.</span>
+                            </span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="removeHistory">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_func_opt8">History size:</label>
+                        <select id="numLimit">
+                            <option value="20">20</option>
+                            <option value="40">40</option>
+                            <option value="60">60</option>
+                            <option value="80">80</option>
+                            <option value="100">100</option>
+                            <option value="120">120</option>
+                            <option value="140">140</option>
+                            <option value="160">160</option>
+                            <option value="180">180</option>
+                            <option value="200">200</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_func_opt9">Items per page:</label>
+                        <select id="numItems">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                            <option value="25">25</option>
+                            <option value="30">30</option>
+                            <option value="40">40</option>
+                            <option value="50">50</option>
+                            <option value="60">60</option>
+                            <option value="80">80</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_func_opt1">Search in:</label>
+                        <select id="searchMode">
+                            <option value="1" data-i18n="opt_func_opt2">Title</option>
+                            <option value="2" data-i18n="opt_func_opt3">URL</option>
+                            <option value="3" data-i18n="opt_func_opt4">Title & URL</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_func_opt12">Close popup on middle-click</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="mClickClose">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_func_opt11">Long click duration (s):</label>
+                        <input type="number" id="longPressDelay" min="1" max="10" class="input-number">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Appearance Section -->
+            <section class="section">
+                <h2 class="section-title" data-i18n="opt_looks_title">Appearance</h2>
+                <div class="settings-card">
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt1">Show count badge on icon</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="showBadge">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt8">Use alternate icon</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="useAlternateIcon">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt2">Controls at top</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="menuTop">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt3">Show search bar</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="showSearch">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt4">Show 'Clear' button</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="showClear">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt5">Show timestamp</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="showTime">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">
+                            <span data-i18n="opt_looks_opt7">Tooltips show title instead of URL</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="tooltipText">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_looks_opt10">Popup width:</label>
+                        <select id="popupWidth">
+                            <option value="300">300px</option>
+                            <option value="340">340px</option>
+                            <option value="380">380px</option>
+                            <option value="420">420px</option>
+                            <option value="460">460px</option>
+                            <option value="500">500px</option>
+                            <option value="540">540px</option>
+                            <option value="580">580px</option>
+                            <option value="620">620px</option>
+                            <option value="660">660px</option>
+                            <option value="700">700px</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_looks_opt11">Popup style:</label>
+                        <select id="popupStyle">
+                            <option value="1">Classic</option>
+                            <option value="2">Studio</option>
+                            <option value="3">Minimalist</option>
+                            <option value="4">Beacon</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_func_opt10">Lines per item:</label>
+                        <select id="numLines">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Actions Section -->
+            <section class="section">
+                <h2 class="section-title">Actions</h2>
+                <div class="settings-card">
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_func_opt5">Keyboard shortcuts:</label>
+                        <button class="btn btn-secondary" id="openKBshort" data-i18n="opt_func_opt5a">Configure</button>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" data-i18n="opt_resetbtn">Clear History</label>
+                        <button class="btn btn-danger" id="resetButton">Clear</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <div class="footer">
+                <span>Contact: <a href="mailto:extension@tekky.cc">extension@tekky.cc</a></span>
+                <span>Developer: <a href="https://tekky.cc">tekky.cc</a></span>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span class="toast-icon">✓</span>
+        <span class="toast-message">Saved</span>
+    </div>
+
+    <script type="module" src="options.js"></script>
+</body>
+</html>

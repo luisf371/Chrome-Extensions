@@ -1,0 +1,272 @@
+{
+   "cLog_title": {
+      "message": "Список изменений"
+   },
+   "cred_line1": {
+      "message": "Благодарность расширению \u003Ca href=\"https://chrome.google.com/webstore/detail/bcennaiejdjpomgmmohhpgnjlmpcjmbg\">Sexy Undo Close Tab\u003C/a> , так как SimpleUndoClose это его форк."
+   },
+   "cred_line2": {
+      "message": "Кроме того, благодарность расширению Undo Close tab,  которое тоже является форком Sexy Undo Close Tab."
+   },
+   "cred_line3": {
+      "message": "Также спасибо всем другим расширениям, форком которых может быть Undo Close tab  :)"
+   },
+   "cred_line4": {
+      "message": "Отдельное спасибо \u003Ca href=\"https://developer.android.com/design/index.html\">Android Design\u003C/a> за 3 иконки для кнопок на странице настроек."
+   },
+   "cred_title": {
+      "message": "Благодарности"
+   },
+   "ext_font": {
+      "message": "'Segoe UI', Tahoma, sans-serif"
+   },
+   "feed_text1": {
+      "message": "Не стесняйтесь оставлять сообщения об ошибках, предложениях и вопросах."
+   },
+   "feed_text2": {
+      "message": "Обратная связь здесь!"
+   },
+   "feed_title": {
+      "message": "Обратная связь"
+   },
+   "html_topbtn_tooltip1": {
+      "message": "Настройки"
+   },
+   "html_topbtn_tooltip2": {
+      "message": "Благодарности и список изменений"
+   },
+   "html_topbtn_tooltip3": {
+      "message": "Информация"
+   },
+   "manifest_description": {
+      "message": "Восстановление закрытых вкладок."
+   },
+   "manifest_kbshort1": {
+      "message": "Открыть последнюю закрытую вкладку"
+   },
+   "manifest_toolbarbtn_tooltip": {
+      "message": "Открыть закрытые вкладки"
+   },
+   "opera_description": {
+      "message": "Простой способ отменить закрытые вкладки. \n (Но не историю этих вкладок) \n Для использования: \n - Нажмите кнопку на панели инструментов, всплывающее окно покажет закрытые вкладки \n - Нажмите на закрытую страницу, которую нужно восстановить \n - Поддерживается навигация с помощью клавиатуры \n - Чтобы удалить одну запись, нажмите кнопку удаления в правом нижнем углу синей области выделения \n - Поиск - набрать в строке поиска. \n Список изменений находится на странице настроек расширения \n Сохраняет черты базового расширения Sexy Undo Close Tab от J К."
+   },
+   "opt_blogbtn_tooltip": {
+      "message": "Блог"
+   },
+   "opt_func_opt1": {
+      "message": "Поиск по ключевым словам:"
+   },
+   "opt_func_opt10": {
+      "message": "Количество строк текста, отображающихся для каждой вкладки:"
+   },
+   "opt_func_opt11": {
+      "message": "Продолжительность долгого нажатия:"
+   },
+   "opt_func_opt12": {
+      "message": "Закрывать всплывающее окно средней кнопкой мыши"
+   },
+   "opt_func_opt1_tooltip": {
+      "message": "Влияет на результат поиска во всплывающем окне."
+   },
+   "opt_func_opt2": {
+      "message": "только в заголовках вкладок"
+   },
+   "opt_func_opt3": {
+      "message": "только в URL вкладок"
+   },
+   "opt_func_opt4": {
+      "message": "в заголовках и URL вкладок"
+   },
+   "opt_func_opt5": {
+      "message": "Редактирование пользовательских горячих клавиш"
+   },
+   "opt_func_opt5_tooltip": {
+      "message": "Горячие клавиши работают только на обычных страницах. В настройках браузера и Интернет-магазине Chrome - не работают."
+   },
+   "opt_func_opt5a": {
+      "message": "Изменить"
+   },
+   "opt_func_opt6": {
+      "message": "Отключить двойное нажатие"
+   },
+   "opt_func_opt6b": {
+      "message": "Отключить тройной нажатие"
+   },
+   "opt_func_opt7": {
+      "message": "Сохранять список закрытых вкладок после завершения работы браузера"
+   },
+   "opt_func_opt8": {
+      "message": "Количество закрытых вкладок в списке:"
+   },
+   "opt_func_opt9": {
+      "message": "Количество закрытых вкладок, отображающихся в окне:"
+   },
+   "opt_func_title": {
+      "message": "Функциональность"
+   },
+   "opt_looks_opt1": {
+      "message": "Отображать счётчик закрытых вкладок на иконке в панели инструментов"
+   },
+   "opt_looks_opt10": {
+      "message": "Ширина всплывающего окна:"
+   },
+   "opt_looks_opt11": {
+      "message": "Выберите стиль:"
+   },
+   "opt_looks_opt12": {
+      "message": "Тема:"
+   },
+   "opt_looks_opt13": {
+      "message": "система по умолчанию"
+   },
+   "opt_looks_opt14": {
+      "message": "светлый"
+   },
+   "opt_looks_opt15": {
+      "message": "темно"
+   },
+   "opt_looks_opt2": {
+      "message": "Расположение строки поиска и кнопок сверху"
+   },
+   "opt_looks_opt3": {
+      "message": "Отображать строку поиска"
+   },
+   "opt_looks_opt4": {
+      "message": "Отображать кнопку 'Очистить'"
+   },
+   "opt_looks_opt5": {
+      "message": "Отображать время закрытия вкладок"
+   },
+   "opt_looks_opt6": {
+      "message": "Жирный шрифт"
+   },
+   "opt_looks_opt7": {
+      "message": "Показывать заголовок вкладки вместо URL в подсказках"
+   },
+   "opt_looks_opt8": {
+      "message": "Использовать альтернативную иконку в панели инструментов"
+   },
+   "opt_looks_opt9": {
+      "message": "Расположение времени справа"
+   },
+   "opt_looks_title": {
+      "message": "Вид"
+   },
+   "opt_resetbtn": {
+      "message": "Очистить список"
+   },
+   "opt_resetbtn_popupMsg": {
+      "message": "Очистить список сохранённых вкладок?"
+   },
+   "other_text1": {
+      "message": "Откройте мою DeviantArt страницу, чтобы увидеть другие мои работы!"
+   },
+   "other_title": {
+      "message": "Другие работы"
+   },
+   "perm_reason2a": {
+      "message": "Вкладкам и журналу посещений"
+   },
+   "perm_reason2b": {
+      "message": "ПОЧЕМУ: Требуется для использования API chrome.tabs, выявления статуса вкладки и получения информации"
+   },
+   "perm_text1": {
+      "message": "SimpleUndoClose получает доступ к:"
+   },
+   "perm_text2": {
+      "message": "Вы можете узнать больше о разрешениях \u003Ca href=\"http://developer.chrome.com/extensions/permission_warnings.html#warnings\">здесь\u003C/a>"
+   },
+   "perm_title": {
+      "message": "Запрашиваемые разрешения"
+   },
+   "popup_cancel_tooltip": {
+      "message": "Отмена"
+   },
+   "popup_clrbtn": {
+      "message": "Очистить"
+   },
+   "popup_clrbtn_tooltip": {
+      "message": "Очистить историю вкладок"
+   },
+   "popup_delbtn": {
+      "message": "Удалить"
+   },
+   "popup_delbtn_tooltip": {
+      "message": "Удалить найденные вкладки"
+   },
+   "popup_delete2_tooltip": {
+      "message": "Удалить выбранные вкладки"
+   },
+   "popup_icon_tooltip": {
+      "message": "Домашняя страница"
+   },
+   "popup_noSearchResult": {
+      "message": "Ничего не найдено по запросу"
+   },
+   "popup_noTabsMsg": {
+      "message": "\u003Ccenter>Нет закрытых вкладок\u003C/center>"
+   },
+   "popup_nxtbtn_tooltip": {
+      "message": "Следующая страница"
+   },
+   "popup_open1_btn": {
+      "message": "Открыть"
+   },
+   "popup_open1_tooltip": {
+      "message": "Открыть выбранные вкладки"
+   },
+   "popup_open2_btn": {
+      "message": "новом окне"
+   },
+   "popup_open2_tooltip": {
+      "message": "Открыть выбранные вкладки в новом окне"
+   },
+   "popup_prvbtn_tooltip": {
+      "message": "Предыдущая страница"
+   },
+   "popup_search_tooltip": {
+      "message": "Введите ключевое слово для поиска"
+   },
+   "style1": {
+      "message": "По умолчанию"
+   },
+   "style2": {
+      "message": "Классический"
+   },
+   "style3": {
+      "message": "Без кнопки удаления вкладки"
+   },
+   "tips_tip1": {
+      "message": "Горячие клавиши для восстановления последней закрытой вкладки"
+   },
+   "tips_tip1_line1": {
+      "message": "Откройте страницу настроек расширения, нажмите кнопку 'Изменить', затем введите новую комбинацию клавиш. Комбинация по умолчанию: ALT+X."
+   },
+   "tips_tip2": {
+      "message": "Двойное нажатие на иконке для восстановления последней закрытой вкладки"
+   },
+   "tips_tip2_line1": {
+      "message": "Убедитесь в том, что чекбокс не установлен, затем дважды щелкните на иконку в панели инструментов"
+   },
+   "tips_tip2_line2": {
+      "message": "ПРИМЕЧАНИЕ: Возможно понадобится время для второго нажатия"
+   },
+   "tips_tip3": {
+      "message": "Навигация с помощью клавиатуры во всплывающем окне"
+   },
+   "tips_tip3_line1": {
+      "message": "Вызовите всплывающее окно, затем используйте клавиши со стрелками для навигации"
+   },
+   "tips_tip3_line2": {
+      "message": "Управление: ← , → - переход между страницами; ↑ , ↓ - выбор закрытой вкладки;\u003Cbr>Enter - восстановить вкладку."
+   },
+   "tips_tip4": {
+      "message": "Как назначить сочетания клавиш для расширения:"
+   },
+   "tips_tip4_line1": {
+      "message": "Откройте страницу расширений браузера и нажмите 'Быстрые клавиши'."
+   },
+   "tips_title": {
+      "message": "Советы по использованию"
+   }
+}

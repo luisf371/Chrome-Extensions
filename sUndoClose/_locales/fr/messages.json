@@ -1,0 +1,271 @@
+{
+   "cLog_title": {
+      "message": "Journal des modifications"
+   },
+   "cred_line1": {
+      "message": "Crédits à Sexy Undo Close Tab car sUndoClose en est un fork."
+   },
+   "cred_line2": {
+      "message": "Merci également au plugin Undo Close tab, dont Sexy Undo Close Tab est issu."
+   },
+   "cred_line3": {
+      "message": "Enfin, merci à toutes les autres extensions dont le plugin Undo Close tab peut être dérivé :)"
+   },
+   "cred_line4": {
+      "message": "Crédits supplémentaires à Android Design pour les 3 icônes situées en haut à droite."
+   },
+   "cred_title": {
+      "message": "Crédits"
+   },
+   "extName": {
+      "message": "sUndoClose",
+      "description": "Extension name"
+   },
+   "statusSaved": {
+      "message": "Enregistré",
+      "description": "Toast message when settings are saved"
+   },
+   "ext_font": {
+      "message": "'Segoe UI', Tahoma, sans-serif"
+   },
+   "feed_text1": {
+      "message": "N'hésitez pas à laisser un message concernant des bugs, questions ou suggestions."
+   },
+   "feed_text2": {
+      "message": "Laissez vos commentaires ici !"
+   },
+   "feed_title": {
+      "message": "Commentaires"
+   },
+   "html_topbtn_tooltip1": {
+      "message": "Paramètres"
+   },
+   "html_topbtn_tooltip2": {
+      "message": "Crédits et journal des modifications"
+   },
+   "html_topbtn_tooltip3": {
+      "message": "Informations"
+   },
+   "manifest_description": {
+      "message": "Un simple popup pour restaurer les onglets fermés, juste ça et un peu plus."
+   },
+   "manifest_kbshort1": {
+      "message": "Restaurer le dernier onglet fermé"
+   },
+   "manifest_toolbarbtn_tooltip": {
+      "message": "Restaurer les onglets fermés"
+   },
+   "opera_description": {
+      "message": "Juste un moyen simple de restaurer vos onglets fermés. \\n (Ne restaure pas l'historique de l'onglet) \\n Pour utiliser : \\n - cliquez sur le bouton de la barre d'outils, un popup affichant les onglets fermés apparaît \\n - cliquez sur la page fermée que vous voulez restaurer \\n - navigation au clavier supportée \\n - pour supprimer une entrée, cliquez sur le bouton supprimer dans le coin inférieur droit de la zone bleue \\n - recherchez en tapant dans la barre de recherche. \\n Le journal des modifications est dans les pages d'options de l'extension. \\n Conserve les fonctionnalités de l'extension de base Sexy Undo Close Tab par J K."
+   },
+   "opt_blogbtn_tooltip": {
+      "message": "Visiter le blog"
+   },
+   "opt_func_opt1": {
+      "message": "Rechercher dans :"
+   },
+   "opt_func_opt10": {
+      "message": "Lignes par élément :"
+   },
+   "opt_func_opt11": {
+      "message": "Durée du clic long (s) :"
+   },
+   "opt_func_opt12": {
+      "message": "Fermer le popup avec le clic du milieu"
+   },
+   "opt_func_opt1_tooltip": {
+      "message": "Détermine quels champs sont recherchés dans le popup."
+   },
+   "opt_func_opt2": {
+      "message": "Titre"
+   },
+   "opt_func_opt3": {
+      "message": "URL"
+   },
+   "opt_func_opt4": {
+      "message": "Titre et URL"
+   },
+   "opt_func_opt5": {
+      "message": "Raccourcis"
+   },
+   "opt_func_opt5_tooltip": {
+      "message": "Gérer les raccourcis de l'extension dans les paramètres Chrome."
+   },
+   "opt_func_opt5a": {
+      "message": "Configurer"
+   },
+   "opt_func_opt6": {
+      "message": "Désactiver le double-clic"
+   },
+   "opt_func_opt6b": {
+      "message": "Désactiver le triple-clic"
+   },
+   "opt_func_opt7": {
+      "message": "Conserver l'historique après fermeture du navigateur"
+   },
+   "opt_func_opt8": {
+      "message": "Taille de l'historique :"
+   },
+   "opt_func_opt9": {
+      "message": "Éléments par page :"
+   },
+   "opt_func_title": {
+      "message": "Comportement"
+   },
+   "opt_looks_opt1": {
+      "message": "Afficher le compteur sur l'icône"
+   },
+   "opt_looks_opt10": {
+      "message": "Largeur du popup :"
+   },
+   "opt_looks_opt11": {
+      "message": "Style de liste :"
+   },
+   "opt_looks_opt12": {
+      "message": "Thème :"
+   },
+   "opt_looks_opt13": {
+      "message": "Par défaut du système"
+   },
+   "opt_looks_opt14": {
+      "message": "Clair"
+   },
+   "opt_looks_opt15": {
+      "message": "Sombre"
+   },
+   "opt_looks_opt2": {
+      "message": "Contrôles en haut"
+   },
+   "opt_looks_opt3": {
+      "message": "Afficher la barre de recherche"
+   },
+   "opt_looks_opt4": {
+      "message": "Afficher le bouton 'Effacer'"
+   },
+   "opt_looks_opt5": {
+      "message": "Afficher l'horodatage"
+   },
+   "opt_looks_opt6": {
+      "message": "Utiliser la police en gras"
+   },
+   "opt_looks_opt7": {
+      "message": "Les infobulles affichent le titre au lieu de l'URL"
+   },
+   "opt_looks_opt8": {
+      "message": "Utiliser l'icône alternative"
+   },
+   "opt_looks_opt9": {
+      "message": "Aligner l'horodatage à droite"
+   },
+   "opt_looks_title": {
+      "message": "Apparence"
+   },
+   "opt_resetbtn": {
+      "message": "Effacer l'historique"
+   },
+   "opt_resetbtn_popupMsg": {
+      "message": "Êtes-vous sûr de vouloir effacer l'historique ?"
+   },
+   "opt_removeHistory": {
+      "message": "Supprimer l'entrée de l'historique"
+   },
+   "other_text1": {
+      "message": "Visitez ma page DeviantArt pour voir plus de mes travaux !"
+   },
+   "other_title": {
+      "message": "Autres travaux"
+   },
+   "perm_reason2a": {
+      "message": "Vos onglets et votre activité de navigation"
+   },
+   "perm_reason2b": {
+      "message": "POURQUOI : Nécessaire pour utiliser l'API chrome.tabs afin de détecter l'état des onglets et obtenir leurs détails"
+   },
+   "perm_text1": {
+      "message": "Comme indiqué, sUndoClose peut accéder à :"
+   },
+   "perm_text2": {
+      "message": "Les demandes d'autorisation sont nécessaires pour détecter l'état des onglets et récupérer leurs détails."
+   },
+   "perm_title": {
+      "message": "Raison des demandes d'autorisation"
+   },
+   "popup_cancel_tooltip": {
+      "message": "Annuler"
+   },
+   "popup_clrbtn": {
+      "message": "Effacer"
+   },
+   "popup_clrbtn_tooltip": {
+      "message": "Effacer l'historique des onglets"
+   },
+   "popup_delbtn": {
+      "message": "Supprimer"
+   },
+   "popup_delbtn_tooltip": {
+      "message": "Supprimer les onglets trouvés"
+   },
+   "popup_delete2_tooltip": {
+      "message": "Supprimer les onglets sélectionnés"
+   },
+   "popup_noSearchResult": {
+      "message": "Aucun onglet fermé trouvé contenant"
+   },
+   "popup_noTabsMsg": {
+      "message": "<center>Aucun onglet fermé</center>"
+   },
+   "popup_nxtbtn_tooltip": {
+      "message": "Page suivante"
+   },
+   "popup_open1_btn": {
+      "message": "Ouvrir"
+   },
+   "popup_open1_tooltip": {
+      "message": "Ouvrir la sélection"
+   },
+   "popup_open2_btn": {
+      "message": "Nouvelle fenêtre"
+   },
+   "popup_open2_tooltip": {
+      "message": "Ouvrir la sélection dans une nouvelle fenêtre"
+   },
+   "popup_prvbtn_tooltip": {
+      "message": "Page précédente"
+   },
+   "popup_search_tooltip": {
+      "message": "Entrez un mot-clé de recherche"
+   },
+   "tips_tip1": {
+      "message": "Raccourci pour restaurer le dernier onglet fermé"
+   },
+   "tips_tip1_line1": {
+      "message": "COMMENT : Assurez-vous que l'option est définie puis appuyez sur la combinaison de touches"
+   },
+   "tips_tip2": {
+      "message": "Double-cliquez sur l'icône de la barre d'outils pour restaurer le dernier onglet fermé"
+   },
+   "tips_tip2_line1": {
+      "message": "COMMENT : Assurez-vous que l'option n'est pas cochée puis double-cliquez sur l'icône de la barre d'outils"
+   },
+   "tips_tip2_line2": {
+      "message": "NOTE : Vous devrez peut-être chronométrer votre second clic"
+   },
+   "tips_tip3": {
+      "message": "Navigation au clavier dans le popup de l'extension"
+   },
+   "tips_tip3_line1": {
+      "message": "COMMENT : Ouvrez le popup puis utilisez les touches fléchées pour naviguer"
+   },
+   "tips_tip3_line2": {
+      "message": "CONTRÔLES : ←, → = Page précédente, suivante ; ↑, ↓ = Parcourir la liste des onglets fermés ; Entrée = sélectionner le lien"
+   },
+   "tips_tip4": {
+      "message": "Attribuer un raccourci clavier à l'extension"
+   },
+   "tips_tip4_line1": {
+      "message": "COMMENT : Allez dans les paramètres des Extensions du navigateur, faites défiler vers le bas et cliquez sur \"Raccourcis clavier\""
+   },
+   "tips_title": {
+      "message": "Conseils d'utilisation"
+   }
+}
