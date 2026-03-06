@@ -1,0 +1,288 @@
+{
+   "accessibility": {
+      "message": "アクセシビリティ設定"
+   },
+   "addBookmark": {
+      "message": "このフォルダにブックマークを追加"
+   },
+   "confirmDeleteFolderBookmarks": {
+      "message": "$folderName$ フォルダと $bookmarkCount$ 個のブックマークを削除します。よろしいですか？",
+      "placeholders": {
+         "bookmarkCount": {
+            "content": "$2"
+         },
+         "folderName": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmDeleteFolderSubfolders": {
+      "message": "$folderName$ フォルダと $subFolderCount$ 個のサブフォルダを削除します。よろしいですか？",
+      "placeholders": {
+         "folderName": {
+            "content": "$1"
+         },
+         "subFolderCount": {
+            "content": "$2"
+         }
+      }
+   },
+   "confirmDeleteFolderSubfoldersBookmarks": {
+      "message": "$folderName$ フォルダと $subFolderCount$ 個のサブフォルダと $bookmarkCount$ 個のブックマークを削除します。よろしいですか？",
+      "placeholders": {
+         "bookmarkCount": {
+            "content": "$3"
+         },
+         "folderName": {
+            "content": "$1"
+         },
+         "subFolderCount": {
+            "content": "$2"
+         }
+      }
+   },
+   "confirmOpenBookmarks": {
+      "description": "すべてのブックマークを開く場合の確認メッセージ",
+      "message": "$count$ 個のブックマークを開きます。よろしいですか？",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmOpenBookmarksNewIncognitoWindow": {
+      "description": "すべてのブックマークを新しいシークレットウィンドウで開く場合の確認メッセージ",
+      "message": "$count$ 個のブックマークを新しいシークレットウィンドウで開きます。よろしいですか？",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmOpenBookmarksNewWindow": {
+      "description": "すべてのブックマークを新しいウィンドウで開く場合の確認メッセージ",
+      "message": "$count$ 個のブックマークを新しいウィンドウで開きます。よろしいですか？",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "customIcon": {
+      "message": "カスタムアイコン"
+   },
+   "customIconText": {
+      "message": "アイコンは19×19ピクセルである必要があります。それ以外のサイズは自動的にリサイズされます。"
+   },
+   "customStyles": {
+      "message": "テーマ"
+   },
+   "customStylesDesc": {
+      "message": "テーマをカスタマイズするには、下のベースコードをテキストエリアにコピーして、色の値を調整してください。"
+   },
+   "delete": {
+      "message": "削除"
+   },
+   "deleteEllipsis": {
+      "message": "削除..."
+   },
+   "edit": {
+      "message": "編集..."
+   },
+   "editBookmark": {
+      "message": "ブックマークを編集"
+   },
+   "editFolder": {
+      "message": "フォルダを編集"
+   },
+   "errorOccured": {
+      "message": "エラーが発生しました。"
+   },
+   "extDesc": {
+      "description": "拡張機能の説明",
+      "message": "より整理されたブックマークツリーポップアップ"
+   },
+   "extName": {
+      "description": "拡張機能の名前",
+      "message": "sNeatBookmarks"
+   },
+   "general": {
+      "message": "一般設定"
+   },
+   "ignore": {
+      "message": "無視"
+   },
+   "name": {
+      "description": "ブックマークまたはフォルダの名前",
+      "message": "名前"
+   },
+   "noTitle": {
+      "description": "タイトルのないブックマークやフォルダのタイトル",
+      "message": "（無題）"
+   },
+   "nope": {
+      "message": "いいえ"
+   },
+   "open": {
+      "description": "ブックマークを開くアクション",
+      "message": "開く"
+   },
+   "openBookmarks": {
+      "message": "すべてのブックマークを開く"
+   },
+   "openBookmarksIncognitoWindow": {
+      "message": "すべてのブックマークをシークレットウィンドウで開く"
+   },
+   "openBookmarksNewWindow": {
+      "message": "すべてのブックマークを新しいウィンドウで開く"
+   },
+   "openIncognitoWindow": {
+      "message": "シークレットウィンドウで開く"
+   },
+   "openNewTab": {
+      "message": "新しいタブで開く"
+   },
+   "openNewWindow": {
+      "message": "新しいウィンドウで開く"
+   },
+   "optionClickNewTab": {
+      "message": "左クリックでブックマークを新しいタブで開く"
+   },
+   "optionCloseUnusedFolders": {
+      "message": "一度に1つのフォルダのみを開いた状態にする"
+   },
+   "optionConfirmOpenFolder": {
+      "message": "10個以上のブックマークを開く際に確認ダイアログを表示する"
+   },
+   "optionOpenNewTab": {
+      "message": "中クリック（またはCtrl+クリック）でブックマークをバックグラウンドタブで開く"
+   },
+   "optionPopupStays": {
+      "message": "ブックマークを開いても（左クリックで）ポップアップを開いたままにする"
+   },
+   "optionRememberPrevState": {
+      "message": "前回の状態（スクロール位置と開いているフォルダ）を記憶する"
+   },
+   "optionZoom": {
+      "message": "ズーム"
+   },
+   "options": {
+      "message": "オプション"
+   },
+   "optionsPageTitle": {
+      "message": "sNeatBookmarks オプション"
+   },
+   "popupTheme": {
+      "message": "ポップアップテーマ"
+   },
+   "statusSaved": {
+      "message": "保存しました"
+   },
+   "optionsFooterText1": {
+      "description": "オプションページのフッターテキスト",
+      "message": "開発者へのメール: $neatEmail$",
+      "placeholders": {
+         "neatEmail": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText2": {
+      "message": "$extName$ はオープンソースです！ $neatGithub$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neatGithub": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText3": {
+      "message": "よくある質問: $neatFaq$",
+      "placeholders": {
+         "neatFaq": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText4": {
+      "message": "問題の報告や確認: $neatIssues$",
+      "placeholders": {
+         "neatIssues": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText5": {
+      "message": "カスタムアイコンを見る: $neatIcons$",
+      "placeholders": {
+         "neatIcons": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText6": {
+      "message": "$extName$ の翻訳に協力する: $neatTranslate$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neatTranslate": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText7": {
+      "message": "$linkCheeAun$ による $neatGithub$ をベースにしています",
+      "placeholders": {
+         "linkCheeAun": {
+            "content": "$2"
+         },
+         "neatGithub": {
+            "content": "$1"
+         }
+      }
+   },
+   "parentFolder": {
+      "description": "検索結果リストでブックマークのツールチップに表示される親フォルダ情報",
+      "message": "親フォルダ: \"$folderName$\"",
+      "placeholders": {
+         "folderName": {
+            "content": "$1",
+            "example": "ブックマークバー"
+         }
+      }
+   },
+   "reportError": {
+      "message": "エラーを報告"
+   },
+   "reportedToDeveloper": {
+      "description": "拡張機能でエラーが発生し、開発者に報告されたことを示すメッセージ",
+      "message": "このエラーは開発者に報告されました。"
+   },
+   "reset": {
+      "message": "リセット"
+   },
+   "resetSettings": {
+      "message": "設定をリセット"
+   },
+   "resetText": {
+      "message": "$extName$ のすべてのオプションをデフォルトに戻します。",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         }
+      }
+   },
+   "save": {
+      "message": "保存"
+   },
+   "searchBookmarks": {
+      "description": "検索フィールドのプレースホルダーテキスト",
+      "message": "ブックマークを検索"
+   },
+   "url": {
+      "message": "URL"
+   }
+}

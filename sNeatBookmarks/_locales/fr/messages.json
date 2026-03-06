@@ -1,0 +1,288 @@
+{
+   "accessibility": {
+      "message": "Paramètres d'accessibilité"
+   },
+   "addBookmark": {
+      "message": "Ajouter un signet à ce dossier"
+   },
+   "confirmDeleteFolderBookmarks": {
+      "message": "Êtes-vous sûr de vouloir supprimer le dossier $folderName$ et les $bookmarkCount$ signet(s) qu'il contient ?",
+      "placeholders": {
+         "bookmarkCount": {
+            "content": "$2"
+         },
+         "folderName": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmDeleteFolderSubfolders": {
+      "message": "Êtes-vous sûr de vouloir supprimer le dossier $folderName$ et les $subFolderCount$ sous-dossier(s) qu'il contient ?",
+      "placeholders": {
+         "folderName": {
+            "content": "$1"
+         },
+         "subFolderCount": {
+            "content": "$2"
+         }
+      }
+   },
+   "confirmDeleteFolderSubfoldersBookmarks": {
+      "message": "Êtes-vous sûr de vouloir supprimer le dossier $folderName$, les $subFolderCount$ sous-dossier(s) et les $bookmarkCount$ signet(s) qu'il contient ?",
+      "placeholders": {
+         "bookmarkCount": {
+            "content": "$3"
+         },
+         "folderName": {
+            "content": "$1"
+         },
+         "subFolderCount": {
+            "content": "$2"
+         }
+      }
+   },
+   "confirmOpenBookmarks": {
+      "description": "Message de confirmation pour ouvrir tous les signets.",
+      "message": "Êtes-vous sûr de vouloir ouvrir les $count$ signets ?",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmOpenBookmarksNewIncognitoWindow": {
+      "description": "Message de confirmation pour ouvrir tous les signets dans une nouvelle fenêtre de navigation privée.",
+      "message": "Êtes-vous sûr de vouloir ouvrir les $count$ signets dans une nouvelle fenêtre de navigation privée ?",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmOpenBookmarksNewWindow": {
+      "description": "Message de confirmation pour ouvrir tous les signets dans une nouvelle fenêtre.",
+      "message": "Êtes-vous sûr de vouloir ouvrir les $count$ signets dans une nouvelle fenêtre ?",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "customIcon": {
+      "message": "Icône personnalisée"
+   },
+   "customIconText": {
+      "message": "L'icône doit mesurer 19×19 pixels, sinon elle sera redimensionnée."
+   },
+   "customStyles": {
+      "message": "Thèmes"
+   },
+   "customStylesDesc": {
+      "message": "Pour personnaliser le thème, copiez le code de base ci-dessous dans la zone de texte et ajustez les valeurs des couleurs."
+   },
+   "delete": {
+      "message": "Supprimer"
+   },
+   "deleteEllipsis": {
+      "message": "Supprimer..."
+   },
+   "edit": {
+      "message": "Modifier..."
+   },
+   "editBookmark": {
+      "message": "Modifier le signet"
+   },
+   "editFolder": {
+      "message": "Modifier le dossier"
+   },
+   "errorOccured": {
+      "message": "Oups, une erreur s'est produite."
+   },
+   "extDesc": {
+      "description": "Description de l'extension.",
+      "message": "Un arbre de signets plus élégant en popup."
+   },
+   "extName": {
+      "description": "Nom de l'extension.",
+      "message": "sNeatBookmarks"
+   },
+   "general": {
+      "message": "Paramètres généraux"
+   },
+   "ignore": {
+      "message": "Ignorer"
+   },
+   "name": {
+      "description": "Nom du signet ou du dossier.",
+      "message": "Nom"
+   },
+   "noTitle": {
+      "description": "Titre pour les signets sans titre ni URL http(s) ou les dossiers sans titre.",
+      "message": "(sans titre)"
+   },
+   "nope": {
+      "message": "Non"
+   },
+   "open": {
+      "description": "Action pour ouvrir les signets.",
+      "message": "Ouvrir"
+   },
+   "openBookmarks": {
+      "message": "Ouvrir tous les signets"
+   },
+   "openBookmarksIncognitoWindow": {
+      "message": "Ouvrir tous les signets en navigation privée"
+   },
+   "openBookmarksNewWindow": {
+      "message": "Ouvrir tous les signets dans une nouvelle fenêtre"
+   },
+   "openIncognitoWindow": {
+      "message": "Ouvrir en navigation privée"
+   },
+   "openNewTab": {
+      "message": "Ouvrir dans un nouvel onglet"
+   },
+   "openNewWindow": {
+      "message": "Ouvrir dans une nouvelle fenêtre"
+   },
+   "optionClickNewTab": {
+      "message": "Le clic gauche ouvre les signets dans un nouvel onglet."
+   },
+   "optionCloseUnusedFolders": {
+      "message": "Garder un seul dossier ouvert à la fois."
+   },
+   "optionConfirmOpenFolder": {
+      "message": "Afficher une confirmation lors de l'ouverture de plus de 10 signets."
+   },
+   "optionOpenNewTab": {
+      "message": "Le clic central (ou Ctrl+clic) ouvre les signets dans un onglet en arrière-plan."
+   },
+   "optionPopupStays": {
+      "message": "Le popup reste ouvert lors de l'ouverture des signets (via clic gauche)."
+   },
+   "optionRememberPrevState": {
+      "message": "Le popup mémorise l'état précédent (position de défilement et dossiers ouverts)."
+   },
+   "optionZoom": {
+      "message": "Zoom"
+   },
+   "options": {
+      "message": "Options"
+   },
+   "optionsPageTitle": {
+      "message": "Options de sNeatBookmarks"
+   },
+   "popupTheme": {
+      "message": "Thème du popup"
+   },
+   "statusSaved": {
+      "message": "Enregistré"
+   },
+   "optionsFooterText1": {
+      "description": "Texte de pied de page pour la page Options",
+      "message": "Contactez le développeur à $neatEmail$",
+      "placeholders": {
+         "neatEmail": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText2": {
+      "message": "$extName$ est open source ! $neatGithub$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neatGithub": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText3": {
+      "message": "FAQ : $neatFaq$",
+      "placeholders": {
+         "neatFaq": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText4": {
+      "message": "Voir les problèmes ou en signaler un nouveau : $neatIssues$",
+      "placeholders": {
+         "neatIssues": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText5": {
+      "message": "Parcourir les icônes personnalisées : $neatIcons$",
+      "placeholders": {
+         "neatIcons": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText6": {
+      "message": "Aidez à traduire $extName$ sur $neatTranslate$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neatTranslate": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText7": {
+      "message": "Basé sur $neatGithub$ par $linkCheeAun$",
+      "placeholders": {
+         "linkCheeAun": {
+            "content": "$2"
+         },
+         "neatGithub": {
+            "content": "$1"
+         }
+      }
+   },
+   "parentFolder": {
+      "description": "Information du dossier parent affichée dans l'infobulle des signets dans la liste des résultats de recherche.",
+      "message": "Dossier parent : \"$folderName$\"",
+      "placeholders": {
+         "folderName": {
+            "content": "$1",
+            "example": "Barre de favoris"
+         }
+      }
+   },
+   "reportError": {
+      "message": "Signaler l'erreur"
+   },
+   "reportedToDeveloper": {
+      "description": "Message indiquant qu'une erreur dans l'extension a été signalée au développeur.",
+      "message": "Ceci a été signalé au développeur."
+   },
+   "reset": {
+      "message": "Réinitialiser"
+   },
+   "resetSettings": {
+      "message": "Réinitialiser les paramètres"
+   },
+   "resetText": {
+      "message": "Réinitialiser toutes les options de $extName$ aux valeurs par défaut.",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         }
+      }
+   },
+   "save": {
+      "message": "Enregistrer"
+   },
+   "searchBookmarks": {
+      "description": "Texte indicatif du champ de recherche.",
+      "message": "Rechercher dans les signets"
+   },
+   "url": {
+      "message": "URL"
+   }
+}

@@ -1,0 +1,288 @@
+{
+   "accessibility": {
+      "message": "辅助功能设置"
+   },
+   "addBookmark": {
+      "message": "添加书签到此文件夹"
+   },
+   "confirmDeleteFolderBookmarks": {
+      "message": "您确定要删除文件夹'$folderName$'及其中的 $bookmarkCount$ 个书签吗？",
+      "placeholders": {
+         "bookmarkCount": {
+            "content": "$2"
+         },
+         "folderName": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmDeleteFolderSubfolders": {
+      "message": "您确定要删除文件夹'$folderName$'及其中的 $subFolderCount$ 个子文件夹吗？",
+      "placeholders": {
+         "folderName": {
+            "content": "$1"
+         },
+         "subFolderCount": {
+            "content": "$2"
+         }
+      }
+   },
+   "confirmDeleteFolderSubfoldersBookmarks": {
+      "message": "您确定要删除文件夹'$folderName$'及其中的 $subFolderCount$ 个子文件夹和 $bookmarkCount$ 个书签吗？",
+      "placeholders": {
+         "bookmarkCount": {
+            "content": "$3"
+         },
+         "folderName": {
+            "content": "$1"
+         },
+         "subFolderCount": {
+            "content": "$2"
+         }
+      }
+   },
+   "confirmOpenBookmarks": {
+      "description": "打开所有书签的确认信息",
+      "message": "您确定要打开全部 $count$ 个书签吗？",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmOpenBookmarksNewIncognitoWindow": {
+      "description": "在隐身窗口中打开所有书签的确认信息",
+      "message": "您确定要在新的隐身窗口中打开全部 $count$ 个书签吗？",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmOpenBookmarksNewWindow": {
+      "description": "在新窗口中打开所有书签的确认信息",
+      "message": "您确定要在新窗口中打开全部 $count$ 个书签吗？",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "customIcon": {
+      "message": "自定义图标"
+   },
+   "customIconText": {
+      "message": "图标尺寸必须为 19×19 像素，否则将被自动缩放。"
+   },
+   "customStyles": {
+      "message": "主题"
+   },
+   "customStylesDesc": {
+      "message": "要自定义主题，请将下方的基础代码复制到文本框中，然后调整颜色值。"
+   },
+   "delete": {
+      "message": "删除"
+   },
+   "deleteEllipsis": {
+      "message": "删除..."
+   },
+   "edit": {
+      "message": "编辑..."
+   },
+   "editBookmark": {
+      "message": "编辑书签"
+   },
+   "editFolder": {
+      "message": "编辑文件夹"
+   },
+   "errorOccured": {
+      "message": "糟糕，发生了错误。"
+   },
+   "extDesc": {
+      "description": "扩展描述",
+      "message": "更整洁的书签树弹出窗口。"
+   },
+   "extName": {
+      "description": "扩展名称",
+      "message": "sNeatBookmarks"
+   },
+   "general": {
+      "message": "常规设置"
+   },
+   "ignore": {
+      "message": "忽略"
+   },
+   "name": {
+      "description": "书签或文件夹的名称",
+      "message": "名称"
+   },
+   "noTitle": {
+      "description": "没有标题的书签（无 http(s) URL）或没有标题的文件夹的标题",
+      "message": "（无标题）"
+   },
+   "nope": {
+      "message": "取消"
+   },
+   "open": {
+      "description": "打开书签的操作",
+      "message": "打开"
+   },
+   "openBookmarks": {
+      "message": "打开所有书签"
+   },
+   "openBookmarksIncognitoWindow": {
+      "message": "在隐身窗口中打开所有书签"
+   },
+   "openBookmarksNewWindow": {
+      "message": "在新窗口中打开所有书签"
+   },
+   "openIncognitoWindow": {
+      "message": "在隐身窗口中打开"
+   },
+   "openNewTab": {
+      "message": "在新标签页中打开"
+   },
+   "openNewWindow": {
+      "message": "在新窗口中打开"
+   },
+   "optionClickNewTab": {
+      "message": "左键点击在新标签页中打开书签。"
+   },
+   "optionCloseUnusedFolders": {
+      "message": "一次只保持一个文件夹打开。"
+   },
+   "optionConfirmOpenFolder": {
+      "message": "打开超过 10 个书签时显示确认对话框。"
+   },
+   "optionOpenNewTab": {
+      "message": "中键点击（或 Ctrl+点击）在后台标签页中打开书签。"
+   },
+   "optionPopupStays": {
+      "message": "打开书签时（通过左键点击）弹出窗口保持打开。"
+   },
+   "optionRememberPrevState": {
+      "message": "弹出窗口记住上次状态（滚动位置和打开的文件夹）。"
+   },
+   "optionZoom": {
+      "message": "缩放"
+   },
+   "options": {
+      "message": "选项"
+   },
+   "optionsPageTitle": {
+      "message": "sNeatBookmarks 选项"
+   },
+   "popupTheme": {
+      "message": "弹出窗口主题"
+   },
+   "statusSaved": {
+      "message": "已保存"
+   },
+   "optionsFooterText1": {
+      "description": "选项页面的页脚文本",
+      "message": "联系开发者：$neatEmail$",
+      "placeholders": {
+         "neatEmail": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText2": {
+      "message": "$extName$ 是开源的！$neatGithub$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neatGithub": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText3": {
+      "message": "常见问题：$neatFaq$",
+      "placeholders": {
+         "neatFaq": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText4": {
+      "message": "查看问题或提交新问题：$neatIssues$",
+      "placeholders": {
+         "neatIssues": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText5": {
+      "message": "浏览自定义图标：$neatIcons$",
+      "placeholders": {
+         "neatIcons": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText6": {
+      "message": "帮助翻译 $extName$：$neatTranslate$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neatTranslate": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText7": {
+      "message": "基于 $linkCheeAun$ 的 $neatGithub$",
+      "placeholders": {
+         "linkCheeAun": {
+            "content": "$2"
+         },
+         "neatGithub": {
+            "content": "$1"
+         }
+      }
+   },
+   "parentFolder": {
+      "description": "在搜索结果列表中书签工具提示显示的父文件夹信息",
+      "message": "所在文件夹：'$folderName$'",
+      "placeholders": {
+         "folderName": {
+            "content": "$1",
+            "example": "书签栏"
+         }
+      }
+   },
+   "reportError": {
+      "message": "报告错误"
+   },
+   "reportedToDeveloper": {
+      "description": "表示扩展中发生的错误已报告给开发者的消息",
+      "message": "此问题已报告给开发者。"
+   },
+   "reset": {
+      "message": "重置"
+   },
+   "resetSettings": {
+      "message": "重置设置"
+   },
+   "resetText": {
+      "message": "将所有 $extName$ 选项重置为默认值。",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         }
+      }
+   },
+   "save": {
+      "message": "保存"
+   },
+   "searchBookmarks": {
+      "description": "搜索框的占位符文本",
+      "message": "搜索书签"
+   },
+   "url": {
+      "message": "网址"
+   }
+}

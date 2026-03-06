@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="optionsPageTitle">sNeatBookmarks Options</title>
+  <link rel="stylesheet" href="options.css">
+  <script src="neatools.js"></script>
+</head>
+<body data-theme="dark">
+  <div class="container">
+    <header>
+      <div class="header-title">
+        <img src="icon32.png" width="24" height="24" alt="">
+        <h1><span data-i18n="extName">sNeatBookmarks</span></h1>
+        <span class="version-badge" id="version"></span>
+      </div>
+      <div class="header-actions">
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+          <svg class="icon-sun" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <!-- General Settings Section -->
+      <div class="form-section">
+        <div class="section-header">
+          <h2 data-i18n="general">General Settings</h2>
+        </div>
+        <div class="settings-card">
+          <div class="form-group">
+            <label for="click-new-tab">
+              <span data-i18n="optionClickNewTab">Left-click opens bookmarks in a new tab.</span>
+            </label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="click-new-tab">
+              <label class="slider" for="click-new-tab"></label>
+            </div>
+          </div>
+          
+          <div class="form-group sub-option" id="popup-stay-container">
+            <label for="popup-stay-open">
+              <span data-i18n="optionPopupStays">Popup stays open when opening bookmarks.</span>
+            </label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="popup-stay-open">
+              <label class="slider" for="popup-stay-open"></label>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="open-new-tab-bg">
+              <span data-i18n="optionOpenNewTab">Middle-click opens bookmarks in background tab.</span>
+            </label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="open-new-tab-bg">
+              <label class="slider" for="open-new-tab-bg"></label>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="close-unused-folders">
+              <span data-i18n="optionCloseUnusedFolders">Keep only one folder open at a time.</span>
+            </label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="close-unused-folders">
+              <label class="slider" for="close-unused-folders"></label>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="confirm-open-folder">
+              <span data-i18n="optionConfirmOpenFolder">Confirm when opening more than 10 bookmarks.</span>
+            </label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="confirm-open-folder">
+              <label class="slider" for="confirm-open-folder"></label>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="remember-prev-state">
+              <span data-i18n="optionRememberPrevState">Remember scroll position and open folders.</span>
+            </label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="remember-prev-state">
+              <label class="slider" for="remember-prev-state"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Popup Theme Section -->
+      <div class="form-section">
+        <div class="section-header">
+          <h2 data-i18n="customStyles">Popup Theme</h2>
+        </div>
+        <div class="settings-card">
+          <div class="form-group">
+            <label for="theme-select">
+              <span data-i18n="popupTheme">Popup Theme</span>
+            </label>
+            <select id="theme-select">
+              <option value="light">Light (Default)</option>
+              <option value="light-modern">Light (Modern)</option>
+              <option value="dark">Dark Mode</option>
+              <option value="neon">Neon Night</option>
+              <option value="vintage">Vintage Parchment</option>
+              <option value="custom">Custom CSS</option>
+            </select>
+          </div>
+          
+          <div id="custom-css-container" class="custom-css-section">
+            <div class="css-template-container">
+              <label data-i18n="customStylesDesc">Copy the baseline code below and adjust colors:</label>
+              <pre id="css-template"></pre>
+            </div>
+            <textarea id="userstyle" placeholder="Paste your CSS here..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accessibility Section -->
+      <div class="form-section">
+        <div class="section-header">
+          <h2 data-i18n="accessibility">Accessibility</h2>
+        </div>
+        <div class="settings-card">
+          <div class="form-group">
+            <label for="zoom-input">
+              <span data-i18n="optionZoom">Zoom</span>
+            </label>
+            <div class="zoom-control">
+              <input type="number" id="zoom-input" min="90" max="150" step="10" value="100">
+              <span>%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Icon Section -->
+      <div class="form-section">
+        <div class="section-header">
+          <h2 data-i18n="customIcon">Custom Icon</h2>
+        </div>
+        <div class="settings-card">
+          <div class="form-group icon-upload-group">
+            <div class="icon-preview" id="custom-icon-preview">
+              <img src="icon.png" width="19" height="19" alt="">
+            </div>
+            <div class="icon-upload-controls">
+              <label data-i18n="customIconText">Icon must be 19x19 or it will be resized.</label>
+              <input type="file" id="custom-icon-file" accept="image/*">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reset Section -->
+      <div class="form-section">
+        <div class="section-header">
+          <h2 data-i18n="resetSettings">Reset Settings</h2>
+        </div>
+        <div class="settings-card">
+          <div class="form-group reset-group">
+            <span id="resetText" data-i18n="resetText">Reset all options to default.</span>
+            <button type="button" id="reset-button" class="btn-danger">
+              <span data-i18n="reset">Reset</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <span>Contact: <a href="mailto:extension@tekky.cc">extension@tekky.cc</a></span>
+        <span>Developer: <a href="https://tekky.cc">tekky.cc</a></span>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">
+    <span class="toast-icon"></span>
+    <span class="toast-message" data-i18n="statusSaved">Saved</span>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

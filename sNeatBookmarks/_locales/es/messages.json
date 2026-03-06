@@ -1,0 +1,288 @@
+{
+   "accessibility": {
+      "message": "Ajustes de accesibilidad"
+   },
+   "addBookmark": {
+      "message": "Añadir marcador a esta carpeta"
+   },
+   "confirmDeleteFolderBookmarks": {
+      "message": "¿Está seguro de que quiere eliminar la carpeta $folderName$ y $bookmarkCount$ marcador(es) almacenado(s) en ésta?",
+      "placeholders": {
+         "bookmarkCount": {
+            "content": "$2"
+         },
+         "folderName": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmDeleteFolderSubfolders": {
+      "message": "¿Está seguro de que quiere eliminar la carpeta $folderName$ y $subFolderCount$ subcarpeta(s) almacenada(s) en ésta?",
+      "placeholders": {
+         "folderName": {
+            "content": "$1"
+         },
+         "subFolderCount": {
+            "content": "$2"
+         }
+      }
+   },
+   "confirmDeleteFolderSubfoldersBookmarks": {
+      "message": "¿Está seguro de que quiere eliminar la carpeta $folderName$, $subFolderCount$ subcarpeta(s) y $bookmarkCount$ marcador(es) almacenados en ésta?",
+      "placeholders": {
+         "bookmarkCount": {
+            "content": "$3"
+         },
+         "folderName": {
+            "content": "$1"
+         },
+         "subFolderCount": {
+            "content": "$2"
+         }
+      }
+   },
+   "confirmOpenBookmarks": {
+      "description": "Mensaje de confirmación para abrir todos los marcadores.",
+      "message": "¿Está seguro de que quiere abrir $count$ marcadores?",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmOpenBookmarksNewIncognitoWindow": {
+      "description": "Mensaje de confirmación para abrir todos los marcadores en una nueva ventana de incógnito.",
+      "message": "¿Está seguro de que quiere abrir $count$ marcadores en una nueva ventana de incógnito?",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmOpenBookmarksNewWindow": {
+      "description": "Mensaje de confirmación para abrir todos los marcadores en una nueva ventana.",
+      "message": "¿Está seguro de que quiere abrir $count$ marcadores en una nueva ventana?",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "customIcon": {
+      "message": "Icono personalizado"
+   },
+   "customIconText": {
+      "message": "El icono debe ser de 19×19 o será redimensionado."
+   },
+   "customStyles": {
+      "message": "Temas"
+   },
+   "customStylesDesc": {
+      "message": "Para personalizar el tema, copie el código base de abajo en el área de texto y ajuste los valores de los colores."
+   },
+   "delete": {
+      "message": "Eliminar"
+   },
+   "deleteEllipsis": {
+      "message": "Eliminar..."
+   },
+   "edit": {
+      "message": "Editar..."
+   },
+   "editBookmark": {
+      "message": "Editar marcador"
+   },
+   "editFolder": {
+      "message": "Editar carpeta"
+   },
+   "errorOccured": {
+      "message": "Ups, ha ocurrido un error."
+   },
+   "extDesc": {
+      "description": "Descripción de la extensión.",
+      "message": "Un árbol de marcadores más elegante en ventana emergente."
+   },
+   "extName": {
+      "description": "El nombre de la extensión.",
+      "message": "sNeatBookmarks"
+   },
+   "general": {
+      "message": "Ajustes generales"
+   },
+   "ignore": {
+      "message": "Ignorar"
+   },
+   "name": {
+      "description": "Nombre de marcador o de carpeta.",
+      "message": "Nombre"
+   },
+   "noTitle": {
+      "description": "Título para marcadores sin título con URL sin http(s) o carpetas sin título.",
+      "message": "(sin título)"
+   },
+   "nope": {
+      "message": "No"
+   },
+   "open": {
+      "description": "Acción al abrir marcadores.",
+      "message": "Abrir"
+   },
+   "openBookmarks": {
+      "message": "Abrir todos los marcadores"
+   },
+   "openBookmarksIncognitoWindow": {
+      "message": "Abrir todos los marcadores en ventana de incógnito"
+   },
+   "openBookmarksNewWindow": {
+      "message": "Abrir todos los marcadores en una nueva ventana"
+   },
+   "openIncognitoWindow": {
+      "message": "Abrir en una ventana de incógnito"
+   },
+   "openNewTab": {
+      "message": "Abrir en una nueva pestaña"
+   },
+   "openNewWindow": {
+      "message": "Abrir en una nueva ventana"
+   },
+   "optionClickNewTab": {
+      "message": "Clic izquierdo abre el marcador en una nueva pestaña."
+   },
+   "optionCloseUnusedFolders": {
+      "message": "Mantener solo una carpeta abierta a la vez."
+   },
+   "optionConfirmOpenFolder": {
+      "message": "Mostrar confirmación al abrir más de 10 marcadores."
+   },
+   "optionOpenNewTab": {
+      "message": "Clic central (o Ctrl+clic) abre los marcadores en una pestaña en segundo plano."
+   },
+   "optionPopupStays": {
+      "message": "La ventana emergente permanece abierta al abrir marcadores (con clic izquierdo)."
+   },
+   "optionRememberPrevState": {
+      "message": "La ventana emergente recuerda el estado anterior (posición de desplazamiento y carpetas abiertas)."
+   },
+   "optionZoom": {
+      "message": "Zoom"
+   },
+   "options": {
+      "message": "Opciones"
+   },
+   "optionsPageTitle": {
+      "message": "Opciones de sNeatBookmarks"
+   },
+   "popupTheme": {
+      "message": "Tema de la ventana emergente"
+   },
+   "statusSaved": {
+      "message": "Guardado"
+   },
+   "optionsFooterText1": {
+      "description": "Texto de pie de página para la página de opciones.",
+      "message": "Enviar correo al desarrollador a $neatEmail$",
+      "placeholders": {
+         "neatEmail": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText2": {
+      "message": "¡$extName$ es de código abierto! $neatGithub$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neatGithub": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText3": {
+      "message": "Preguntas frecuentes: $neatFaq$",
+      "placeholders": {
+         "neatFaq": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText4": {
+      "message": "Ver problemas o informar uno nuevo: $neatIssues$",
+      "placeholders": {
+         "neatIssues": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText5": {
+      "message": "Explorar iconos personalizados: $neatIcons$",
+      "placeholders": {
+         "neatIcons": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText6": {
+      "message": "Ayuda a traducir $extName$ en $neatTranslate$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neatTranslate": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText7": {
+      "message": "Basado en $neatGithub$ por $linkCheeAun$",
+      "placeholders": {
+         "linkCheeAun": {
+            "content": "$2"
+         },
+         "neatGithub": {
+            "content": "$1"
+         }
+      }
+   },
+   "parentFolder": {
+      "description": "Información de la carpeta superior mostrada en la descripción del marcador en la lista de resultados de búsqueda.",
+      "message": "Carpeta superior: \"$folderName$\"",
+      "placeholders": {
+         "folderName": {
+            "content": "$1",
+            "example": "Barra de marcadores"
+         }
+      }
+   },
+   "reportError": {
+      "message": "Informar del error"
+   },
+   "reportedToDeveloper": {
+      "description": "Un mensaje para un error ocurrido en la extensión, el desarrollador ha sido informado.",
+      "message": "Esto ha sido informado al desarrollador."
+   },
+   "reset": {
+      "message": "Restablecer"
+   },
+   "resetSettings": {
+      "message": "Restablecer ajustes"
+   },
+   "resetText": {
+      "message": "Restablecer todas las opciones de $extName$ a los valores predeterminados.",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         }
+      }
+   },
+   "save": {
+      "message": "Guardar"
+   },
+   "searchBookmarks": {
+      "description": "Texto contenedor del campo de búsqueda.",
+      "message": "Buscar marcadores"
+   },
+   "url": {
+      "message": "URL"
+   }
+}

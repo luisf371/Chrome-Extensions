@@ -1,0 +1,288 @@
+{
+   "accessibility": {
+      "message": "Accessibility Settings"
+   },
+   "addBookmark": {
+      "message": "Add bookmark to this folder"
+   },
+   "confirmDeleteFolderBookmarks": {
+      "message": "Are you sure you want to delete $folderName$ folder and $bookmarkCount$ bookmark(s) in it?",
+      "placeholders": {
+         "bookmarkCount": {
+            "content": "$2"
+         },
+         "folderName": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmDeleteFolderSubfolders": {
+      "message": "Are you sure you want to delete $folderName$ folder and $subFolderCount$ sub-folder(s) in it?",
+      "placeholders": {
+         "folderName": {
+            "content": "$1"
+         },
+         "subFolderCount": {
+            "content": "$2"
+         }
+      }
+   },
+   "confirmDeleteFolderSubfoldersBookmarks": {
+      "message": "Are you sure you want to delete $folderName$ folder, $subFolderCount$ sub-folder(s) and $bookmarkCount$ bookmark(s) in it?",
+      "placeholders": {
+         "bookmarkCount": {
+            "content": "$3"
+         },
+         "folderName": {
+            "content": "$1"
+         },
+         "subFolderCount": {
+            "content": "$2"
+         }
+      }
+   },
+   "confirmOpenBookmarks": {
+      "description": "Confirmation message for opening all bookmarks.",
+      "message": "Are you sure you want to open all $count$ bookmarks?",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmOpenBookmarksNewIncognitoWindow": {
+      "description": "Confirmation message for opening all bookmarks in a new incognito window.",
+      "message": "Are you sure you want to open all $count$ bookmarks in a new incognito window?",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "confirmOpenBookmarksNewWindow": {
+      "description": "Confirmation message for opening all bookmarks in a new window.",
+      "message": "Are you sure you want to open all $count$ bookmarks in a new window?",
+      "placeholders": {
+         "count": {
+            "content": "$1"
+         }
+      }
+   },
+   "customIcon": {
+      "message": "Custom Icon"
+   },
+   "customIconText": {
+      "message": "The icon must be 19&times;19 or it will be resized."
+   },
+   "customStyles": {
+      "message": "Themes"
+   },
+   "customStylesDesc": {
+      "message": "To customize the theme, copy the baseline code below into the text area and adjust the color values."
+   },
+   "delete": {
+      "message": "Delete"
+   },
+   "deleteEllipsis": {
+      "message": "Delete..."
+   },
+   "edit": {
+      "message": "Edit..."
+   },
+   "editBookmark": {
+      "message": "Edit bookmark"
+   },
+   "editFolder": {
+      "message": "Edit folder"
+   },
+   "errorOccured": {
+      "message": "Oops, an error occurred."
+   },
+   "extDesc": {
+      "description": "The extension description.",
+      "message": "A neat bookmarks tree popup."
+   },
+   "extName": {
+      "description": "The extension name.",
+      "message": "sNeatBookmarks"
+   },
+   "general": {
+      "message": "General Settings"
+   },
+   "ignore": {
+      "message": "Ignore"
+   },
+   "name": {
+      "description": "Name of bookmark or folder.",
+      "message": "Name"
+   },
+   "noTitle": {
+      "description": "The title for untitled bookmarks with no http(s) URL or untitled folders.",
+      "message": "(no title)"
+   },
+   "nope": {
+      "message": "Nope"
+   },
+   "open": {
+      "description": "Action to open bookmarks.",
+      "message": "Open"
+   },
+   "openBookmarks": {
+      "message": "Open All Bookmarks"
+   },
+   "openBookmarksIncognitoWindow": {
+      "message": "Open All Bookmarks in Incognito Window"
+   },
+   "openBookmarksNewWindow": {
+      "message": "Open All Bookmarks in New Window"
+   },
+   "openIncognitoWindow": {
+      "message": "Open in Incognito Window"
+   },
+   "openNewTab": {
+      "message": "Open in New Tab"
+   },
+   "openNewWindow": {
+      "message": "Open in New Window"
+   },
+   "optionClickNewTab": {
+      "message": "Left-click opens bookmarks in a new tab."
+   },
+   "optionCloseUnusedFolders": {
+      "message": "Keep only one folder open at a time."
+   },
+   "optionConfirmOpenFolder": {
+      "message": "Confirmation dialog appears when opening more than 10 bookmarks."
+   },
+   "optionOpenNewTab": {
+      "message": "Middle-click (or Ctrl-click) opens bookmarks in a background tab."
+   },
+   "optionPopupStays": {
+      "message": "Popup stays open when opening bookmarks (via left-click)."
+   },
+   "optionRememberPrevState": {
+      "message": "Popup remembers the previous state (scroll position and open folders)."
+   },
+   "optionZoom": {
+      "message": "Zoom"
+   },
+   "options": {
+      "message": "Options"
+   },
+   "optionsPageTitle": {
+      "message": "sNeatBookmarks Options"
+   },
+   "popupTheme": {
+      "message": "Popup Theme"
+   },
+   "statusSaved": {
+      "message": "Saved"
+   },
+   "optionsFooterText1": {
+      "description": "Footer text for the Options page",
+      "message": "Email the developer at $neatEmail$",
+      "placeholders": {
+         "neatEmail": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText2": {
+      "message": "$extName$ is open source! $neatGithub$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neatGithub": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText3": {
+      "message": "FAQ: $neatFaq$",
+      "placeholders": {
+         "neatFaq": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText4": {
+      "message": "View issues or submit a new one: $neatIssues$",
+      "placeholders": {
+         "neatIssues": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText5": {
+      "message": "Browse custom icons: $neatIcons$",
+      "placeholders": {
+         "neatIcons": {
+            "content": "$1"
+         }
+      }
+   },
+   "optionsFooterText6": {
+      "message": "Help translate $extName$ at $neatTranslate$",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         },
+         "neatTranslate": {
+            "content": "$2"
+         }
+      }
+   },
+   "optionsFooterText7": {
+      "message": "Based on $neatGithub$ by $linkCheeAun$",
+      "placeholders": {
+         "linkCheeAun": {
+            "content": "$2"
+         },
+         "neatGithub": {
+            "content": "$1"
+         }
+      }
+   },
+   "parentFolder": {
+      "description": "Parent folder information displayed in the tooltip of bookmarks in search results list.",
+      "message": "Parent folder: \"$folderName$\"",
+      "placeholders": {
+         "folderName": {
+            "content": "$1",
+            "example": "Bookmarks bar"
+         }
+      }
+   },
+   "reportError": {
+      "message": "Report Error"
+   },
+   "reportedToDeveloper": {
+      "description": "A message for an error occurred in the extension, has been reported to the developer.",
+      "message": "This has been reported to the developer."
+   },
+   "reset": {
+      "message": "Reset"
+   },
+   "resetSettings": {
+      "message": "Reset Settings"
+   },
+   "resetText": {
+      "message": "Reset all $extName$ options to default.",
+      "placeholders": {
+         "extName": {
+            "content": "$1"
+         }
+      }
+   },
+   "save": {
+      "message": "Save"
+   },
+   "searchBookmarks": {
+      "description": "Placeholder text for search field.",
+      "message": "Search Bookmarks"
+   },
+   "url": {
+      "message": "URL"
+   }
+}
