@@ -1,0 +1,429 @@
+{
+  "extName": {
+    "message": "sSummarizer",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "AIを使用したインテリジェントなウェブコンテンツ要約。ウェブページ、YouTube動画、Redditスレッドに対応。",
+    "description": "Extension description"
+  },
+  "optionsTitle": {
+    "message": "設定",
+    "description": "Options page title"
+  },
+  "extSubtitle": {
+    "message": "ウェブコンテンツの要約を開始するためにAPI設定を行ってください",
+    "description": "Subtitle on options page"
+  },
+  "btnSave": {
+    "message": "設定を保存",
+    "description": "Save button text"
+  },
+  "btnTest": {
+    "message": "接続テスト",
+    "description": "Test connection button"
+  },
+  "btnShow": {
+    "message": "表示",
+    "description": "Show password button"
+  },
+  "btnHide": {
+    "message": "非表示",
+    "description": "Hide password button"
+  },
+  "btnUseDefault": {
+    "message": "デフォルトを使用",
+    "description": "Use default button"
+  },
+  "step1": {
+    "message": "ステップ 1",
+    "description": "Step 1 tag"
+  },
+  "step1Title": {
+    "message": "AIプロバイダーに接続",
+    "description": "Step 1 title"
+  },
+  "step1Desc": {
+    "message": "拡張機能がAPIと通信するために必要なエンドポイント、モデル、資格情報を提供してください。",
+    "description": "Step 1 description"
+  },
+  "cardEndpoint": {
+    "message": "エンドポイントとモデル",
+    "description": "Card title"
+  },
+  "labelProvider": {
+    "message": "APIプロバイダー",
+    "description": "Provider label"
+  },
+  "providerOpenai": {
+    "message": "OpenAI (Chat Completions)",
+    "description": "OpenAI option"
+  },
+  "providerAzure": {
+    "message": "Azure OpenAI",
+    "description": "Azure option"
+  },
+  "providerGroq": {
+    "message": "Groq",
+    "description": "Groq option"
+  },
+  "providerPerplexity": {
+    "message": "Perplexity",
+    "description": "Perplexity option"
+  },
+  "providerAnthropic": {
+    "message": "Anthropic Claude",
+    "description": "Anthropic option"
+  },
+  "providerGemini": {
+    "message": "Google Gemini",
+    "description": "Gemini option"
+  },
+  "providerOpenrouter": {
+    "message": "OpenRouter",
+    "description": "OpenRouter option"
+  },
+  "providerGlm": {
+    "message": "GLM (Coding Plan)"
+  },
+  "helpProvider": {
+    "message": "プリセットを選択すると推奨エンドポイントが自動入力されます。OpenAI互換プリセットは自動的に/completionsを追加します。",
+    "description": "Provider help text"
+  },
+  "cardContextMenu": {
+    "message": "コンテキストメニュー",
+    "description": "Context menu card title"
+  },
+  "labelApiUrl": {
+    "message": "OpenAI互換API URL",
+    "description": "API URL label"
+  },
+  "helpApiUrl": {
+    "message": "上記のフィールドは選択したプロバイダープリセットに基づいて自動入力されます。OpenAIスタイルのプロバイダーでは/completionsが自動的に追加されます。",
+    "description": "API URL help text"
+  },
+  "labelModel": {
+    "message": "モデル名",
+    "description": "Model label"
+  },
+  "helpModel": {
+    "message": "要約を処理する正確なモデル識別子を選択してください（例：gpt5.2, claude-4.6-sonnet）。",
+    "description": "Model help text"
+  },
+  "labelApiKey": {
+    "message": "APIキー",
+    "description": "API Key label"
+  },
+  "helpApiKey": {
+    "message": "APIキーはブラウザストレージに保存され、上記エンドポイントでの認証にのみ使用されます。",
+    "description": "API Key help text"
+  },
+  "step2": {
+    "message": "ステップ 2",
+    "description": "Step 2 tag"
+  },
+  "step2Title": {
+    "message": "一般設定",
+    "description": "Step 2 title"
+  },
+  "step2Desc": {
+    "message": "出力の設定と要約の動作を設定します。",
+    "description": "Step 2 description"
+  },
+  "labelSystemPrompt": {
+    "message": "システムプロンプト",
+    "description": "System prompt label"
+  },
+  "helpSystemPrompt": {
+    "message": "AIがコンテンツを要約する方法をカスタマイズします。空欄の場合は組み込みの指示が使用されます。",
+    "description": "System prompt help"
+  },
+  "helpByteLimit": {
+    "message": "バイト制限：",
+    "description": "Byte limit label"
+  },
+  "cardFontSize": {
+    "message": "読みやすさ",
+    "description": "Font size card title"
+  },
+  "labelFontSize": {
+    "message": "デフォルトのフォントサイズ（px）",
+    "description": "Font size label"
+  },
+  "helpFontSize": {
+    "message": "フローティング要約ウィンドウの初期フォントサイズを設定します（許容範囲：8-24px）。",
+    "description": "Font size help text"
+  },
+  "step3": {
+    "message": "ステップ 3",
+    "description": "Step 3 tag"
+  },
+  "step3Title": {
+    "message": "プラットフォーム設定",
+    "description": "Step 3 title"
+  },
+  "step3Desc": {
+    "message": "AIを呼び出す前にYouTubeとRedditから何を収集するかを拡張機能に伝えます。",
+    "description": "Step 3 description"
+  },
+  "badgeWebPages": {
+    "message": "ウェブページ",
+    "description": "Web pages badge"
+  },
+  "descWebPages": {
+    "message": "標準的なウェブページを要約するための一般設定。",
+    "description": "Web pages description"
+  },
+  "labelContextMenu": {
+    "message": "右クリックメニューを有効化",
+    "description": "Context menu label"
+  },
+  "helpContextMenu": {
+    "message": "テキストを選択したときにブラウザのコンテキストメニューに「選択範囲を要約」オプションを追加します。",
+    "description": "Context menu help"
+  },
+  "badgeYouTube": {
+    "message": "YouTube",
+    "description": "YouTube badge"
+  },
+  "descYouTube": {
+    "message": "動画を要約する際の字幕、タイムスタンプ、言語ヒントを制御します。",
+    "description": "YouTube description"
+  },
+  "labelTimestamps": {
+    "message": "タイムスタンプを含める",
+    "description": "Timestamps label"
+  },
+  "helpTimestamps": {
+    "message": "プロンプトにHH:MM:SSマーカーを追加します。各タイムスタンプはトークンを増加させ、APIコストが上がる可能性があります。",
+    "description": "Timestamps help text"
+  },
+  "labelTimestampPrompt": {
+    "message": "タイムスタンプの指示",
+    "description": "Timestamp prompt label"
+  },
+  "helpTimestampPrompt": {
+    "message": "これらの指示はタイムスタンプが有効な場合にのみシステムプロンプトに追加されます。",
+    "description": "Timestamp prompt help"
+  },
+  "labelSubtitleType": {
+    "message": "字幕タイプ",
+    "description": "Subtitle type label"
+  },
+  "subtitleAuto": {
+    "message": "自動（ASR）",
+    "description": "Automatic subtitle option"
+  },
+  "subtitleManual": {
+    "message": "手動（人間が提供）",
+    "description": "Manual subtitle option"
+  },
+  "helpSubtitleType": {
+    "message": "自動字幕と人間の字幕のどちらを優先するかを選択します。自動が利用できない場合は手動にフォールバックします。",
+    "description": "Subtitle type help"
+  },
+  "labelPreferredLang": {
+    "message": "優先言語",
+    "description": "Preferred language label"
+  },
+  "helpPreferredLang": {
+    "message": "単一の言語コードを入力してください（例：en, es, fr）。空欄の場合は英語がデフォルトになります。",
+    "description": "Preferred language help"
+  },
+  "badgeReddit": {
+    "message": "Reddit",
+    "description": "Reddit badge"
+  },
+  "descReddit": {
+    "message": "要約前に読み込むスレッド数とソート方法を選択します。",
+    "description": "Reddit description"
+  },
+  "labelMaxComments": {
+    "message": "最大コメント数",
+    "description": "Max comments label"
+  },
+  "helpMaxComments": {
+    "message": "含めるトップレベルスレッドの最大数（1-100）。",
+    "description": "Max comments help"
+  },
+  "labelReplyDepth": {
+    "message": "返信の深さ",
+    "description": "Reply depth label"
+  },
+  "helpReplyDepth": {
+    "message": "スクレイパーが返信をどこまで辿るかを選択します（0 = トップレベルのみ）。",
+    "description": "Reply depth help"
+  },
+  "labelSortComments": {
+    "message": "コメントの並び順",
+    "description": "Sort comments label"
+  },
+  "sortCurrent": {
+    "message": "現在（表示ページ）",
+    "description": "Current sort option"
+  },
+  "sortBest": {
+    "message": "ベスト",
+    "description": "Best sort option"
+  },
+  "sortTop": {
+    "message": "トップ",
+    "description": "Top sort option"
+  },
+  "sortNew": {
+    "message": "新着",
+    "description": "New sort option"
+  },
+  "helpSortComments": {
+    "message": "現在はページに表示されているものを維持します。他のモードはソートされたスレッドをサイレントに取得します。",
+    "description": "Sort comments help"
+  },
+  "step4": {
+    "message": "ステップ 4",
+    "description": "Step 4 tag"
+  },
+  "step4Title": {
+    "message": "デバッグと検証",
+    "description": "Step 4 title"
+  },
+  "step4Desc": {
+    "message": "ページを離れる前にキャプチャされた内容を確認します。",
+    "description": "Step 4 description"
+  },
+  "labelDebugMode": {
+    "message": "デバッグモードを有効化",
+    "description": "Debug mode label"
+  },
+  "helpDebugMode": {
+    "message": "有効にすると、抽出された生のコンテンツがAIに送信される代わりにウィンドウ内に表示されます。セレクターのトラブルシューティングに最適です。",
+    "description": "Debug mode help"
+  },
+  "infoHowToUse": {
+    "message": "使い方",
+    "description": "How to use title"
+  },
+  "infoStep1": {
+    "message": "上記でAPI設定を行ってください",
+    "description": "Info step 1"
+  },
+  "infoStep2": {
+    "message": "任意のウェブページまたはYouTube動画に移動してください",
+    "description": "Info step 2"
+  },
+  "infoStep3": {
+    "message": "ブラウザのツールバーにある拡張機能アイコンをクリックしてください",
+    "description": "Info step 3"
+  },
+  "infoStep4": {
+    "message": "AIがコンテンツを分析して要約するまでお待ちください",
+    "description": "Info step 4"
+  },
+  "infoStep5": {
+    "message": "フローティングウィンドウで要約を確認してください",
+    "description": "Info step 5"
+  },
+  "infoSupportedTypes": {
+    "message": "対応コンテンツタイプ",
+    "description": "Supported types title"
+  },
+  "typeWebPages": {
+    "message": "通常のウェブページ（表示テキストを抽出）",
+    "description": "Web pages type"
+  },
+  "typeYouTube": {
+    "message": "YouTube動画（自動生成字幕を使用）",
+    "description": "YouTube type"
+  },
+  "typeArticles": {
+    "message": "ニュース記事とブログ投稿",
+    "description": "Articles type"
+  },
+  "typeDocs": {
+    "message": "ドキュメントとガイド",
+    "description": "Docs type"
+  },
+  "footerContact": {
+    "message": "連絡先：",
+    "description": "Footer contact label"
+  },
+  "footerDeveloper": {
+    "message": "開発者：",
+    "description": "Footer developer label"
+  },
+  "statusSaved": {
+    "message": "設定が正常に保存されました！",
+    "description": "Save success message"
+  },
+  "statusError": {
+    "message": "設定の保存中にエラーが発生しました",
+    "description": "Save error message"
+  },
+  "statusTestSuccess": {
+    "message": "API接続成功！",
+    "description": "Test success message"
+  },
+  "stepSlash": {
+    "message": "クイックコマンド",
+    "description": "Short label for slash commands section"
+  },
+  "stepSlashTitle": {
+    "message": "クイックコマンド",
+    "description": "Title for slash commands section"
+  },
+  "stepSlashDesc": {
+    "message": "素早く使えるプロンプト用のスラッシュコマンドを作成します。チャットで / を入力して使用できます。",
+    "description": "Description for slash commands section"
+  },
+  "cardSlashTitle": {
+    "message": "スラッシュコマンド",
+    "description": "Card title for slash commands list"
+  },
+  "btnAddCommand": {
+    "message": "コマンドを追加",
+    "description": "Button to add a new slash command"
+  },
+  "helpSlash": {
+    "message": "コマンド名は英数字のみ（スペース不可）。先頭の「/」は自動で付与されます。",
+    "description": "Help text for slash commands"
+  },
+  "placeholderCommand": {
+    "message": "コマンド",
+    "description": "Placeholder for slash command name"
+  },
+  "placeholderPrompt": {
+    "message": "このコマンドを使用したときに送信されるプロンプトを入力...",
+    "description": "Placeholder for slash command prompt"
+  },
+  "emptySlash": {
+    "message": "まだコマンドはありません。「コマンドを追加」をクリックして作成します。",
+    "description": "Message shown when no slash commands are configured"
+  },
+  "errorMaxSlash": {
+    "message": "コマンドは最大 10 個までです",
+    "description": "Error message when limit is reached"
+  },
+  "placeholderThinking": {
+    "message": "考え中...",
+    "description": "Placeholder when AI is processing"
+  },
+  "placeholderFollowUp": {
+    "message": "追加の質問をする...",
+    "description": "Placeholder for follow-up questions"
+  },
+  "emptyDropdown": {
+    "message": "コマンドが見つかりません。拡張機能のオプションで設定してください。",
+    "description": "Message shown in dropdown when no commands match"
+  },
+  "menuQuickCommands": {
+    "message": "クイックコマンド",
+    "description": "Label for the quick commands parent menu item"
+  },
+  "menuConfigureCommands": {
+    "message": "コマンドを設定...",
+    "description": "Label for the configure commands placeholder item"
+  },
+  "menuSummarizeSelection": {
+    "message": "選択範囲を要約",
+    "description": "Label for the summarize selection context menu item"
+  }
+}

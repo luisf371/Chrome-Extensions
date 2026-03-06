@@ -1,0 +1,429 @@
+{
+  "extName": {
+    "message": "sSummarizer",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "使用AI智能总结网页内容。支持网页、YouTube视频和Reddit帖子。",
+    "description": "Extension description"
+  },
+  "optionsTitle": {
+    "message": "设置",
+    "description": "Options page title"
+  },
+  "extSubtitle": {
+    "message": "配置您的API设置以开始总结网页内容",
+    "description": "Subtitle on options page"
+  },
+  "btnSave": {
+    "message": "保存设置",
+    "description": "Save button text"
+  },
+  "btnTest": {
+    "message": "测试连接",
+    "description": "Test connection button"
+  },
+  "btnShow": {
+    "message": "显示",
+    "description": "Show password button"
+  },
+  "btnHide": {
+    "message": "隐藏",
+    "description": "Hide password button"
+  },
+  "btnUseDefault": {
+    "message": "使用默认",
+    "description": "Use default button"
+  },
+  "step1": {
+    "message": "步骤 1",
+    "description": "Step 1 tag"
+  },
+  "step1Title": {
+    "message": "连接到您的AI提供商",
+    "description": "Step 1 title"
+  },
+  "step1Desc": {
+    "message": "提供扩展程序与API通信所需的端点、模型和凭据。",
+    "description": "Step 1 description"
+  },
+  "cardEndpoint": {
+    "message": "端点和模型",
+    "description": "Card title"
+  },
+  "labelProvider": {
+    "message": "API提供商",
+    "description": "Provider label"
+  },
+  "providerOpenai": {
+    "message": "OpenAI (Chat Completions)",
+    "description": "OpenAI option"
+  },
+  "providerAzure": {
+    "message": "Azure OpenAI",
+    "description": "Azure option"
+  },
+  "providerGroq": {
+    "message": "Groq",
+    "description": "Groq option"
+  },
+  "providerPerplexity": {
+    "message": "Perplexity",
+    "description": "Perplexity option"
+  },
+  "providerAnthropic": {
+    "message": "Anthropic Claude",
+    "description": "Anthropic option"
+  },
+  "providerGemini": {
+    "message": "Google Gemini",
+    "description": "Gemini option"
+  },
+  "providerOpenrouter": {
+    "message": "OpenRouter",
+    "description": "OpenRouter option"
+  },
+  "providerGlm": {
+    "message": "GLM (Coding Plan)"
+  },
+  "helpProvider": {
+    "message": "选择一个预设以自动填充推荐的端点。兼容OpenAI的预设会自动添加/completions。",
+    "description": "Provider help text"
+  },
+  "cardContextMenu": {
+    "message": "右键菜单",
+    "description": "Context menu card title"
+  },
+  "labelApiUrl": {
+    "message": "兼容OpenAI的API URL",
+    "description": "API URL label"
+  },
+  "helpApiUrl": {
+    "message": "上面的字段会根据所选提供商预设自动填充。OpenAI风格的提供商会自动添加/completions。",
+    "description": "API URL help text"
+  },
+  "labelModel": {
+    "message": "模型名称",
+    "description": "Model label"
+  },
+  "helpModel": {
+    "message": "选择将处理摘要的确切模型标识符（例如，gpt5.2, claude-4.6-sonnet）。",
+    "description": "Model help text"
+  },
+  "labelApiKey": {
+    "message": "API密钥",
+    "description": "API Key label"
+  },
+  "helpApiKey": {
+    "message": "您的API密钥保存在浏览器存储中，仅用于向上述端点进行身份验证。",
+    "description": "API Key help text"
+  },
+  "step2": {
+    "message": "步骤 2",
+    "description": "Step 2 tag"
+  },
+  "step2Title": {
+    "message": "常规设置",
+    "description": "Step 2 title"
+  },
+  "step2Desc": {
+    "message": "配置输出偏好和摘要行为。",
+    "description": "Step 2 description"
+  },
+  "labelSystemPrompt": {
+    "message": "系统提示词",
+    "description": "System prompt label"
+  },
+  "helpSystemPrompt": {
+    "message": "自定义AI应如何总结内容。留空则使用内置指令。",
+    "description": "System prompt help"
+  },
+  "helpByteLimit": {
+    "message": "字节限制：",
+    "description": "Byte limit label"
+  },
+  "cardFontSize": {
+    "message": "阅读舒适度",
+    "description": "Font size card title"
+  },
+  "labelFontSize": {
+    "message": "默认字体大小（px）",
+    "description": "Font size label"
+  },
+  "helpFontSize": {
+    "message": "设置浮动摘要窗口的初始字体大小（允许范围：8-24px）。",
+    "description": "Font size help text"
+  },
+  "step3": {
+    "message": "步骤 3",
+    "description": "Step 3 tag"
+  },
+  "step3Title": {
+    "message": "平台偏好",
+    "description": "Step 3 title"
+  },
+  "step3Desc": {
+    "message": "告诉扩展程序在调用AI之前从YouTube和Reddit收集什么内容。",
+    "description": "Step 3 description"
+  },
+  "badgeWebPages": {
+    "message": "网页",
+    "description": "Web pages badge"
+  },
+  "descWebPages": {
+    "message": "总结标准网页的常规设置。",
+    "description": "Web pages description"
+  },
+  "labelContextMenu": {
+    "message": "启用右键菜单",
+    "description": "Context menu label"
+  },
+  "helpContextMenu": {
+    "message": "当选中文本时，在浏览器右键菜单中添加「总结选中内容」选项。",
+    "description": "Context menu help"
+  },
+  "badgeYouTube": {
+    "message": "YouTube",
+    "description": "YouTube badge"
+  },
+  "descYouTube": {
+    "message": "在总结视频时控制字幕、时间戳和语言提示。",
+    "description": "YouTube description"
+  },
+  "labelTimestamps": {
+    "message": "包含时间戳",
+    "description": "Timestamps label"
+  },
+  "helpTimestamps": {
+    "message": "在提示中添加HH:MM:SS标记。每个时间戳会增加token数量，可能会增加API成本。",
+    "description": "Timestamps help text"
+  },
+  "labelTimestampPrompt": {
+    "message": "时间戳说明",
+    "description": "Timestamp prompt label"
+  },
+  "helpTimestampPrompt": {
+    "message": "这些说明仅在启用时间戳时附加到系统提示中。",
+    "description": "Timestamp prompt help"
+  },
+  "labelSubtitleType": {
+    "message": "字幕类型",
+    "description": "Subtitle type label"
+  },
+  "subtitleAuto": {
+    "message": "自动（ASR）",
+    "description": "Automatic subtitle option"
+  },
+  "subtitleManual": {
+    "message": "手动（人工提供）",
+    "description": "Manual subtitle option"
+  },
+  "helpSubtitleType": {
+    "message": "选择是偏好自动转录还是人工字幕。自动模式在不可用时会回退到手动。",
+    "description": "Subtitle type help"
+  },
+  "labelPreferredLang": {
+    "message": "首选语言",
+    "description": "Preferred language label"
+  },
+  "helpPreferredLang": {
+    "message": "提供单一语言代码（例如，en, es, fr）。留空则默认为英语。",
+    "description": "Preferred language help"
+  },
+  "badgeReddit": {
+    "message": "Reddit",
+    "description": "Reddit badge"
+  },
+  "descReddit": {
+    "message": "选择在总结前读取多少帖子以及如何排序。",
+    "description": "Reddit description"
+  },
+  "labelMaxComments": {
+    "message": "最大评论数",
+    "description": "Max comments label"
+  },
+  "helpMaxComments": {
+    "message": "要包含的顶级帖子的最大数量（1-100）。",
+    "description": "Max comments help"
+  },
+  "labelReplyDepth": {
+    "message": "回复深度",
+    "description": "Reply depth label"
+  },
+  "helpReplyDepth": {
+    "message": "选择爬虫应该遍历回复的深度（0 = 仅顶级）。",
+    "description": "Reply depth help"
+  },
+  "labelSortComments": {
+    "message": "评论排序方式",
+    "description": "Sort comments label"
+  },
+  "sortCurrent": {
+    "message": "当前（可见页面）",
+    "description": "Current sort option"
+  },
+  "sortBest": {
+    "message": "最佳",
+    "description": "Best sort option"
+  },
+  "sortTop": {
+    "message": "热门",
+    "description": "Top sort option"
+  },
+  "sortNew": {
+    "message": "最新",
+    "description": "New sort option"
+  },
+  "helpSortComments": {
+    "message": "「当前」保持页面上可见的内容。其他模式会静默获取排序后的帖子。",
+    "description": "Sort comments help"
+  },
+  "step4": {
+    "message": "步骤 4",
+    "description": "Step 4 tag"
+  },
+  "step4Title": {
+    "message": "调试和验证",
+    "description": "Step 4 title"
+  },
+  "step4Desc": {
+    "message": "在内容离开页面之前检查捕获的内容。",
+    "description": "Step 4 description"
+  },
+  "labelDebugMode": {
+    "message": "启用调试模式",
+    "description": "Debug mode label"
+  },
+  "helpDebugMode": {
+    "message": "启用后，提取的原始内容将显示在窗口中而不是发送给AI。非常适合排查选择器问题。",
+    "description": "Debug mode help"
+  },
+  "infoHowToUse": {
+    "message": "使用方法",
+    "description": "How to use title"
+  },
+  "infoStep1": {
+    "message": "在上方配置您的API设置",
+    "description": "Info step 1"
+  },
+  "infoStep2": {
+    "message": "导航到任何网页或YouTube视频",
+    "description": "Info step 2"
+  },
+  "infoStep3": {
+    "message": "点击浏览器工具栏中的扩展程序图标",
+    "description": "Info step 3"
+  },
+  "infoStep4": {
+    "message": "等待AI分析和总结内容",
+    "description": "Info step 4"
+  },
+  "infoStep5": {
+    "message": "在浮动窗口中查看摘要",
+    "description": "Info step 5"
+  },
+  "infoSupportedTypes": {
+    "message": "支持的内容类型",
+    "description": "Supported types title"
+  },
+  "typeWebPages": {
+    "message": "普通网页（提取可见文本）",
+    "description": "Web pages type"
+  },
+  "typeYouTube": {
+    "message": "YouTube视频（使用自动生成的字幕）",
+    "description": "YouTube type"
+  },
+  "typeArticles": {
+    "message": "新闻文章和博客帖子",
+    "description": "Articles type"
+  },
+  "typeDocs": {
+    "message": "文档和指南",
+    "description": "Docs type"
+  },
+  "footerContact": {
+    "message": "联系方式：",
+    "description": "Footer contact label"
+  },
+  "footerDeveloper": {
+    "message": "开发者：",
+    "description": "Footer developer label"
+  },
+  "statusSaved": {
+    "message": "设置保存成功！",
+    "description": "Save success message"
+  },
+  "statusError": {
+    "message": "保存设置时出错",
+    "description": "Save error message"
+  },
+  "statusTestSuccess": {
+    "message": "API连接成功！",
+    "description": "Test success message"
+  },
+  "stepSlash": {
+    "message": "快捷命令",
+    "description": "Short label for slash commands section"
+  },
+  "stepSlashTitle": {
+    "message": "快捷命令",
+    "description": "Title for slash commands section"
+  },
+  "stepSlashDesc": {
+    "message": "创建斜杠命令以快速发送提示。在聊天中输入 / 即可使用。",
+    "description": "Description for slash commands section"
+  },
+  "cardSlashTitle": {
+    "message": "斜杠命令",
+    "description": "Card title for slash commands list"
+  },
+  "btnAddCommand": {
+    "message": "添加命令",
+    "description": "Button to add a new slash command"
+  },
+  "helpSlash": {
+    "message": "命令只能包含字母和数字（不含空格）。会自动添加「/」前缀。",
+    "description": "Help text for slash commands"
+  },
+  "placeholderCommand": {
+    "message": "命令",
+    "description": "Placeholder for slash command name"
+  },
+  "placeholderPrompt": {
+    "message": "输入使用此命令时将发送的提示...",
+    "description": "Placeholder for slash command prompt"
+  },
+  "emptySlash": {
+    "message": "还没有命令。点击「添加命令」创建一个。",
+    "description": "Message shown when no slash commands are configured"
+  },
+  "errorMaxSlash": {
+    "message": "最多允许 10 个命令",
+    "description": "Error message when limit is reached"
+  },
+  "placeholderThinking": {
+    "message": "思考中...",
+    "description": "Placeholder when AI is processing"
+  },
+  "placeholderFollowUp": {
+    "message": "提出后续问题...",
+    "description": "Placeholder for follow-up questions"
+  },
+  "emptyDropdown": {
+    "message": "未找到命令。请在扩展程序选项中配置。",
+    "description": "Message shown in dropdown when no commands match"
+  },
+  "menuQuickCommands": {
+    "message": "快捷命令",
+    "description": "Label for the quick commands parent menu item"
+  },
+  "menuConfigureCommands": {
+    "message": "配置命令...",
+    "description": "Label for the configure commands placeholder item"
+  },
+  "menuSummarizeSelection": {
+    "message": "总结选中内容",
+    "description": "Label for the summarize selection context menu item"
+  }
+}

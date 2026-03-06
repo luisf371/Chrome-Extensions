@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="optionsTitle">AI Summarizer - Settings</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body data-theme="dark">
+  <div class="container">
+    <div class="form-actions">
+      <button type="submit" form="options-form" class="save-button">
+        <span class="button-text" data-i18n="btnSave">Save Settings</span>
+      </button>
+      <button type="button" id="test-connection" class="test-button" data-i18n="btnTest">
+        Test Connection
+      </button>
+    </div>
+
+    <header>
+      <div class="header-content">
+        <h1 data-i18n="extName">AI Summarizer Settings</h1>
+        <p class="subtitle" data-i18n="extSubtitle">Configure your API settings to start summarizing web content</p>
+      </div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <main>
+      <form id="options-form" class="settings-form">
+        <section class="form-section">
+          <div class="section-header">
+            <span class="section-tag" data-i18n="step1">Step 1</span>
+            <div>
+              <h2 data-i18n="step1Title">Connect to your AI provider</h2>
+              <p class="section-description" data-i18n="step1Desc">Provide the endpoint, model, and credentials needed
+                for the extension to talk to your API.</p>
+            </div>
+          </div>
+          <div class="section-grid">
+            <article class="settings-card">
+              <h3 data-i18n="cardEndpoint">Endpoint & Model</h3>
+              <div class="form-group">
+                <label for="api-provider" class="required" data-i18n="labelProvider">API Provider</label>
+                <select id="api-provider" name="api-provider">
+                  <option value="openai" selected data-i18n="providerOpenai">OpenAI (Chat Completions)</option>
+                  <option value="azure" data-i18n="providerAzure">Azure OpenAI</option>
+                  <option value="groq" data-i18n="providerGroq">Groq</option>
+                  <option value="perplexity" data-i18n="providerPerplexity">Perplexity</option>
+                  <option value="anthropic" data-i18n="providerAnthropic">Anthropic Claude</option>
+                  <option value="gemini" data-i18n="providerGemini">Google Gemini</option>
+                  <option value="openrouter" data-i18n="providerOpenrouter">OpenRouter</option>
+                  <option value="glm" data-i18n="providerGlm">GLM (Coding Plan)</option>
+                </select>
+                <small class="help-text" data-i18n="helpProvider">Select a preset to auto-fill the recommended endpoint.
+                  OpenAI-compatible presets automatically append /completions.</small>
+              </div>
+              <div class="form-group">
+                <label for="api-url" class="required" data-i18n="labelApiUrl">OpenAI-Compatible API URL</label>
+                <input type="url" id="api-url" name="api-url" placeholder="https://api.openai.com/v1/chat/completions"
+                  required autocomplete="off">
+                <small class="help-text" data-i18n="helpApiUrl">The field above is auto-filled from the selected
+                  provider preset. OpenAI-style providers automatically append /completions.</small>
+              </div>
+              <div id="azure-config-fields" hidden>
+                <div class="form-group">
+                  <label for="azure-resource" class="required">Azure Resource Name</label>
+                  <input type="text" id="azure-resource" name="azure-resource" placeholder="your-resource"
+                    autocomplete="off">
+                  <small class="help-text">Enter the Azure OpenAI resource name only (without `https://` or
+                    `.openai.azure.com`).</small>
+                </div>
+                <div class="form-group">
+                  <label for="azure-deployment" class="required">Azure Deployment Name</label>
+                  <input type="text" id="azure-deployment" name="azure-deployment" placeholder="gpt5.2"
+                    autocomplete="off">
+                  <small class="help-text">The deployment name configured in your Azure OpenAI resource.</small>
+                </div>
+                <div class="form-group">
+                  <label for="azure-api-version">Azure API Version</label>
+                  <input type="text" id="azure-api-version" name="azure-api-version" placeholder="2024-02-15-preview"
+                    autocomplete="off">
+                  <small class="help-text">Optional. Leave blank to use the extension default API version.</small>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="model" class="required" data-i18n="labelModel">Model Name</label>
+                <input type="text" id="model" name="model" placeholder="gpt5.2" required autocomplete="off">
+                <small class="help-text" data-i18n="helpModel">Pick the exact model identifier that should process
+                  summaries (e.g., gpt5.2, claude-4.6-sonnet).</small>
+              </div>
+              <div class="form-group">
+                <label for="api-key" class="required" data-i18n="labelApiKey">API Key</label>
+                <div class="password-input-wrapper">
+                  <input type="password" id="api-key" name="api-key" placeholder="sk-..." required
+                    autocomplete="new-password">
+                  <button type="button" id="toggle-password" class="toggle-password" title="Show/Hide API Key"
+                    data-i18n="btnShow">
+                    Show
+                  </button>
+                </div>
+                <small class="help-text" data-i18n="helpApiKey">Your API key stays in browser storage and is used only
+                  to authenticate with the endpoint above.</small>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-header">
+            <span class="section-tag" data-i18n="step2">Step 2</span>
+            <div>
+              <h2 data-i18n="step2Title">General Settings</h2>
+              <p class="section-description" data-i18n="step2Desc">Configure output preferences and summary behavior.
+              </p>
+            </div>
+          </div>
+          <div class="section-grid">
+            <article class="settings-card full-span">
+              <div class="label-group">
+                <label for="system-prompt" data-i18n="labelSystemPrompt">System Prompt</label>
+                <button type="button" id="default-prompt-btn" class="text-button" data-i18n="btnUseDefault">Use
+                  Default</button>
+              </div>
+              <textarea id="system-prompt" name="system-prompt" rows="6"
+                placeholder="You are a helpful assistant that summarizes content clearly and concisely. Focus on the main points and key takeaways."></textarea>
+              <small class="help-text">
+                <span data-i18n="helpSystemPrompt">Customize how the AI should summarize content. Leave blank for the
+                  built-in instructions.</span>
+                <br>
+                <strong data-i18n="helpByteLimit">Byte limit:</strong> <span id="prompt-counter">0</span>/8000
+              </small>
+            </article>
+
+            <article class="settings-card">
+              <h3 data-i18n="cardFontSize">Reading comfort</h3>
+              <div class="form-group">
+                <label for="default-font-size" data-i18n="labelFontSize">Default Font Size (px)</label>
+                <input type="number" id="default-font-size" name="default-font-size" min="8" max="24" placeholder="14">
+                <small class="help-text" data-i18n="helpFontSize">Set the initial font size for the floating summary
+                  window (allowed range: 8-24px).</small>
+              </div>
+            </article>
+
+            <article class="settings-card">
+              <h3 data-i18n="cardContextMenu">Context Menu</h3>
+              <div class="form-group form-group-toggle">
+                <label for="enable-context-menu" data-i18n="labelContextMenu">Enable Right-Click</label>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="enable-context-menu" name="enable-context-menu">
+                  <label class="slider" for="enable-context-menu"></label>
+                </div>
+              </div>
+              <small class="help-text" data-i18n="helpContextMenu">Show "Summarize selection" in browser context menu
+                when text is highlighted.</small>
+            </article>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-header">
+            <span class="section-tag" data-i18n="stepSlash">Quick /slash Selection</span>
+            <div>
+              <h2 data-i18n="stepSlashTitle">Quick /slash Selection</h2>
+              <p class="section-description" data-i18n="stepSlashDesc">Create slash commands for quick prompts. Type /
+                in the chat to use them.</p>
+            </div>
+          </div>
+          <div class="section-grid single-column">
+            <article class="settings-card full-span">
+              <div class="slash-commands-header">
+                <h3 data-i18n="cardSlashTitle">Slash Commands</h3>
+                <span class="command-count"><span id="command-count">0</span>/10</span>
+              </div>
+              <div id="slash-commands-list" class="slash-commands-list">
+                <!-- Commands will be dynamically added here -->
+              </div>
+              <button type="button" id="add-command-btn" class="add-command-btn" title="Add new command">
+                <span class="add-icon">+</span>
+                <span data-i18n="btnAddCommand">Add Command</span>
+              </button>
+              <small class="help-text" data-i18n="helpSlash">Commands must be alphanumeric (no spaces). The "/" prefix
+                is added automatically.</small>
+            </article>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-header">
+            <span class="section-tag" data-i18n="step3">Step 3</span>
+            <div>
+              <h2 data-i18n="step3Title">Platform preferences</h2>
+              <p class="section-description" data-i18n="step3Desc">Tell the extension what to collect from YouTube and
+                Reddit before it calls the AI.</p>
+            </div>
+          </div>
+          <div class="section-grid single-column">
+            <article class="settings-card platform-card full-span">
+              <div class="platform-badge" data-i18n="badgeYouTube">YouTube</div>
+              <p class="card-description" data-i18n="descYouTube">Control transcripts, timestamps, and language hints
+                while summarizing videos.</p>
+
+              <div class="form-group form-group-toggle">
+                <div class="toggle-header">
+                  <label for="include-timestamps" data-i18n="labelTimestamps">Include Timestamps</label>
+                  <small class="help-text inline-help" data-i18n="helpTimestamps">Adds HH:MM:SS markers to the prompt.
+                    Each timestamp increases tokens and may raise API cost.</small>
+                </div>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="include-timestamps" name="include-timestamps">
+                  <label class="slider" for="include-timestamps"></label>
+                </div>
+              </div>
+
+              <div class="form-group is-disabled" id="timestamp-prompt-container">
+                <div class="label-group">
+                  <label for="timestamp-prompt" data-i18n="labelTimestampPrompt">Timestamp Instructions</label>
+                  <button type="button" id="default-timestamp-prompt-btn" class="text-button"
+                    data-i18n="btnUseDefault">Use Default</button>
+                </div>
+                <textarea id="timestamp-prompt" name="timestamp-prompt" rows="5"
+                  placeholder="Instructions for handling timestamps..." disabled></textarea>
+                <small class="help-text" data-i18n="helpTimestampPrompt">
+                  These instructions are appended to the system prompt only when timestamps are enabled.
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label for="subtitle-priority" data-i18n="labelSubtitleType">Subtitle Type</label>
+                <select id="subtitle-priority" name="subtitle-priority">
+                  <option value="auto" selected data-i18n="subtitleAuto">Automatic (ASR)</option>
+                  <option value="manual" data-i18n="subtitleManual">Manual (human-provided)</option>
+                </select>
+                <small class="help-text" data-i18n="helpSubtitleType">Choose whether to prefer automatic transcripts or
+                  human captions. Automatic falls back when unavailable.</small>
+              </div>
+
+              <div class="form-group">
+                <label for="preferred-language" data-i18n="labelPreferredLang">Preferred Language</label>
+                <input type="text" id="preferred-language" name="preferred-language" placeholder="en"
+                  autocomplete="off">
+                <small class="help-text" data-i18n="helpPreferredLang">Provide a single language code (e.g., en, es,
+                  fr). Defaults to English if left blank.</small>
+              </div>
+            </article>
+
+            <article class="settings-card platform-card full-span">
+              <div class="platform-badge" data-i18n="badgeReddit">Reddit</div>
+              <p class="card-description" data-i18n="descReddit">Choose how many threads to read and how they are sorted
+                before summarizing.</p>
+              <div class="form-group">
+                <label for="reddit-max-comments" data-i18n="labelMaxComments">Max Comments</label>
+                <input type="number" id="reddit-max-comments" name="reddit-max-comments" min="1" max="10000"
+                  placeholder="100">
+                <small class="help-text" data-i18n="helpMaxComments">Maximum number of top-level threads to include
+                  (1-10,000). Note: Reddit lazy-loads comments; expand threads manually before summarizing for large
+                  values.</small>
+              </div>
+
+              <div class="form-group">
+                <div class="label-group label-group-inline">
+                  <label for="reddit-depth" data-i18n="labelReplyDepth">Include Reply Depth</label>
+                  <small class="help-text inline-help">(<span aria-hidden="true" style="color: #facc15;">▲</span>
+                    Replies do not count toward Max Comments.)</small>
+                </div>
+                <input type="number" id="reddit-depth" name="reddit-depth" min="0" max="10" placeholder="3">
+                <small class="help-text" data-i18n="helpReplyDepth">Pick how deep the scraper should traverse replies (0
+                  = top level only).</small>
+              </div>
+
+              <div class="form-group">
+                <label for="reddit-sort" data-i18n="labelSortComments">Sort Comments By</label>
+                <select id="reddit-sort" name="reddit-sort">
+                  <option value="current" selected data-i18n="sortCurrent">Current (Visible Page)</option>
+                  <option value="best" data-i18n="sortBest">Best</option>
+                  <option value="top" data-i18n="sortTop">Top</option>
+                  <option value="new" data-i18n="sortNew">New</option>
+                </select>
+                <small class="help-text" data-i18n="helpSortComments">Current keeps whatever is visible on-page. Other
+                  modes fetch sorted threads silently.</small>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-header">
+            <span class="section-tag" data-i18n="step4">Step 4</span>
+            <div>
+              <h2 data-i18n="step4Title">Debug & verification</h2>
+              <p class="section-description" data-i18n="step4Desc">Inspect what is being captured before it ever leaves
+                the page.</p>
+            </div>
+          </div>
+          <div class="section-grid">
+            <article class="settings-card highlight-card">
+              <div class="form-group form-group-toggle">
+                <div class="toggle-header">
+                  <label for="enable-debug-mode" data-i18n="labelDebugMode">Enable Debug Mode</label>
+                  <small class="help-text inline-help" data-i18n="helpDebugMode">When enabled, the extracted raw content
+                    is shown inside the window instead of sending it to the AI. Perfect for troubleshooting
+                    selectors.</small>
+                </div>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="enable-debug-mode" name="enable-debug-mode">
+                  <label class="slider" for="enable-debug-mode"></label>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+      </form>
+
+      <div class="info-section">
+        <h3 data-i18n="infoHowToUse">How to Use</h3>
+        <ol>
+          <li data-i18n="infoStep1">Configure your API settings above</li>
+          <li data-i18n="infoStep2">Navigate to any webpage or YouTube video</li>
+          <li data-i18n="infoStep3">Click the extension icon in your browser toolbar</li>
+          <li data-i18n="infoStep4">Wait for the AI to analyze and summarize the content</li>
+          <li data-i18n="infoStep5">View the summary in the floating window</li>
+        </ol>
+
+        <div class="supported-sites">
+          <h4 data-i18n="infoSupportedTypes">Supported Content Types</h4>
+          <ul>
+            <li data-i18n="typeWebPages">Regular web pages (extracts visible text)</li>
+            <li data-i18n="typeYouTube">YouTube videos (uses auto-generated transcripts)</li>
+            <li data-i18n="typeArticles">News articles and blog posts</li>
+            <li data-i18n="typeDocs">Documentation and guides</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span data-i18n="footerContact">Contact:</span> <a href="mailto:extension@tekky.cc">extension@tekky.cc</a>
+        <span data-i18n="footerDeveloper">Developer:</span> <a href="https://tekky.cc">tekky.cc</a>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast">
+    <span class="toast-icon"></span>
+    <span class="toast-message"></span>
+  </div>
+
+  <script src="shared/azure-utils.js"></script>
+  <script src="options.js"></script>
+</body>
+
+</html>

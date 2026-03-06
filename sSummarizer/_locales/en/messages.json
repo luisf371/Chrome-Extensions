@@ -1,0 +1,429 @@
+{
+  "extName": {
+    "message": "sSummarizer",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Intelligent web content summarization using AI. Supports web pages, YouTube videos, and Reddit threads.",
+    "description": "Extension description"
+  },
+  "optionsTitle": {
+    "message": "Settings",
+    "description": "Options page title"
+  },
+  "extSubtitle": {
+    "message": "Configure your API settings to start summarizing web content",
+    "description": "Subtitle on options page"
+  },
+  "btnSave": {
+    "message": "Save Settings",
+    "description": "Save button text"
+  },
+  "btnTest": {
+    "message": "Test Connection",
+    "description": "Test connection button"
+  },
+  "btnShow": {
+    "message": "Show",
+    "description": "Show password button"
+  },
+  "btnHide": {
+    "message": "Hide",
+    "description": "Hide password button"
+  },
+  "btnUseDefault": {
+    "message": "Use Default",
+    "description": "Use default button"
+  },
+  "step1": {
+    "message": "Step 1",
+    "description": "Step 1 tag"
+  },
+  "step1Title": {
+    "message": "Connect to your AI provider",
+    "description": "Step 1 title"
+  },
+  "step1Desc": {
+    "message": "Provide the endpoint, model, and credentials needed for the extension to talk to your API.",
+    "description": "Step 1 description"
+  },
+  "cardEndpoint": {
+    "message": "Endpoint & Model",
+    "description": "Card title"
+  },
+  "labelProvider": {
+    "message": "API Provider",
+    "description": "Provider label"
+  },
+  "providerOpenai": {
+    "message": "OpenAI (Chat Completions)",
+    "description": "OpenAI option"
+  },
+  "providerAzure": {
+    "message": "Azure OpenAI",
+    "description": "Azure option"
+  },
+  "providerGroq": {
+    "message": "Groq",
+    "description": "Groq option"
+  },
+  "providerPerplexity": {
+    "message": "Perplexity",
+    "description": "Perplexity option"
+  },
+  "providerAnthropic": {
+    "message": "Anthropic Claude",
+    "description": "Anthropic option"
+  },
+  "providerGemini": {
+    "message": "Google Gemini",
+    "description": "Gemini option"
+  },
+  "providerOpenrouter": {
+    "message": "OpenRouter",
+    "description": "OpenRouter option"
+  },
+  "providerGlm": {
+    "message": "GLM (Coding Plan)"
+  },
+  "helpProvider": {
+    "message": "Select a preset to auto-fill the recommended endpoint. OpenAI-compatible presets automatically append /completions.",
+    "description": "Provider help text"
+  },
+  "cardContextMenu": {
+    "message": "Context Menu",
+    "description": "Context menu card title"
+  },
+  "labelApiUrl": {
+    "message": "OpenAI-Compatible API URL",
+    "description": "API URL label"
+  },
+  "helpApiUrl": {
+    "message": "The field above is auto-filled from the selected provider preset. OpenAI-style providers automatically append /completions.",
+    "description": "API URL help text"
+  },
+  "labelModel": {
+    "message": "Model Name",
+    "description": "Model label"
+  },
+  "helpModel": {
+    "message": "Pick the exact model identifier that should process summaries (e.g., gpt5.2, claude-4.6-sonnet).",
+    "description": "Model help text"
+  },
+  "labelApiKey": {
+    "message": "API Key",
+    "description": "API Key label"
+  },
+  "helpApiKey": {
+    "message": "Your API key stays in browser storage and is used only to authenticate with the endpoint above.",
+    "description": "API Key help text"
+  },
+  "step2": {
+    "message": "Step 2",
+    "description": "Step 2 tag"
+  },
+  "step2Title": {
+    "message": "General Settings",
+    "description": "Step 2 title"
+  },
+  "step2Desc": {
+    "message": "Configure output preferences and summary behavior.",
+    "description": "Step 2 description"
+  },
+  "labelSystemPrompt": {
+    "message": "System Prompt",
+    "description": "System prompt label"
+  },
+  "helpSystemPrompt": {
+    "message": "Customize how the AI should summarize content. Leave blank for the built-in instructions.",
+    "description": "System prompt help"
+  },
+  "helpByteLimit": {
+    "message": "Byte limit:",
+    "description": "Byte limit label"
+  },
+  "cardFontSize": {
+    "message": "Reading comfort",
+    "description": "Font size card title"
+  },
+  "labelFontSize": {
+    "message": "Default Font Size (px)",
+    "description": "Font size label"
+  },
+  "helpFontSize": {
+    "message": "Set the initial font size for the floating summary window (allowed range: 8-24px).",
+    "description": "Font size help text"
+  },
+  "step3": {
+    "message": "Step 3",
+    "description": "Step 3 tag"
+  },
+  "step3Title": {
+    "message": "Platform preferences",
+    "description": "Step 3 title"
+  },
+  "step3Desc": {
+    "message": "Tell the extension what to collect from YouTube and Reddit before it calls the AI.",
+    "description": "Step 3 description"
+  },
+  "badgeWebPages": {
+    "message": "Web Pages",
+    "description": "Web pages badge"
+  },
+  "descWebPages": {
+    "message": "General settings for summarizing standard web pages.",
+    "description": "Web pages description"
+  },
+  "labelContextMenu": {
+    "message": "Enable Right-Click Menu",
+    "description": "Context menu label"
+  },
+  "helpContextMenu": {
+    "message": "Adds a \"Summarize selection\" option to the browser context menu when text is highlighted.",
+    "description": "Context menu help"
+  },
+  "badgeYouTube": {
+    "message": "YouTube",
+    "description": "YouTube badge"
+  },
+  "descYouTube": {
+    "message": "Control transcripts, timestamps, and language hints while summarizing videos.",
+    "description": "YouTube description"
+  },
+  "labelTimestamps": {
+    "message": "Include Timestamps",
+    "description": "Timestamps label"
+  },
+  "helpTimestamps": {
+    "message": "Adds HH:MM:SS markers to the prompt. Each timestamp increases tokens and may raise API cost.",
+    "description": "Timestamps help text"
+  },
+  "labelTimestampPrompt": {
+    "message": "Timestamp Instructions",
+    "description": "Timestamp prompt label"
+  },
+  "helpTimestampPrompt": {
+    "message": "These instructions are appended to the system prompt only when timestamps are enabled.",
+    "description": "Timestamp prompt help"
+  },
+  "labelSubtitleType": {
+    "message": "Subtitle Type",
+    "description": "Subtitle type label"
+  },
+  "subtitleAuto": {
+    "message": "Automatic (ASR)",
+    "description": "Automatic subtitle option"
+  },
+  "subtitleManual": {
+    "message": "Manual (human-provided)",
+    "description": "Manual subtitle option"
+  },
+  "helpSubtitleType": {
+    "message": "Choose whether to prefer automatic transcripts or human captions. Automatic falls back when unavailable.",
+    "description": "Subtitle type help"
+  },
+  "labelPreferredLang": {
+    "message": "Preferred Language",
+    "description": "Preferred language label"
+  },
+  "helpPreferredLang": {
+    "message": "Provide a single language code (e.g., en, es, fr). Defaults to English if left blank.",
+    "description": "Preferred language help"
+  },
+  "badgeReddit": {
+    "message": "Reddit",
+    "description": "Reddit badge"
+  },
+  "descReddit": {
+    "message": "Choose how many threads to read and how they are sorted before summarizing.",
+    "description": "Reddit description"
+  },
+  "labelMaxComments": {
+    "message": "Max Comments",
+    "description": "Max comments label"
+  },
+  "helpMaxComments": {
+    "message": "Maximum number of top-level threads to include (1-100).",
+    "description": "Max comments help"
+  },
+  "labelReplyDepth": {
+    "message": "Include Reply Depth",
+    "description": "Reply depth label"
+  },
+  "helpReplyDepth": {
+    "message": "Pick how deep the scraper should traverse replies (0 = top level only).",
+    "description": "Reply depth help"
+  },
+  "labelSortComments": {
+    "message": "Sort Comments By",
+    "description": "Sort comments label"
+  },
+  "sortCurrent": {
+    "message": "Current (Visible Page)",
+    "description": "Current sort option"
+  },
+  "sortBest": {
+    "message": "Best",
+    "description": "Best sort option"
+  },
+  "sortTop": {
+    "message": "Top",
+    "description": "Top sort option"
+  },
+  "sortNew": {
+    "message": "New",
+    "description": "New sort option"
+  },
+  "helpSortComments": {
+    "message": "Current keeps whatever is visible on-page. Other modes fetch sorted threads silently.",
+    "description": "Sort comments help"
+  },
+  "step4": {
+    "message": "Step 4",
+    "description": "Step 4 tag"
+  },
+  "step4Title": {
+    "message": "Debug & verification",
+    "description": "Step 4 title"
+  },
+  "step4Desc": {
+    "message": "Inspect what is being captured before it ever leaves the page.",
+    "description": "Step 4 description"
+  },
+  "labelDebugMode": {
+    "message": "Enable Debug Mode",
+    "description": "Debug mode label"
+  },
+  "helpDebugMode": {
+    "message": "When enabled, the extracted raw content is shown inside the window instead of sending it to the AI. Perfect for troubleshooting selectors.",
+    "description": "Debug mode help"
+  },
+  "infoHowToUse": {
+    "message": "How to Use",
+    "description": "How to use title"
+  },
+  "infoStep1": {
+    "message": "Configure your API settings above",
+    "description": "Info step 1"
+  },
+  "infoStep2": {
+    "message": "Navigate to any webpage or YouTube video",
+    "description": "Info step 2"
+  },
+  "infoStep3": {
+    "message": "Click the extension icon in your browser toolbar",
+    "description": "Info step 3"
+  },
+  "infoStep4": {
+    "message": "Wait for the AI to analyze and summarize the content",
+    "description": "Info step 4"
+  },
+  "infoStep5": {
+    "message": "View the summary in the floating window",
+    "description": "Info step 5"
+  },
+  "infoSupportedTypes": {
+    "message": "Supported Content Types",
+    "description": "Supported types title"
+  },
+  "typeWebPages": {
+    "message": "Regular web pages (extracts visible text)",
+    "description": "Web pages type"
+  },
+  "typeYouTube": {
+    "message": "YouTube videos (uses auto-generated transcripts)",
+    "description": "YouTube type"
+  },
+  "typeArticles": {
+    "message": "News articles and blog posts",
+    "description": "Articles type"
+  },
+  "typeDocs": {
+    "message": "Documentation and guides",
+    "description": "Docs type"
+  },
+  "footerContact": {
+    "message": "Contact:",
+    "description": "Footer contact label"
+  },
+  "footerDeveloper": {
+    "message": "Developer:",
+    "description": "Footer developer label"
+  },
+  "statusSaved": {
+    "message": "Settings saved successfully!",
+    "description": "Save success message"
+  },
+  "statusError": {
+    "message": "Error saving settings",
+    "description": "Save error message"
+  },
+  "statusTestSuccess": {
+    "message": "API connection successful!",
+    "description": "Test success message"
+  },
+  "stepSlash": {
+    "message": "Quick /slash Selection",
+    "description": "Short label for slash commands section"
+  },
+  "stepSlashTitle": {
+    "message": "Quick /slash Selection",
+    "description": "Title for slash commands section"
+  },
+  "stepSlashDesc": {
+    "message": "Create slash commands for quick prompts. Type / in the chat to use them.",
+    "description": "Description for slash commands section"
+  },
+  "cardSlashTitle": {
+    "message": "Slash Commands",
+    "description": "Card title for slash commands list"
+  },
+  "btnAddCommand": {
+    "message": "Add Command",
+    "description": "Button to add a new slash command"
+  },
+  "helpSlash": {
+    "message": "Commands must be alphanumeric (no spaces). The '/' prefix is added automatically.",
+    "description": "Help text for slash commands"
+  },
+  "placeholderCommand": {
+    "message": "command",
+    "description": "Placeholder for slash command name"
+  },
+  "placeholderPrompt": {
+    "message": "Enter the prompt that will be sent when this command is used...",
+    "description": "Placeholder for slash command prompt"
+  },
+  "emptySlash": {
+    "message": "No commands yet. Click 'Add Command' to create one.",
+    "description": "Message shown when no slash commands are configured"
+  },
+  "errorMaxSlash": {
+    "message": "Maximum 10 commands allowed",
+    "description": "Error message when limit is reached"
+  },
+  "placeholderThinking": {
+    "message": "Thinking...",
+    "description": "Placeholder when AI is processing"
+  },
+  "placeholderFollowUp": {
+    "message": "Ask a follow-up...",
+    "description": "Placeholder for follow-up questions"
+  },
+  "emptyDropdown": {
+    "message": "No commands found. Configure in extension options.",
+    "description": "Message shown in dropdown when no commands match"
+  },
+  "menuQuickCommands": {
+    "message": "Quick /slash Selection",
+    "description": "Label for the quick commands parent menu item"
+  },
+  "menuConfigureCommands": {
+    "message": "Configure commands...",
+    "description": "Label for the configure commands placeholder item"
+  },
+  "menuSummarizeSelection": {
+    "message": "Summarize selection",
+    "description": "Label for the summarize selection context menu item"
+  }
+}
