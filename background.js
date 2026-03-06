@@ -19,9 +19,6 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     await chrome.storage.local.set({ settings: DEFAULT_SETTINGS, threads: {} });
     console.log('[RNCH] Extension installed, defaults set');
-  } else if (details.reason === 'update') {
-    // Migrate from old localStorage-based storage if needed
-    await migrateOldData();
   }
 });
 
@@ -94,13 +91,6 @@ async function saveThreadData(threadId, data) {
   
   await chrome.storage.local.set({ threads });
   return { success: true };
-}
-
-// Migrate old localStorage data (from Kango version)
-async function migrateOldData() {
-  // This runs in service worker - no direct localStorage access
-  // Migration will happen in content script on first run
-  console.log('[RNCH] Update detected, migration will run on first page visit');
 }
 
 // Clear badge when tab is closed or navigated away

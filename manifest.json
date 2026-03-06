@@ -1,25 +1,21 @@
 {
   "manifest_version": 3,
   "name": "Reddit New Comments Highlighter",
-  "version": "4.0.0",
+  "version": "1.0",
   "description": "Highlights new comments when you revisit a Reddit thread. Supports both old and new Reddit.",
-  "homepage_url": "https://github.com/shadyabhi/Reddit-New-Comments-Highlighter",
-  
+  "homepage_url": "https://github.com/example/Reddit-New-Comments-Highlighter",
   "permissions": [
     "storage"
   ],
-  
   "host_permissions": [
     "https://www.reddit.com/*",
     "https://old.reddit.com/*",
     "https://new.reddit.com/*"
   ],
-  
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
-  
   "content_scripts": [
     {
       "matches": [
@@ -27,31 +23,33 @@
         "https://old.reddit.com/r/*/comments/*",
         "https://new.reddit.com/r/*/comments/*"
       ],
-      "js": ["src/content.js"],
-      "css": ["src/content.css"],
+      "js": [
+        "src/content.js"
+      ],
+      "css": [
+        "src/content.css"
+      ],
       "run_at": "document_idle"
     }
   ],
-  
   "options_ui": {
     "page": "src/options.html",
     "open_in_tab": false
   },
-  
   "action": {
     "default_icon": {
-      "16": "icons/button.png",
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
     "default_title": "Reddit New Comments Highlighter"
   },
-  
   "icons": {
-    "16": "icons/button.png",
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  
   "minimum_chrome_version": "120"
 }

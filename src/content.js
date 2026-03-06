@@ -203,53 +203,12 @@
     });
   }
 
-  async function migrateOldData() {
-    const migrated = await chrome.storage.local.get('_migrated');
-    if (migrated._migrated) return;
-    
-    try {
-      const oldList = localStorage.getItem('cc-list');
-      if (!oldList) {
-        await chrome.storage.local.set({ _migrated: true });
-        return;
-      }
-      
-      const threads = {};
-      const threadIds = oldList.split(',').filter(Boolean);
-      
-      for (const id of threadIds.slice(0, 1000)) {
-        const data = localStorage.getItem(`cc-${id}`);
-        if (data) {
-          const [timestamp, count] = data.split(',');
-          threads[id] = {
-            lastVisit: parseInt(timestamp, 10),
-            commentCount: parseInt(count, 10) || 0
-          };
-        }
-      }
-      
-      if (Object.keys(threads).length > 0) {
-        const existing = await chrome.storage.local.get('threads');
-        await chrome.storage.local.set({ 
-          threads: { ...threads, ...existing.threads },
-          _migrated: true 
-        });
-        console.log(`[RNCH] Migrated ${Object.keys(threads).length} threads from old storage`);
-      }
-    } catch (e) {
-      console.error('[RNCH] Migration failed:', e);
-      await chrome.storage.local.set({ _migrated: true });
-    }
-  }
-
   async function init() {
     const version = detectRedditVersion();
     if (version === RedditVersion.UNKNOWN) return;
     
     threadId = extractThreadId();
     if (!threadId) return;
-    
-    await migrateOldData();
     
     settings = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
     threadData = await chrome.runtime.sendMessage({ 
@@ -262,14 +221,10 @@
     setupMutationObserver(version);
     setupKeyboardNavigation();
     
-    const commentCount = version === RedditVersion.OLD
-      ? document.querySelectorAll('.thing.comment').length
-      : document.querySelectorAll('shreddit-comment').length;
-    
     await chrome.runtime.sendMessage({
       type: 'SAVE_THREAD_DATA',
       threadId,
-      data: { commentCount }
+      data: {}
     });
     
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {

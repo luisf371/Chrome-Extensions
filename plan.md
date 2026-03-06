@@ -3,11 +3,9 @@
 ## Deep Analysis Summary
 
 ### Current State
-- **Manifest Version**: 2 (deprecated, Chrome removing support in 2025)
-- **Framework**: Kango (defunct cross-browser framework from 2015, company gone)
-- **Dependencies**: jQuery 2.1.4 (85KB), Bootstrap 2 CSS
-- **Reddit Support**: Old Reddit only (pre-2018 DOM structure)
-- **Storage**: Split between localStorage (options) and Kango storage (background) - broken sync
+- **Manifest Version**: 3
+- **Reddit Support**: Old Reddit + New Reddit (Shreddit)
+- **Storage**: chrome.storage.local
 
 ---
 
@@ -182,7 +180,7 @@ const isOldReddit = () => document.querySelector('.comments-page') !== null;
   },
   // Per-thread data
   "threads": {
-    "abc123": { "lastVisit": 1706000000000, "commentCount": 42 },
+    "abc123": { "lastVisit": 1706000000000 },
     // ... up to maxHistory entries
   }
 }
@@ -224,7 +222,6 @@ chrome.runtime.onMessage.addListener((msg) => {
 |------|------------|
 | New Reddit DOM changes frequently | Use stable selectors (`shreddit-*`), add version detection |
 | Service worker may be terminated | Store state immediately, use `chrome.storage.session` for ephemeral data |
-| Users lose settings on upgrade | Migrate old localStorage data on first run |
 
 ---
 
