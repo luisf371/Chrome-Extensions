@@ -61,6 +61,8 @@ Pipfile.lock
 .idea/
 *.sublime-project
 *.sublime-workspace
+memory.md
+error_msg's.md
 
 # === Misc ===
 *.zip

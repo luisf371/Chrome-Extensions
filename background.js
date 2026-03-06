@@ -119,8 +119,8 @@ const OpenAIAdapter = {
   },
 
   isStreamEnd(data) {
-    // OpenAI uses [DONE] signal (handled in processBuffer) or finish_reason
-    return data === '[DONE]' || data?.choices?.[0]?.finish_reason === 'stop';
+    // OpenAI uses [DONE] signal (handled in processBuffer) or any non-null finish_reason
+    return data === '[DONE]' || Boolean(data?.choices?.[0]?.finish_reason);
   }
 };
 
@@ -157,7 +157,7 @@ const GLMAdapter = {
   },
 
   isStreamEnd(data) {
-    return data === '[DONE]' || data?.choices?.[0]?.finish_reason === 'stop';
+    return data === '[DONE]' || Boolean(data?.choices?.[0]?.finish_reason);
   }
 };
 
@@ -268,7 +268,7 @@ const GeminiAdapter = {
 
   isStreamEnd(data) {
     // Gemini: finishReason in candidates
-    return data?.candidates?.[0]?.finishReason === 'STOP';
+    return Boolean(data?.candidates?.[0]?.finishReason);
   }
 };
 
@@ -567,6 +567,25 @@ async function sendMessageSafely(tabId, message) {
   });
 }
 
+async function finalizeInterruptedStream(tabId, uniqueId, fullResponse, originalContext, noticeMessage, errorMessage) {
+  if (fullResponse) {
+    await sendMessageSafely(tabId, {
+      action: 'appendToFloatingWindow',
+      content: noticeMessage,
+      uniqueId
+    });
+    await sendMessageSafely(tabId, {
+      action: 'streamEnd',
+      uniqueId,
+      fullResponse,
+      originalContext
+    });
+    await sendMessageSafely(tabId, { action: 'hideLoading', uniqueId });
+  } else {
+    await handleApiError(uniqueId, errorMessage);
+  }
+}
+
 // Note: YouTube transcript fetching is now handled entirely by the content script
 // using the same approach as the Python youtube-transcript-api implementation
 
@@ -765,7 +784,7 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
     const shouldForceGeminiUrl = providerKind === 'gemini';
     if (shouldForceGeminiUrl) {
       const geminiModel = model?.trim() || 'gemini-pro';
-      fetchUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:streamGenerateContent`;
+      fetchUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:streamGenerateContent?alt=sse`;
     }
 
     const response = await fetch(fetchUrl, {
@@ -798,6 +817,7 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
+    let sawTerminalEvent = false;
 
     // Store the reader so we can cancel it if needed
     const abortInfo = abortControllers.get(uniqueId);
@@ -843,11 +863,36 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
         const { done, value } = await readWithTimeout(reader, STREAM_CHUNK_TIMEOUT);
         if (done) {
           if (buffer.length > 0) {
-            processBuffer(buffer, uniqueId, adapter);
+            const flushResult = processBuffer(buffer, uniqueId, adapter);
+            buffer = flushResult.buffer;
+            sawTerminalEvent = sawTerminalEvent || flushResult.sawTerminalEvent;
+          }
+
+          const fullResponse = responseAccumulators.get(uniqueId) || '';
+          if (!sawTerminalEvent) {
+            console.warn('[API] Stream closed before terminal event', {
+              uniqueId,
+              provider: providerKind || 'unknown',
+              responseChars: fullResponse.length,
+              bufferedTailChars: buffer.trim().length
+            });
+
+            await finalizeInterruptedStream(
+              tab,
+              uniqueId,
+              fullResponse,
+              originalContext,
+              '\n\n---\n⚠ *Stream interrupted — the connection closed before the provider sent a completion signal. You can ask a follow-up to continue.*',
+              'Stream interrupted: the connection closed before the provider finished responding. Please try again.'
+            );
+
+            abortControllers.delete(uniqueId);
+            cancelledRequests.delete(uniqueId);
+            responseAccumulators.delete(uniqueId);
+            break;
           }
 
           // Send stream end signal with full response and original context
-          const fullResponse = responseAccumulators.get(uniqueId);
           await sendMessageSafely(tab, {
             action: 'streamEnd',
             uniqueId,
@@ -863,7 +908,9 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
           break;
         }
         buffer += decoder.decode(value, { stream: true });
-        buffer = processBuffer(buffer, uniqueId, adapter);
+        const processResult = processBuffer(buffer, uniqueId, adapter);
+        buffer = processResult.buffer;
+        sawTerminalEvent = sawTerminalEvent || processResult.sawTerminalEvent;
       }
     } catch (error) {
       if (error.name === 'AbortError') {
@@ -874,21 +921,14 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
 
         // Send partial content notice + unlock chat for retry
         const fullSoFar = responseAccumulators.get(uniqueId) || '';
-        if (fullSoFar) {
-          await sendMessageSafely(tab, {
-            action: 'appendToFloatingWindow',
-            content: '\n\n---\n⚠ *Stream interrupted — the API stopped sending data mid-response. You can ask a follow-up to continue.*',
-            uniqueId
-          });
-          await sendMessageSafely(tab, {
-            action: 'streamEnd',
-            uniqueId,
-            fullResponse: fullSoFar,
-            originalContext
-          });
-        } else {
-          await handleApiError(uniqueId, 'Stream interrupted: the API stopped responding before sending any content. Please try again.');
-        }
+        await finalizeInterruptedStream(
+          tab,
+          uniqueId,
+          fullSoFar,
+          originalContext,
+          '\n\n---\n⚠ *Stream interrupted — the API stopped sending data mid-response. You can ask a follow-up to continue.*',
+          'Stream interrupted: the API stopped responding before sending any content. Please try again.'
+        );
       } else {
         console.log('[API] Stream reading error:', error);
         await handleApiError(uniqueId, `Stream error: ${error.message}`);
@@ -999,48 +1039,44 @@ async function handleApiError(uniqueId, message) {
 function processBuffer(buffer, uniqueId, adapter) {
   const abortInfo = abortControllers.get(uniqueId);
   if (!abortInfo) {
-    return '';
+    return { buffer: '', sawTerminalEvent: false };
   }
 
   const lines = buffer.split('\n');
   buffer = lines.pop();
+  let sawTerminalEvent = false;
 
   for (const line of lines) {
     if (!abortControllers.get(uniqueId)) {
-      return '';
+      return { buffer: '', sawTerminalEvent };
     }
 
-    if (line.trim().startsWith('data: ')) {
-      const jsonLine = line.trim().substring(5).trim();
-
-      if (adapter.isStreamEnd(jsonLine)) {
-        continue;
-      }
-      handleJsonLine(jsonLine, uniqueId, adapter);
+    const trimmedLine = line.trim();
+    if (trimmedLine.startsWith('data:')) {
+      const jsonLine = trimmedLine.substring(5).trim();
+      sawTerminalEvent = handleJsonLine(jsonLine, uniqueId, adapter) || sawTerminalEvent;
     }
   }
-  return buffer;
+  return { buffer, sawTerminalEvent };
 }
 
 function handleJsonLine(jsonLine, uniqueId, adapter) {
   try {
-    if (!jsonLine) return;
+    if (!jsonLine) return false;
+    if (jsonLine === '[DONE]') return true;
 
     const abortInfo = abortControllers.get(uniqueId);
     if (!abortInfo) {
-      return;
+      return false;
     }
 
     const data = JSON.parse(jsonLine);
+    const isTerminalEvent = adapter.isStreamEnd(data);
     const tab = tabIdMap.get(uniqueId);
-
-    if (!tab) {
-      return;
-    }
 
     const contentChunk = adapter.parseStreamChunk(data);
 
-    if (contentChunk) {
+    if (tab && contentChunk) {
       chrome.tabs.sendMessage(tab, {
         action: 'appendToFloatingWindow',
         content: contentChunk,
@@ -1053,7 +1089,9 @@ function handleJsonLine(jsonLine, uniqueId, adapter) {
       responseAccumulators.set(uniqueId, current + contentChunk);
     }
 
+    return isTerminalEvent;
   } catch (e) {
     console.warn('[API] Failed to parse JSON line:', e.message);
+    return false;
   }
 }
