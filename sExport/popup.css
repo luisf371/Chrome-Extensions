@@ -1,0 +1,103 @@
+:root {
+  --bg: #0b1020;
+  --card: #121a33;
+  --text: #e7e9f2;
+  --muted: #aab2d5;
+  --border: rgba(255, 255, 255, 0.12);
+  --accent: #6ea8fe;
+  --danger: #ff6b6b;
+  --ok: #3ddc97;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  width: 360px;
+  padding: 12px;
+  color: var(--text);
+  background: radial-gradient(1200px 700px at 20% 0%, #1b2a6b 0%, var(--bg) 52%);
+  font: 13px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+main {
+  display: grid;
+  gap: 10px;
+}
+
+header h1 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.card {
+  background: rgba(18, 26, 51, 0.9);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 10px;
+}
+
+.card h2 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+button {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(180deg, rgba(110, 168, 254, 0.2), rgba(110, 168, 254, 0.08));
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 10px;
+  cursor: pointer;
+  font-weight: 650;
+  letter-spacing: 0.15px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.fileRow {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+
+input[type="file"] {
+  width: 100%;
+}
+
+.hint {
+  margin: 8px 0 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.statusCard pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--muted);
+}
+

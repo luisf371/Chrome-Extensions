@@ -1,0 +1,3 @@
+- After changes, run at least `node --check .\\popup.js` for syntax.
+- Manually verify in Chrome by loading the unpacked extension and testing both export and restore flows.
+- Update `README.md` for user-visible behavior changes and append brief notes to `memory.md` for noteworthy constraints or debugging discoveries.

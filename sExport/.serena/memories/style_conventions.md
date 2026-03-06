@@ -1,0 +1,4 @@
+- Code style is simple vanilla JS with `const`/`function` declarations, semicolons, 2-space indentation in HTML/CSS and 2-space/4-space visual formatting in JS consistent with Prettier-like wrapping.
+- No TypeScript or module system; runtime code lives in one `popup.js` file.
+- Keep changes minimal and aligned with existing utility-function style (`chromePromisify`, small helpers, explicit status strings).
+- Documentation is concise Markdown in `README.md`; update it when behavior/limitations change.

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>sExport Tabs</title>
+    <link rel="stylesheet" href="popup.css" />
+    <script defer src="popup.js"></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>sExport Tabs</h1>
+        <p class="subtitle">Export all open tabs to a text file, then restore later.</p>
+      </header>
+
+      <section class="card">
+        <h2>Export</h2>
+        <button id="exportBtn" type="button">Download tabs.txt</button>
+      </section>
+
+      <section class="card">
+        <h2>Restore</h2>
+        <label class="fileRow">
+          <span>Choose export file</span>
+          <input id="importFile" type="file" accept=".txt,text/plain" />
+        </label>
+        <button id="restoreBtn" type="button" disabled>Restore windows</button>
+        <p class="hint">Restores into new windows (does not close your current ones).</p>
+      </section>
+
+      <section class="card statusCard">
+        <h2>Status</h2>
+        <pre id="status" aria-live="polite">Ready.</pre>
+      </section>
+    </main>
+  </body>
+</html>
+

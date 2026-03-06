@@ -1,0 +1,4 @@
+- Purpose: Chrome Manifest V3 extension that exports all open tabs grouped by window/tab-group into a text file and can restore them later.
+- Stack: plain HTML/CSS/JavaScript, no build step, no framework, Chrome extension APIs (`tabs`, `tabGroups`, `downloads`).
+- Structure: `manifest.json` defines MV3 popup action; `popup.html` is the popup UI; `popup.css` styles the popup; `popup.js` contains export/import/restore logic; `README.md` covers install/use; `memory.md` is the project-local log.
+- Environment: Windows development environment; load unpacked via `chrome://extensions`.

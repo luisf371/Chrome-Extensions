@@ -1,0 +1,4 @@
+- Inspect files: `Get-Content -Raw .\\popup.js`, `Get-Content -Raw .\\manifest.json`, `rg -n "pattern" .`
+- Syntax check: `node --check .\\popup.js`
+- Load/run manually: open `chrome://extensions`, enable Developer Mode, choose Load unpacked, select `D:\\Chrome Extensions\\sExport`.
+- Git basics on Windows PowerShell: `git status`, `git diff`, `git log --oneline --decorate -n 10`.
