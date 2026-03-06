@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Gestiona tus pestañas",
+    "message": "Toma el control de tus pestañas. Elige dónde aparecen las nuevas pestañas, gestiona el enfoque al cerrar y bloquea las pestañas duplicadas.",
     "description": "Extension description"
   },
   "popupDescription": {
@@ -90,5 +90,33 @@
   "optPreventDuplicatesHint": {
     "message": "La acción \"Duplicar pestaña\" sigue permitida",
     "description": "Hint text explaining the smart behavior"
+  },
+  "optDuplicateMode": {
+    "message": "Manejo de duplicados",
+    "description": "Label for duplicate handling mode"
+  },
+  "valCloseNew": {
+    "message": "cerrar nueva, enfocar anterior",
+    "description": "Option to close the new tab and focus the existing one"
+  },
+  "valCloseOld": {
+    "message": "cerrar anterior, quedarse en nueva",
+    "description": "Option to close the existing tab and stay on the new one"
+  },
+  "valTeleport": {
+    "message": "teletransportar anterior a nueva (Mejor)",
+    "description": "Option to move existing tab to new position and focus"
+  },
+  "footerContact": {
+    "message": "Contacto:",
+    "description": "Footer contact label"
+  },
+  "footerDeveloper": {
+    "message": "Desarrollador:",
+    "description": "Footer developer label"
+  },
+  "footerExtensionName": {
+    "message": "Nombre de la extensión:",
+    "description": "Footer extension name label"
   }
 }

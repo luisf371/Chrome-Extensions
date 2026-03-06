@@ -10,17 +10,23 @@ const DEFAULT_SETTINGS = Object.freeze({
 
 const windowState = new Map();
 let settingsCache = { ...DEFAULT_SETTINGS };
-const sessionStorageAvailable = Boolean(chrome.storage && chrome.storage.session);
+const storageApi = chrome.storage || null;
+const sessionStorageAvailable = Boolean(storageApi && storageApi.session);
 const duplicateRemovals = new Set();
+const duplicateCheckInProgress = new Set();
 let readyPromise = bootstrap().catch(handleStartupError);
 
-chrome.storage.onChanged.addListener((changes, areaName) => {
-   if (areaName !== 'sync') return;
-   for (const [key, change] of Object.entries(changes)) {
-      const newValue = change.newValue !== undefined ? change.newValue : DEFAULT_SETTINGS[key];
-      settingsCache[key] = newValue;
-   }
-});
+if (storageApi && storageApi.onChanged && storageApi.onChanged.addListener) {
+   storageApi.onChanged.addListener((changes, areaName) => {
+      if (areaName !== 'sync') return;
+      for (const [key, change] of Object.entries(changes)) {
+         const newValue = change.newValue !== undefined ? change.newValue : DEFAULT_SETTINGS[key];
+         settingsCache[key] = newValue;
+      }
+   });
+} else {
+   console.warn('[sTabControl] chrome.storage unavailable; using defaults only.');
+}
 
 chrome.tabs.onCreated.addListener(tab => {
    handleTabCreated(tab).catch(handleRuntimeError);
@@ -62,7 +68,8 @@ async function bootstrap() {
 }
 
 async function ensureDefaults() {
-   const stored = await chrome.storage.sync.get(Object.keys(DEFAULT_SETTINGS));
+   if (!storageApi || !storageApi.sync) return;
+   const stored = await storageApi.sync.get(Object.keys(DEFAULT_SETTINGS));
    const updates = {};
    for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
       if (!Object.prototype.hasOwnProperty.call(stored, key)) {
@@ -70,19 +77,23 @@ async function ensureDefaults() {
       }
    }
    if (Object.keys(updates).length > 0) {
-      await chrome.storage.sync.set(updates);
+      await storageApi.sync.set(updates);
    }
 }
 
 async function loadSettings() {
-   const stored = await chrome.storage.sync.get(DEFAULT_SETTINGS);
+   if (!storageApi || !storageApi.sync) {
+      settingsCache = { ...DEFAULT_SETTINGS };
+      return;
+   }
+   const stored = await storageApi.sync.get(DEFAULT_SETTINGS);
    settingsCache = { ...DEFAULT_SETTINGS, ...stored };
 }
 
 async function restoreSessionState() {
    if (!sessionStorageAvailable) return;
    try {
-      const stored = await chrome.storage.session.get('windowState');
+      const stored = await storageApi.session.get('windowState');
       const rawState = stored.windowState || {};
       for (const [windowIdString, entry] of Object.entries(rawState)) {
          const windowId = Number(windowIdString);
@@ -109,7 +120,7 @@ async function persistSessionState() {
       };
    }
    try {
-      await chrome.storage.session.set({ windowState: serialised });
+      await storageApi.session.set({ windowState: serialised });
    } catch (error) {
       console.error('Failed to persist session state', error);
    }
@@ -385,10 +396,20 @@ function logIgnorableError(error) {
    }
 }
 
+async function removeDuplicateTab(tabId) {
+   duplicateRemovals.add(tabId);
+   try {
+      await chrome.tabs.remove(tabId);
+   } catch (error) {
+      duplicateRemovals.delete(tabId);
+      throw error;
+   }
+}
+
 function normalizeUrl(url) {
    try {
       const parsed = new URL(url);
-      return parsed.origin + parsed.pathname.replace(/\/$/, '') + parsed.search;
+      return parsed.origin + parsed.pathname.replace(/\/$/, '') + parsed.search + parsed.hash;
    } catch {
       return url;
    }
@@ -408,7 +429,9 @@ async function handleNavigationCommitted(details) {
    
    if (transitionType === 'reload') return;
    if (transitionQualifiers && transitionQualifiers.includes('from_address_bar')) return;
-   
+   if (duplicateCheckInProgress.has(tabId)) return;
+   duplicateCheckInProgress.add(tabId);
+
    try {
       const currentTab = await chrome.tabs.get(tabId);
       const tabs = await chrome.tabs.query({}); // Query all windows for global duplicates
@@ -425,71 +448,47 @@ async function handleNavigationCommitted(details) {
          switch (settingsCache.duplicateMode) {
             case 'close_old': {
                // Smoothest: Keep current, remove old
-               duplicateRemovals.add(existingTab.id);
-               await chrome.tabs.remove(existingTab.id);
+               await removeDuplicateTab(existingTab.id);
                break;
             }
             case 'close_new': {
                // Data Preservation: Focus old, remove new
-               duplicateRemovals.add(currentTab.id);
-               await chrome.tabs.remove(currentTab.id);
+               await removeDuplicateTab(currentTab.id);
                await activateTab(existingTab.id);
                if (existingTab.windowId !== currentTab.windowId) {
                   await chrome.windows.update(existingTab.windowId, { focused: true });
                }
-               blinkTab(existingTab.id);
-               break;
-            }
-            case 'teleport':
+                break;
+             }
+             case 'teleport':
             default: {
                // Best of both worlds: Move old to new position, remove new
-               duplicateRemovals.add(currentTab.id);
-               
+               const targetWindowId = currentTab.windowId;
+
                // Move existing tab to new location
-               await chrome.tabs.move(existingTab.id, { 
-                  windowId: currentTab.windowId, 
-                  index: currentTab.index 
+               await chrome.tabs.move(existingTab.id, {
+                  windowId: targetWindowId,
+                  index: currentTab.index
                });
-               
+
                // Close the new tab
-               await chrome.tabs.remove(currentTab.id);
-               
+               await removeDuplicateTab(currentTab.id);
+
                // Focus the existing tab (it's now at the new position)
                await activateTab(existingTab.id);
-               if (existingTab.windowId !== currentTab.windowId) {
-                  await chrome.windows.update(existingTab.windowId, { focused: true });
-               }
-               
-               blinkTab(existingTab.id);
-               break;
-            }
-         }
-      }
-   } catch (error) {
-      logIgnorableError(error);
-   }
-}
-
-/**
- * Visual feedback for teleported/focused tabs
- */
-function blinkTab(tabId) {
-   chrome.scripting.executeScript({
-      target: { tabId },
-      func: () => {
-         const originalTitle = document.title;
-         let count = 0;
-         const interval = setInterval(() => {
-            document.title = count % 2 === 0 ? `👀 ${originalTitle}` : originalTitle;
-            if (++count > 5) {
-               clearInterval(interval);
-               document.title = originalTitle;
-            }
-         }, 400);
-      }
-   }).catch(() => {
-      // Ignore errors if content script can't run (e.g. restricted URLs)
-   });
+               if (existingTab.windowId !== targetWindowId) {
+                await chrome.windows.update(targetWindowId, { focused: true });
+                }
+                
+                break;
+             }
+          }
+       }
+    } catch (error) {
+       logIgnorableError(error);
+    } finally {
+       duplicateCheckInProgress.delete(tabId);
+    }
 }
 
 

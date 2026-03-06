@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Gérez vos onglets",
+    "message": "Prenez le contrôle de vos onglets. Choisissez l'emplacement des nouveaux onglets, gérez le focus après la fermeture et bloquez les onglets en double.",
     "description": "Extension description"
   },
   "popupDescription": {
@@ -90,5 +90,33 @@
   "optPreventDuplicatesHint": {
     "message": "L'action \"Dupliquer l'onglet\" reste autorisée",
     "description": "Hint text explaining the smart behavior"
+  },
+  "optDuplicateMode": {
+    "message": "Gestion des doublons",
+    "description": "Label for duplicate handling mode"
+  },
+  "valCloseNew": {
+    "message": "fermer nouvelle, focus ancienne",
+    "description": "Option to close the new tab and focus the existing one"
+  },
+  "valCloseOld": {
+    "message": "fermer ancienne, rester sur nouvelle",
+    "description": "Option to close the existing tab and stay on the new one"
+  },
+  "valTeleport": {
+    "message": "téléporter ancienne vers nouvelle (Meilleur)",
+    "description": "Option to move existing tab to new position and focus"
+  },
+  "footerContact": {
+    "message": "Contact :",
+    "description": "Footer contact label"
+  },
+  "footerDeveloper": {
+    "message": "Développeur :",
+    "description": "Footer developer label"
+  },
+  "footerExtensionName": {
+    "message": "Nom de l'extension :",
+    "description": "Footer extension name label"
   }
 }

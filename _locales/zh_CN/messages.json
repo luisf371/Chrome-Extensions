@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "管理您的标签页",
+    "message": "掌控您的标签页。选择新标签页出现的位置，处理关闭后的焦点，并拦截重复标签页。",
     "description": "Extension description"
   },
   "popupDescription": {
@@ -90,5 +90,33 @@
   "optPreventDuplicatesHint": {
     "message": "「复制标签页」操作仍然允许",
     "description": "Hint text explaining the smart behavior"
+  },
+  "optDuplicateMode": {
+    "message": "重复处理",
+    "description": "Label for duplicate handling mode"
+  },
+  "valCloseNew": {
+    "message": "关闭新标签页，聚焦旧标签页",
+    "description": "Option to close the new tab and focus the existing one"
+  },
+  "valCloseOld": {
+    "message": "关闭旧标签页，保留新标签页",
+    "description": "Option to close the existing tab and stay on the new one"
+  },
+  "valTeleport": {
+    "message": "将旧标签页移至新位置（最佳）",
+    "description": "Option to move existing tab to new position and focus"
+  },
+  "footerContact": {
+    "message": "联系方式：",
+    "description": "Footer contact label"
+  },
+  "footerDeveloper": {
+    "message": "开发者：",
+    "description": "Footer developer label"
+  },
+  "footerExtensionName": {
+    "message": "扩展名称：",
+    "description": "Footer extension name label"
   }
 }

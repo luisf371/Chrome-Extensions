@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Gerencie suas guias",
+    "message": "Assuma o controle de suas abas. Escolha onde novas abas aparecem, gerencie o foco após o fechamento e bloqueie abas duplicadas.",
     "description": "Extension description"
   },
   "popupDescription": {
@@ -90,5 +90,33 @@
   "optPreventDuplicatesHint": {
     "message": "A ação \"Duplicar guia\" ainda é permitida",
     "description": "Hint text explaining the smart behavior"
+  },
+  "optDuplicateMode": {
+    "message": "Gerenciamento de duplicados",
+    "description": "Label for duplicate handling mode"
+  },
+  "valCloseNew": {
+    "message": "fechar nova, focar antiga",
+    "description": "Option to close the new tab and focus the existing one"
+  },
+  "valCloseOld": {
+    "message": "fechar antiga, ficar na nova",
+    "description": "Option to close the existing tab and stay on the new one"
+  },
+  "valTeleport": {
+    "message": "teletransportar antiga para nova (Melhor)",
+    "description": "Option to move existing tab to new position and focus"
+  },
+  "footerContact": {
+    "message": "Contato:",
+    "description": "Footer contact label"
+  },
+  "footerDeveloper": {
+    "message": "Desenvolvedor:",
+    "description": "Footer developer label"
+  },
+  "footerExtensionName": {
+    "message": "Nome da Extensão:",
+    "description": "Footer extension name label"
   }
 }

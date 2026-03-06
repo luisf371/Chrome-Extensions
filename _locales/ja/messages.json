@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "タブを管理する",
+    "message": "タブを完全にコントロール。新しいタブの表示位置を選択し、閉じた後のフォーカスを管理し、重複タブをブロックします。",
     "description": "Extension description"
   },
   "popupDescription": {
@@ -90,5 +90,33 @@
   "optPreventDuplicatesHint": {
     "message": "「タブを複製」は引き続き使用可能",
     "description": "Hint text explaining the smart behavior"
+  },
+  "optDuplicateMode": {
+    "message": "重複処理",
+    "description": "Label for duplicate handling mode"
+  },
+  "valCloseNew": {
+    "message": "新規を閉じて既存を表示",
+    "description": "Option to close the new tab and focus the existing one"
+  },
+  "valCloseOld": {
+    "message": "既存を閉じて新規に留まる",
+    "description": "Option to close the existing tab and stay on the new one"
+  },
+  "valTeleport": {
+    "message": "既存を新規位置に移動（最適）",
+    "description": "Option to move existing tab to new position and focus"
+  },
+  "footerContact": {
+    "message": "お問い合わせ：",
+    "description": "Footer contact label"
+  },
+  "footerDeveloper": {
+    "message": "開発者：",
+    "description": "Footer developer label"
+  },
+  "footerExtensionName": {
+    "message": "拡張機能名：",
+    "description": "Footer extension name label"
   }
 }

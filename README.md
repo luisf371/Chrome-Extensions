@@ -1,74 +1,55 @@
-![sTabControl Icon](icon128.png)
+![Project Banner](path/to/image.png)
+<!-- Replace with actual banner if available -->
 
-# sTabControl
-
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Language: JavaScript](https://img.shields.io/badge/Language-JavaScript-F7DF1E.svg)
-![Manifest Version: 3](https://img.shields.io/badge/Manifest-V3-blue.svg)
+![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-green.svg)
 
 🌍 **Supported Languages:** English, Spanish, French, Japanese, Portuguese (Brazil), Chinese (Simplified)
 
-## Introduction
-sTabControl is a lightweight and powerful Chrome extension designed to give you complete control over your browser's tab behaviors. By automating tab positioning and focus transitions, it ensures a seamless and organized browsing experience tailored to your workflow.
+sTabControl gives you total mastery over how your browser handles new and closed tabs. It prevents annoying duplicate tabs and lets you decide exactly where every new tab should appear.
 
 ## Key Features
-- **Intelligent Positioning**: Automatically place new tabs at the beginning, end, or relative to your current tab.
-- **Smart Focus Transition**: Define exactly which tab gains focus after you close the current one.
-- **Background Loading**: Choose whether to open new tabs in the foreground or keep them in the background.
-- **Duplicate Prevention**: Intelligently prevent multiple tabs of the same URL while still allowing manual "Duplicate Tab" actions.
-- **Personalized UI**: Toggle between Dark and Light themes to match your system or preference.
 
-## Installation
-Since this extension is in development, you can install it manually:
+*   **Duplicate Prevention**: Automatically detects if you already have a site open and "teleports" you back to the old tab.
+*   **Custom Positioning**: Force new tabs to always open at the start, end, or right next to your current tab.
+*   **Focus Control**: Choose which tab gets focused after you close one (like going back to the last used tab).
+*   **Background Loading**: Fine-tune whether new tabs should open in the foreground or stay in the background.
+*   **Simple & Fast**: A lightweight engine that works in the background without any complicated menus.
 
-1. Download or clone this repository to your local machine.
-2. Open Chrome and navigate to `chrome://extensions/`.
-3. Enable **Developer mode** using the toggle in the top right corner.
-4. Click **Load unpacked** and select the `sTabControl` directory.
+## Quick Start
 
-## Usage
-Once installed, sTabControl works automatically in the background. To customize your experience:
+### Install from Chrome Web Store
+1. Visit the [Chrome Web Store](https://chrome.google.com/webstore) (Coming Soon).
+2. Click **Add to Chrome**.
 
-1. Click the **sTabControl** icon in your extension toolbar.
-2. Select **Open Settings** to access the configuration page.
-3. Choose your preferred behaviors for tab creation and closure.
-4. Toggle the **Theme** button to switch between Light and Dark modes.
-5. Settings are saved automatically upon selection.
+### Manual Installation
+1. Download this repository as a ZIP and extract it.
+2. Open Chrome and go to `chrome://extensions/`.
+3. Enable **Developer mode**.
+4. Click **Load unpacked** and select the extension folder.
 
-## Configuration & Overview
-The extension utilizes a `service_worker` (`background.js`) to monitor tab events via the Chrome API. It provides the following configuration options:
+## Overview
 
-| Option | Available Values |
-| :--- | :--- |
-| **New Tab Position** | First, Next Left, Next Right, Last, Default |
-| **After Closing Go To** | Last used tab, Left tab, Right tab, Default |
-| **Open Method** | Foreground, Background |
-| **Duplicate Control** | Enable/Disable duplicate prevention |
-
-## Permissions Explanation
-To provide advanced tab management, sTabControl requires the following permissions:
-- `tabs`: Essential for reordering, focusing, and managing tab properties.
-- `storage`: Used to save and sync your configuration preferences across devices.
-- `webNavigation`: Necessary for detecting URL changes to effectively prevent duplicate tabs.
+This extension utilizes the `chrome.tabs` and `chrome.storage` APIs within a Manifest V3 framework. It monitors tab creation and removal to apply your custom logic instantly, ensuring a more predictable and organized browsing experience.
 
 ## FAQ
-**Q: Does "Prevent duplicate tabs" stop me from manually duplicating a tab?**
-A: No. The extension includes a smart allowance for the "Duplicate Tab" action, so you can still manually clone tabs when needed.
 
-**Q: Will this slow down my browser?**
-A: Not at all. sTabControl uses a Manifest V3 Service Worker that only runs when tab events occur, consuming minimal resources.
+**Q: What does the 's' in the name mean?**
+A: It stands for simple and lightweight application with no bloat, tracking, or ads.
 
-**Q: Can I set different rules for different websites?**
-A: Currently, settings are applied globally to all tabs for a consistent experience.
+**Q: What is "Teleporting" a duplicate tab?**
+A: Instead of opening a second copy of a website, the extension will find your existing tab, move it to your new position, and focus it.
 
-**Q: Does it support dark mode?**
-A: Yes, there is a theme toggle on the settings page to switch between Light and Dark modes.
+**Q: Can I still force a duplicate if I need one?**
+A: Yes, the "Duplicate Tab" action in Chrome is still allowed, so you only block unwanted duplicates from links.
 
-**Q: Why does it need webNavigation permission?**
-A: It uses this to check if a URL you are navigating to is already open in another tab, helping to prevent duplicates.
+**Q: Does it work with tab groups?**
+A: It works alongside tab groups, helping you manage where those tabs land within your existing layout.
 
-## Credits
-sTabControl is an original extension developed as part of the **"s" series** collection of utility extensions.
+**Q: Will it slow down my browser?**
+A: No, it is designed with performance in mind and only runs tiny bits of code when you open or close a tab.
 
 ## License
-[MIT License](LICENSE)
+
+MIT License

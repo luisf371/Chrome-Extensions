@@ -467,13 +467,24 @@ footer {
   line-height: 1.8;
 }
 
-.footer span {
+.footer > span {
   display: block;
+}
+
+#extension-name-display {
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-block;
 }
 
 .footer a {
   color: var(--text-secondary);
   text-decoration: none;
+}
+
+#extension-name-display {
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
 .footer a:hover {

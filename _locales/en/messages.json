@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Manage your tabs",
+    "message": "Take control of your tabs. Choose where new tabs appear, handle focus after closing, and block duplicate tabs.",
     "description": "Extension description"
   },
   "popupDescription": {
@@ -86,6 +86,10 @@
   "footerDeveloper": {
     "message": "Developer:",
     "description": "Footer developer label"
+  },
+  "footerExtensionName": {
+    "message": "Extension Name:",
+    "description": "Footer extension name label"
   },
   "themeToggle": {
     "message": "Theme",

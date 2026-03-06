@@ -164,8 +164,6 @@ function updateDuplicateModeVisibility(show) {
 // Restore Options
 // =====================
 async function restoreOptions() {
-  await migrateLegacyPreferences();
-
   const settings = await chrome.storage.sync.get(DEFAULT_SETTINGS);
   
   SETTING_IDS.forEach(id => {
@@ -177,35 +175,25 @@ async function restoreOptions() {
                 updateDuplicateModeVisibility(element.checked);
               }
           } else {
-              element.value = settings[id] || DEFAULT_SETTINGS[id];
+              element.value = settings[id] ?? DEFAULT_SETTINGS[id];
           }
       }
   });
 }
 
-async function migrateLegacyPreferences() {
-   const legacyValues = {};
-   let hasLegacyData = false;
-   for (const key of Object.keys(DEFAULT_SETTINGS)) {
-      const value = window.localStorage.getItem(key);
-      if (value !== null) {
-         legacyValues[key] = value;
-         hasLegacyData = true;
-      }
-   }
-   if (!hasLegacyData) return;
-   
-   const current = await chrome.storage.sync.get(Object.keys(DEFAULT_SETTINGS));
-   const updates = {};
-   for (const [key, value] of Object.entries(legacyValues)) {
-      if (!Object.prototype.hasOwnProperty.call(current, key)) {
-         updates[key] = value;
-      }
-      window.localStorage.removeItem(key);
-   }
-   if (Object.keys(updates).length > 0) {
-      await chrome.storage.sync.set(updates);
-   }
+// =====================
+// Footer Interactivity
+// =====================
+function initFooterInteractivity() {
+  const extensionNameDisplay = document.getElementById('extension-name-display');
+  if (extensionNameDisplay) {
+    extensionNameDisplay.addEventListener('mouseenter', function() {
+      this.textContent = 'simpleTabControl';
+    });
+    extensionNameDisplay.addEventListener('mouseleave', function() {
+      this.textContent = 'sTabControl';
+    });
+  }
 }
 
 // =====================
@@ -223,4 +211,5 @@ document.addEventListener('DOMContentLoaded', function() {
   initTheme();
   restoreOptions();
   initAutoSave();
+  initFooterInteractivity();
 });
