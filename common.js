@@ -433,7 +433,12 @@ async function updateIconInternal() {
     let settings = data.settings || {};
 
     if (settings.useAlternateIcon) {
-        chrome.action.setIcon({ path: { "19": "icon-19-0.png", "38": "icon-38-0.png" } });
+        chrome.action.setIcon({ 
+            path: { 
+                "16": "assets/icons/icon16.png",
+                "32": "assets/icons/icon32.png"
+            } 
+        });
     } else {
         let isDark = false;
         
@@ -451,15 +456,15 @@ async function updateIconInternal() {
         if (isDark) { 
             chrome.action.setIcon({
                 path: {
-                    "19": "icon-19-2.png",
-                    "38": "icon-38-2.png"
+                    "16": "assets/icon-19-2.png",
+                    "32": "assets/icon-38-2.png"
                 }
             });
         } else { 
             chrome.action.setIcon({
                 path: {
-                    "19": "icon-19-1.png", 
-                    "38": "icon-38-1.png"  
+                    "16": "assets/icon-19-1.png",
+                    "32": "assets/icon-38-1.png"
                 }
             });
         }

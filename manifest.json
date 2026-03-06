@@ -1,17 +1,40 @@
 {
-   "action": {
-      "default_icon": {
-         "16": "icon-16.png",
-         "19": "icon-19-0.png",
-         "38": "icon-38-0.png"
-      },
-      "default_popup": "popup.html",
-      "default_title": "__MSG_manifest_toolbarbtn_tooltip__"
+   "manifest_version": 3,
+   "name": "__MSG_extName__",
+   "version": "1.0",
+   "description": "__MSG_manifest_description__",
+   "default_locale": "en",
+   "homepage_url": "https://tekky.cc",
+   "author": {
+      "email": "extension@tekky.cc"
+   },
+   "icons": {
+      "16": "assets/icons/icon16.png",
+      "32": "assets/icons/icon32.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
    },
    "background": {
       "service_worker": "bg.js",
       "type": "module"
    },
+   "permissions": [
+      "tabs",
+      "favicon",
+      "storage",
+      "history"
+   ],
+   "action": {
+      "default_icon": {
+         "16": "assets/icons/icon16.png",
+         "32": "assets/icons/icon32.png",
+         "48": "assets/icons/icon48.png",
+         "128": "assets/icons/icon128.png"
+      },
+      "default_popup": "popup.html",
+      "default_title": "__MSG_manifest_toolbarbtn_tooltip__"
+   },
+   "options_page": "options.html",
    "commands": {
       "undo-latest": {
          "description": "__MSG_manifest_kbshort1__",
@@ -20,17 +43,5 @@
             "mac": "MacCtrl+Z"
          }
       }
-   },
-   "default_locale": "en",
-   "description": "__MSG_manifest_description__",
-   "icons": {
-      "128": "icon-128.png",
-      "16": "icon-16.png",
-      "48": "icon-48.png"
-   },
-   "manifest_version": 3,
-   "name": "__MSG_extName__",
-   "options_page": "options.html",
-   "permissions": [ "tabs", "favicon", "storage", "history" ],
-   "version": "1.0.0"
+   }
 }

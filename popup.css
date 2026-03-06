@@ -405,7 +405,7 @@ color: var(--popup-text);
 #searchQ {
 border:1px solid var(--popup-control-border);
 border-radius:var(--popup-radius);
-background: var(--popup-control-bg) url(search.png) top left no-repeat;
+background: var(--popup-control-bg) url(assets/search.png) top left no-repeat;
 height:22px;
 font-size:14px;
 padding:0 0 0 20px;
@@ -594,7 +594,7 @@ input[type=search]::-webkit-search-cancel-button{
 	filter: brightness(.5);
 	width:16px;
 	height:16px;
-	background:url(/clear.png) no-repeat;
+	background:url(assets/clear.png) no-repeat;
 	padding-right:3px;
 	cursor:pointer;
 }
