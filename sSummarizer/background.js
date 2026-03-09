@@ -346,45 +346,41 @@ async function setupContextMenu() {
   const isEnabled = enableContextMenu ?? true;
   const commands = slashCommands || [];
 
-  // Remove existing to avoid duplicates or to disable
-  chrome.contextMenus.removeAll(() => {
-    // Create parent menu for Quick /slash Selection on extension icon
-    chrome.contextMenus.create({
-      id: "quick-commands-parent",
-      title: chrome.i18n.getMessage('menuQuickCommands') || "Quick /slash Selection",
-      contexts: ["action"]
-    });
+  // Remove existing to avoid duplicates, then recreate
+  await chrome.contextMenus.removeAll();
 
-    if (commands.length > 0) {
-      // Create child menu items for each slash command
-      commands.forEach((cmd, index) => {
-        chrome.contextMenus.create({
-          id: `slash-cmd-${index}`,
-          parentId: "quick-commands-parent",
-          title: `/${cmd.command}`,
-          contexts: ["action"]
-        });
-      });
-    } else {
-      // Show placeholder when no commands configured
-      chrome.contextMenus.create({
-        id: "configure-commands",
-        parentId: "quick-commands-parent",
-        title: chrome.i18n.getMessage('menuConfigureCommands') || "Configure commands...",
-        contexts: ["action"],
-        enabled: false
-      });
-    }
-
-    // Existing selection context menu
-    if (isEnabled) {
-      chrome.contextMenus.create({
-        id: CONFIG.CONTEXT_MENU_ID,
-        title: chrome.i18n.getMessage('menuSummarizeSelection') || "Summarize selection",
-        contexts: ["selection"]
-      });
-    }
+  chrome.contextMenus.create({
+    id: "quick-commands-parent",
+    title: chrome.i18n.getMessage('menuQuickCommands') || "Quick /slash Selection",
+    contexts: ["action"]
   });
+
+  if (commands.length > 0) {
+    commands.forEach((cmd, index) => {
+      chrome.contextMenus.create({
+        id: `slash-cmd-${index}`,
+        parentId: "quick-commands-parent",
+        title: `/${cmd.command}`,
+        contexts: ["action"]
+      });
+    });
+  } else {
+    chrome.contextMenus.create({
+      id: "configure-commands",
+      parentId: "quick-commands-parent",
+      title: chrome.i18n.getMessage('menuConfigureCommands') || "Configure commands...",
+      contexts: ["action"],
+      enabled: false
+    });
+  }
+
+  if (isEnabled) {
+    chrome.contextMenus.create({
+      id: CONFIG.CONTEXT_MENU_ID,
+      title: chrome.i18n.getMessage('menuSummarizeSelection') || "Summarize selection",
+      contexts: ["selection"]
+    });
+  }
 }
 
 // Add message listener for stopping API requests and handling follow-ups
@@ -429,121 +425,73 @@ async function handleIconClick(tab, directTextContent = null, customPrompt = nul
   tabIdMap.set(uniqueId, tab.id);
 
   // Inject content.js FIRST before sending any messages
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    files: ['content.js']
-  }, async (injectionResults) => {
-    if (chrome.runtime.lastError) {
-      console.log('[Background] Failed to inject content.js:', chrome.runtime.lastError.message);
-      tabIdMap.delete(uniqueId);
-      return; // Graceful failure - can't show UI on restricted pages
-    }
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['content.js']
+    });
+  } catch (e) {
+    console.log('[Background] Failed to inject content.js:', e.message);
+    tabIdMap.delete(uniqueId);
+    return;
+  }
 
-    try {
-      // Now safe to send messages - content.js is injected
-      await sendMessageSafely(tab.id, { action: 'createFloatingWindow', uniqueId });
-      await sendMessageSafely(tab.id, { action: 'showLoading', uniqueId });
-    } catch (error) {
-      console.log('[Background] Failed to initialize UI:', error);
-      tabIdMap.delete(uniqueId);
+  try {
+    await sendMessageSafely(tab.id, { action: 'createFloatingWindow', uniqueId, showLoading: true });
+  } catch (error) {
+    console.log('[Background] Failed to initialize UI:', error);
+    tabIdMap.delete(uniqueId);
+    return;
+  }
+
+  // If we have direct text (e.g. from context menu selection), skip scraping
+  if (directTextContent) {
+    makeApiCall(directTextContent, uniqueId, customPrompt, commandName);
+    return;
+  }
+
+  // Determine which extractor to run
+  let extractorFn;
+  let errorContext;
+
+  if (tab.url.includes('youtube.com/watch')) {
+    const match = tab.url.match(/[?&]v=([^&]+)/);
+    if (!match?.[1]) {
+      handleApiError(uniqueId, 'Could not extract video ID from the URL.');
       return;
     }
+    extractorFn = () => extractYouTubeCaptions();
+    errorContext = 'YouTube video';
+  } else if (tab.url.match(/reddit\.com\/r\/.*\/comments\//)) {
+    extractorFn = () => extractRedditThread();
+    errorContext = 'Reddit thread';
+  } else {
+    extractorFn = () => getPageContent();
+    errorContext = 'page';
+  }
 
-    // If we have direct text (e.g. from context menu selection), skip scraping
-    if (directTextContent) {
-      makeApiCall(directTextContent, uniqueId, customPrompt, commandName);
-      return;
-    }
+  try {
+    // Inject scraper, then run the extractor
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['scripts/content-scraper.js']
+    });
 
-    if (tab.url.includes('youtube.com/watch')) {
-      const match = tab.url.match(/[?&]v=([^&]+)/);
-      const videoId = match?.[1];
-      if (!videoId) {
-        chrome.tabs.sendMessage(tab.id, { action: 'hideLoading', uniqueId });
-        chrome.tabs.sendMessage(tab.id, {
-          action: 'appendToFloatingWindow',
-          content: '[Error] Could not extract video ID from the URL.',
-          uniqueId
-        });
-        return;
-      }
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: extractorFn
+    });
 
-      // Use the new content script that mimics the Python implementation
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ['scripts/content-scraper.js']
-      }, () => {
-        chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          function: () => extractYouTubeCaptions() // This function uses the Python approach
-        }, (results) => {
-          if (chrome.runtime.lastError) {
-            console.log('[Background] Script injection error:', chrome.runtime.lastError.message);
-            handleApiError(uniqueId, `Failed to extract content: ${chrome.runtime.lastError.message}`);
-            return;
-          }
-
-          if (results && results[0] && results[0].result) {
-            const transcriptText = results[0].result;
-
-            if (transcriptText && transcriptText.trim().length > 0) {
-              makeApiCall(transcriptText, uniqueId, customPrompt, commandName);
-            } else {
-              handleApiError(uniqueId, 'The transcript extractor returned empty results. No captions found.');
-            }
-          } else {
-            handleApiError(uniqueId, 'Could not extract any content from this YouTube video. The transcript extractor might have failed.');
-          }
-        });
-      });
-    } else if (tab.url.match(/reddit\.com\/r\/.*\/comments\//)) {
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ['scripts/content-scraper.js']
-      }, () => {
-        chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          function: () => extractRedditThread()
-        }, (results) => {
-          if (chrome.runtime.lastError) {
-            console.log('[Background] Reddit script error:', chrome.runtime.lastError.message);
-            handleApiError(uniqueId, `Failed to extract Reddit thread: ${chrome.runtime.lastError.message}`);
-            return;
-          }
-
-          const extractedContent = results?.[0]?.result;
-          if (extractedContent) {
-            makeApiCall(extractedContent, uniqueId, customPrompt, commandName);
-          } else {
-            handleApiError(uniqueId, 'Failed to extract Reddit content. Please ensure you are on a thread page.');
-          }
-        });
-      });
+    const content = results?.[0]?.result;
+    if (content && content.trim().length > 0) {
+      makeApiCall(content, uniqueId, customPrompt, commandName);
     } else {
-      // Inject the scraper script, then execute the function
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ['scripts/content-scraper.js']
-      }, () => {
-        chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          function: () => getPageContent() // This function is from the injected script
-        }, (results) => {
-          if (chrome.runtime.lastError) {
-            console.log('[Background] Script injection error:', chrome.runtime.lastError.message);
-            handleApiError(uniqueId, `Failed to get page content: ${chrome.runtime.lastError.message}`);
-            return;
-          }
-
-          if (results && results[0] && results[0].result) {
-            makeApiCall(results[0].result, uniqueId, customPrompt, commandName);
-          } else {
-            handleApiError(uniqueId, 'Could not get content from this page.');
-          }
-        });
-      });
+      handleApiError(uniqueId, `Could not extract content from this ${errorContext}.`);
     }
-  });
+  } catch (err) {
+    console.log('[Background] Content extraction error:', err.message);
+    handleApiError(uniqueId, `Failed to extract ${errorContext} content: ${err.message}`);
+  }
 }
 
 /**
@@ -565,25 +513,6 @@ async function sendMessageSafely(tabId, message) {
       }
     });
   });
-}
-
-async function finalizeInterruptedStream(tabId, uniqueId, fullResponse, originalContext, noticeMessage, errorMessage) {
-  if (fullResponse) {
-    await sendMessageSafely(tabId, {
-      action: 'appendToFloatingWindow',
-      content: noticeMessage,
-      uniqueId
-    });
-    await sendMessageSafely(tabId, {
-      action: 'streamEnd',
-      uniqueId,
-      fullResponse,
-      originalContext
-    });
-    await sendMessageSafely(tabId, { action: 'hideLoading', uniqueId });
-  } else {
-    await handleApiError(uniqueId, errorMessage);
-  }
 }
 
 // Note: YouTube transcript fetching is now handled entirely by the content script
@@ -817,7 +746,6 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
-    let sawTerminalEvent = false;
 
     // Store the reader so we can cancel it if needed
     const abortInfo = abortControllers.get(uniqueId);
@@ -825,74 +753,22 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
       abortInfo.reader = reader;
     }
 
-    // Per-chunk read timeout: detect stalled streams that hang without closing
-    const STREAM_CHUNK_TIMEOUT = 30000; // 30s max wait between chunks
-
-    function readWithTimeout(reader, ms) {
-      return new Promise((resolve, reject) => {
-        const timerId = setTimeout(() => {
-          reject(new Error('Stream stalled: no data received for ' + (ms / 1000) + 's'));
-        }, ms);
-
-        reader.read().then(
-          (result) => {
-            clearTimeout(timerId);
-            resolve(result);
-          },
-          (error) => {
-            clearTimeout(timerId);
-            reject(error);
-          }
-        );
-      });
-    }
-
     try {
       while (true) {
         // Check if request was aborted before reading next chunk
         const currentAbortInfo = abortControllers.get(uniqueId);
         if (!currentAbortInfo) {
-          try {
-            reader.cancel();
-          } catch (e) {
-            // reader may already be closed — safe to ignore
-          }
+          try { reader.cancel(); } catch (e) { /* already closed */ }
           break;
         }
 
-        const { done, value } = await readWithTimeout(reader, STREAM_CHUNK_TIMEOUT);
+        const { done, value } = await reader.read();
         if (done) {
           if (buffer.length > 0) {
-            const flushResult = processBuffer(buffer, uniqueId, adapter);
-            buffer = flushResult.buffer;
-            sawTerminalEvent = sawTerminalEvent || flushResult.sawTerminalEvent;
+            processBuffer(buffer + '\n', uniqueId, adapter);
           }
 
           const fullResponse = responseAccumulators.get(uniqueId) || '';
-          if (!sawTerminalEvent) {
-            console.warn('[API] Stream closed before terminal event', {
-              uniqueId,
-              provider: providerKind || 'unknown',
-              responseChars: fullResponse.length,
-              bufferedTailChars: buffer.trim().length
-            });
-
-            await finalizeInterruptedStream(
-              tab,
-              uniqueId,
-              fullResponse,
-              originalContext,
-              '\n\n---\n⚠ *Stream interrupted — the connection closed before the provider sent a completion signal. You can ask a follow-up to continue.*',
-              'Stream interrupted: the connection closed before the provider finished responding. Please try again.'
-            );
-
-            abortControllers.delete(uniqueId);
-            cancelledRequests.delete(uniqueId);
-            responseAccumulators.delete(uniqueId);
-            break;
-          }
-
-          // Send stream end signal with full response and original context
           await sendMessageSafely(tab, {
             action: 'streamEnd',
             uniqueId,
@@ -903,39 +779,20 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
           await sendMessageSafely(tab, { action: 'hideLoading', uniqueId });
           abortControllers.delete(uniqueId);
           cancelledRequests.delete(uniqueId);
-          responseAccumulators.delete(uniqueId);
-          // tabIdMap entry intentionally kept — needed for follow-up requests.
           break;
         }
         buffer += decoder.decode(value, { stream: true });
-        const processResult = processBuffer(buffer, uniqueId, adapter);
-        buffer = processResult.buffer;
-        sawTerminalEvent = sawTerminalEvent || processResult.sawTerminalEvent;
+        buffer = processBuffer(buffer, uniqueId, adapter);
       }
     } catch (error) {
       if (error.name === 'AbortError') {
         // User-initiated cancel — silent
-      } else if (error.message?.includes('Stream stalled')) {
-        console.log('[API] Stream stalled mid-response:', error.message);
-        try { reader.cancel(); } catch (e) { /* already closed */ }
-
-        // Send partial content notice + unlock chat for retry
-        const fullSoFar = responseAccumulators.get(uniqueId) || '';
-        await finalizeInterruptedStream(
-          tab,
-          uniqueId,
-          fullSoFar,
-          originalContext,
-          '\n\n---\n⚠ *Stream interrupted — the API stopped sending data mid-response. You can ask a follow-up to continue.*',
-          'Stream interrupted: the API stopped responding before sending any content. Please try again.'
-        );
       } else {
         console.log('[API] Stream reading error:', error);
         await handleApiError(uniqueId, `Stream error: ${error.message}`);
       }
       abortControllers.delete(uniqueId);
       cancelledRequests.delete(uniqueId);
-      responseAccumulators.delete(uniqueId);
     }
   } catch (err) {
     clearTimeout(timeoutId);
@@ -1039,39 +896,39 @@ async function handleApiError(uniqueId, message) {
 function processBuffer(buffer, uniqueId, adapter) {
   const abortInfo = abortControllers.get(uniqueId);
   if (!abortInfo) {
-    return { buffer: '', sawTerminalEvent: false };
+    return '';
   }
 
   const lines = buffer.split('\n');
   buffer = lines.pop();
-  let sawTerminalEvent = false;
 
   for (const line of lines) {
     if (!abortControllers.get(uniqueId)) {
-      return { buffer: '', sawTerminalEvent };
+      return '';
     }
 
     const trimmedLine = line.trim();
     if (trimmedLine.startsWith('data:')) {
       const jsonLine = trimmedLine.substring(5).trim();
-      sawTerminalEvent = handleJsonLine(jsonLine, uniqueId, adapter) || sawTerminalEvent;
+      if (jsonLine === '[DONE]') {
+        continue;
+      }
+      handleJsonLine(jsonLine, uniqueId, adapter);
     }
   }
-  return { buffer, sawTerminalEvent };
+  return buffer;
 }
 
 function handleJsonLine(jsonLine, uniqueId, adapter) {
   try {
-    if (!jsonLine) return false;
-    if (jsonLine === '[DONE]') return true;
+    if (!jsonLine) return;
 
     const abortInfo = abortControllers.get(uniqueId);
     if (!abortInfo) {
-      return false;
+      return;
     }
 
     const data = JSON.parse(jsonLine);
-    const isTerminalEvent = adapter.isStreamEnd(data);
     const tab = tabIdMap.get(uniqueId);
 
     const contentChunk = adapter.parseStreamChunk(data);
@@ -1088,10 +945,7 @@ function handleJsonLine(jsonLine, uniqueId, adapter) {
       const current = responseAccumulators.get(uniqueId) || '';
       responseAccumulators.set(uniqueId, current + contentChunk);
     }
-
-    return isTerminalEvent;
   } catch (e) {
     console.warn('[API] Failed to parse JSON line:', e.message);
-    return false;
   }
 }

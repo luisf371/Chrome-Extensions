@@ -24,6 +24,7 @@
   let streamHeartbeatTimers = new Map();
   let activeStreams = new Set();
   let contentRenderTimers = new Map();
+  let renderCache = new Map(); // { stableOffset, stableHtml, codeBlockOpen }
 
   // Configuration constants
   const UI_CONFIG = {
@@ -43,6 +44,10 @@
     switch (request.action) {
       case 'createFloatingWindow':
         createFloatingWindow(request.uniqueId);
+        if (request.showLoading) {
+          startStreamSession(request.uniqueId);
+          showLoading(request.uniqueId);
+        }
         sendResponse({ success: true });
         break;
       case 'appendToFloatingWindow':
@@ -86,11 +91,10 @@
         cleanupWindowState(uniqueId);
       }
 
-      const { defaultFontSize } = await chrome.storage.local.get('defaultFontSize');
+      // Single storage read to avoid two sequential async round-trips
+      const { defaultFontSize, windowState } = await chrome.storage.local.get(['defaultFontSize', 'windowState']);
       const initialFontSize = defaultFontSize || UI_CONFIG.DEFAULT_FONT_SIZE;
-
-      const savedState = await chrome.storage.local.get(['windowState']);
-      let state = savedState.windowState || {};
+      let state = windowState || {};
 
       // Validate and correct window position
       state = validateWindowState(state);
@@ -562,6 +566,7 @@
     contentBuffers.delete(uniqueId);
     userScrolledUp.delete(uniqueId);
     isContentUpdating.delete(uniqueId);
+    renderCache.delete(uniqueId);
     chatHistories.delete(uniqueId);
     isChatProcessing.delete(uniqueId);
     slashCommandsCache.delete(uniqueId);
@@ -861,10 +866,14 @@
   /**
    * Escape HTML characters
    */
+  // String-based HTML escaping — avoids DOM element allocation and GC pressure
   function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   /**
@@ -1386,6 +1395,36 @@
     contentRenderTimers.set(uniqueId, timerId);
   }
 
+  /**
+   * Find the last safe split boundary (\n\n not inside a code block).
+   * Returns the character offset right after the \n\n, or 0 if none found.
+   */
+  function findStableBoundary(buffer, startFrom) {
+    let inCodeBlock = false;
+    let lastBoundary = startFrom;
+
+    // Scan from startFrom to detect code fences and \n\n boundaries
+    for (let i = startFrom; i < buffer.length; i++) {
+      // Check for code fence (``` at start of line)
+      if (buffer[i] === '`' && buffer[i + 1] === '`' && buffer[i + 2] === '`') {
+        // Verify it's at start of line
+        if (i === 0 || buffer[i - 1] === '\n') {
+          inCodeBlock = !inCodeBlock;
+          i += 2; // skip past ```
+          continue;
+        }
+      }
+
+      // Look for \n\n boundary outside code blocks
+      if (!inCodeBlock && buffer[i] === '\n' && buffer[i + 1] === '\n') {
+        lastBoundary = i + 2;
+        i++; // skip second \n
+      }
+    }
+
+    return { boundary: lastBoundary, inCodeBlock };
+  }
+
   function flushContentRender(uniqueId) {
     const win = floatingWindows.get(uniqueId);
     if (!win) {
@@ -1397,13 +1436,32 @@
       return;
     }
 
-    const currentBuffer = contentBuffers.get(uniqueId) || '';
+    const buffer = contentBuffers.get(uniqueId) || '';
+    let cache = renderCache.get(uniqueId);
+    if (!cache) {
+      cache = { stableOffset: 0, stableHtml: '' };
+      renderCache.set(uniqueId, cache);
+    }
+
+    // Find how far we can advance the stable boundary
+    const { boundary } = findStableBoundary(buffer, cache.stableOffset);
+
+    // If stable region grew, convert only the new stable chunk
+    if (boundary > cache.stableOffset) {
+      const newStableChunk = buffer.substring(cache.stableOffset, boundary);
+      cache.stableHtml += sanitizeContent(newStableChunk);
+      cache.stableOffset = boundary;
+    }
+
+    // Convert only the trailing unstable portion
+    const tail = buffer.substring(cache.stableOffset);
+    const tailHtml = tail ? sanitizeContent(tail) : '';
 
     isContentUpdating.set(uniqueId, true);
     const savedScrollTop = contentElement.scrollTop;
     const wasScrolledUp = userScrolledUp.get(uniqueId);
 
-    contentElement.innerHTML = sanitizeContent(currentBuffer);
+    contentElement.innerHTML = cache.stableHtml + tailHtml;
 
     if (!wasScrolledUp) {
       requestAnimationFrame(() => {
@@ -1418,8 +1476,12 @@
       });
     }
 
+    // Only write fontSize when it differs to avoid unnecessary style recalculation
     const currentFontSize = textSizes.get(uniqueId) || UI_CONFIG.DEFAULT_FONT_SIZE;
-    contentElement.style.fontSize = `${currentFontSize}px`;
+    const targetSize = `${currentFontSize}px`;
+    if (contentElement.style.fontSize !== targetSize) {
+      contentElement.style.fontSize = targetSize;
+    }
   }
 
 })();
