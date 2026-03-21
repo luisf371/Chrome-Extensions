@@ -139,6 +139,112 @@ async function reorderPlaylists({ orderedIds }) {
   return { success: true };
 }
 
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function normalizeStoredHandle(handle) {
+  if (typeof handle !== 'string') return null;
+  const trimmed = handle.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('@')) {
+    return /^@[A-Za-z0-9._-]+$/.test(trimmed) ? trimmed : null;
+  }
+  return /^[A-Za-z0-9_-]{10,}$/.test(trimmed) ? trimmed : null;
+}
+
+function normalizePlaylistColor(color) {
+  return typeof color === 'string' && /^#[0-9A-Fa-f]{6}$/.test(color)
+    ? color
+    : '#4a9eff';
+}
+
+function normalizeImportedData({ playlists, channels, channelPlaylists }) {
+  if (!isPlainObject(playlists)) {
+    throw new Error('Invalid import: playlists must be an object');
+  }
+  if (channels !== undefined && !isPlainObject(channels)) {
+    throw new Error('Invalid import: channels must be an object');
+  }
+  if (channelPlaylists !== undefined && !isPlainObject(channelPlaylists)) {
+    throw new Error('Invalid import: channelPlaylists must be an object');
+  }
+
+  const now = Date.now();
+  const normalizedPlaylists = {};
+  const playlistEntries = Object.entries(playlists)
+    .filter(([id, playlist]) => (
+      typeof id === 'string' &&
+      id.trim() &&
+      isPlainObject(playlist) &&
+      typeof playlist.name === 'string' &&
+      playlist.name.trim()
+    ))
+    .sort(([, a], [, b]) => {
+      const orderA = Number.isFinite(a.order) ? a.order : Number.MAX_SAFE_INTEGER;
+      const orderB = Number.isFinite(b.order) ? b.order : Number.MAX_SAFE_INTEGER;
+      return orderA - orderB;
+    });
+
+  if (playlistEntries.length === 0) {
+    throw new Error('Invalid import: no valid playlists found');
+  }
+
+  playlistEntries.forEach(([id, playlist], index) => {
+    const playlistId = id.trim();
+    normalizedPlaylists[playlistId] = {
+      id: playlistId,
+      name: playlist.name.trim().slice(0, 50),
+      color: normalizePlaylistColor(playlist.color),
+      order: index,
+      createdAt: Number.isFinite(playlist.createdAt) ? playlist.createdAt : now,
+      updatedAt: now
+    };
+  });
+
+  const normalizedChannels = {};
+  for (const [rawHandle, channel] of Object.entries(channels || {})) {
+    const handle = normalizeStoredHandle(rawHandle);
+    if (!handle) continue;
+    normalizedChannels[handle] = {
+      handle,
+      channelId: typeof channel?.channelId === 'string' ? channel.channelId.trim() : '',
+      name: typeof channel?.name === 'string' && channel.name.trim() ? channel.name.trim() : handle,
+      updatedAt: now
+    };
+  }
+
+  const normalizedChannelPlaylists = {};
+  for (const [rawHandle, playlistIds] of Object.entries(channelPlaylists || {})) {
+    const handle = normalizeStoredHandle(rawHandle);
+    if (!handle || !Array.isArray(playlistIds)) continue;
+
+    const validPlaylistIds = [...new Set(
+      playlistIds
+        .map(id => typeof id === 'string' ? id.trim() : '')
+        .filter(id => id && normalizedPlaylists[id])
+    )];
+
+    if (validPlaylistIds.length === 0) continue;
+
+    normalizedChannelPlaylists[handle] = validPlaylistIds;
+    if (!normalizedChannels[handle]) {
+      normalizedChannels[handle] = {
+        handle,
+        channelId: '',
+        name: handle,
+        updatedAt: now
+      };
+    }
+  }
+
+  return {
+    playlists: normalizedPlaylists,
+    channels: normalizedChannels,
+    channelPlaylists: normalizedChannelPlaylists
+  };
+}
+
 // --- Broadcast ---
 
 async function broadcastChange(key, data) {
@@ -158,10 +264,11 @@ async function broadcastChange(key, data) {
 // --- Import ---
 
 async function importData({ playlists, channels, channelPlaylists, mode }) {
+  const imported = normalizeImportedData({ playlists, channels, channelPlaylists });
   const current = await getAllData();
 
   if (mode === 'replace') {
-    await chrome.storage.local.set({ playlists, channels, channelPlaylists });
+    await chrome.storage.local.set(imported);
     await broadcastChange('all');
     return { success: true };
   }
@@ -173,7 +280,7 @@ async function importData({ playlists, channels, channelPlaylists, mode }) {
   const idMap = {};
 
   // Map imported playlist IDs — reuse existing if same name, else create new
-  for (const [id, pl] of Object.entries(playlists || {})) {
+  for (const [id, pl] of Object.entries(imported.playlists)) {
     const existing = Object.values(mergedPlaylists).find(p => p.name === pl.name);
     if (existing) {
       idMap[id] = existing.id;
@@ -186,14 +293,14 @@ async function importData({ playlists, channels, channelPlaylists, mode }) {
   }
 
   // Merge channels
-  for (const [handle, ch] of Object.entries(channels || {})) {
+  for (const [handle, ch] of Object.entries(imported.channels)) {
     if (!mergedChannels[handle]) {
       mergedChannels[handle] = { ...ch };
     }
   }
 
   // Merge assignments using mapped IDs
-  for (const [handle, plIds] of Object.entries(channelPlaylists || {})) {
+  for (const [handle, plIds] of Object.entries(imported.channelPlaylists)) {
     const existing = mergedCP[handle] || [];
     const mapped = plIds.map(id => idMap[id] || id);
     mergedCP[handle] = [...new Set([...existing, ...mapped])];

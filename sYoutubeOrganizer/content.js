@@ -9,11 +9,14 @@
   let lastUrl = '';
   let pollInterval = null;
   let feedObserver = null;
+  let quickAddObserver = null;
   let data = null;
   let activePlaylistId = null;
   let initSucceeded = false;
   let initGeneration = 0; // increments on each navigation to cancel stale async inits
   let navDebounceTimer = null;
+  const quickAddCloseState = { handler: null, timer: null };
+  const channelListCloseState = { handler: null, timer: null };
 
   const UNCATEGORIZED_ID = '__uncategorized';
 
@@ -106,8 +109,13 @@
   function cleanup() {
     if (feedObserver) { feedObserver.disconnect(); feedObserver = null; }
     if (channelsListObserver) { channelsListObserver.disconnect(); channelsListObserver = null; }
+    if (quickAddObserver) { quickAddObserver.disconnect(); quickAddObserver = null; }
+    clearDocumentCloseListener(quickAddCloseState);
+    clearDocumentCloseListener(channelListCloseState);
     activeChannelListDropdown = null;
     document.querySelectorAll('.syo-host').forEach(el => el.remove());
+    filterHost = null;
+    filterShadow = null;
     activePlaylistId = null;
     quickAddOpen = false;
     quickAddHost = null;
@@ -151,28 +159,65 @@
   let filterHost = null;
   let filterShadow = null;
 
+  function isVisibleElement(el) {
+    return Boolean(
+      el &&
+      el.isConnected &&
+      !el.hasAttribute('hidden') &&
+      el.getClientRects().length > 0
+    );
+  }
+
+  function getActiveSubscriptionsBrowse() {
+    return Array.from(document.querySelectorAll('ytd-browse[page-subtype="subscriptions"]'))
+      .find(isVisibleElement) || null;
+  }
+
+  function getSubscriptionsGrid() {
+    const browse = getActiveSubscriptionsBrowse();
+    return browse?.querySelector('ytd-rich-grid-renderer') || null;
+  }
+
+  function getSubscriptionsContents() {
+    return getSubscriptionsGrid()?.querySelector('#contents') || null;
+  }
+
   async function initSubscriptionsPage(gen) {
     await loadData();
     if (!data || gen !== initGeneration) return;
-    const grid = await waitForElement('ytd-rich-grid-renderer');
-    if (!grid || gen !== initGeneration) return;
-    injectFilterBar();
+    const contents = await waitForElement(getSubscriptionsContents);
+    if (!contents || gen !== initGeneration) return;
+    if (!injectFilterBar()) return;
     applyFilter();
-    observeFeed();
+    if (!observeFeed()) return;
     initSucceeded = true;
   }
 
   function injectFilterBar() {
-    const grid = document.querySelector('ytd-rich-grid-renderer');
-    if (!grid) return;
+    if (filterHost?.isConnected && filterShadow) {
+      renderFilterBar();
+      return true;
+    }
+
+    const grid = getSubscriptionsGrid();
+    if (!grid || !grid.parentElement) return false;
+
+    const existingHost = grid.parentElement.querySelector(':scope > .syo-filter-host');
+    if (existingHost?.shadowRoot) {
+      filterHost = existingHost;
+      filterShadow = existingHost.shadowRoot;
+      renderFilterBar();
+      return true;
+    }
 
     filterHost = document.createElement('div');
-    filterHost.className = 'syo-host';
+    filterHost.className = 'syo-host syo-filter-host';
     filterHost.style.cssText = 'all: initial; display: block;';
     grid.parentElement.insertBefore(filterHost, grid);
 
     filterShadow = filterHost.attachShadow({ mode: 'open' });
     renderFilterBar();
+    return true;
   }
 
   function renderFilterBar() {
@@ -300,7 +345,7 @@
   }
 
   function applyFilter() {
-    const cards = document.querySelectorAll('ytd-rich-item-renderer');
+    const cards = getSubscriptionsGrid()?.querySelectorAll('ytd-rich-item-renderer') || [];
 
     if (!activePlaylistId) {
       cards.forEach(card => { card.style.display = ''; });
@@ -345,26 +390,33 @@
   }
 
   function observeFeed() {
-    const grid = document.querySelector('ytd-rich-grid-renderer #contents');
-    if (!grid) return;
+    const browse = getActiveSubscriptionsBrowse();
+    if (!browse) return false;
 
     let debounceTimer = null;
-    let lastFilteredCount = 0;
+    let lastFilteredCount = getSubscriptionsGrid()?.querySelectorAll('ytd-rich-item-renderer').length || 0;
+    let lastFirstCard = getSubscriptionsGrid()?.querySelector('ytd-rich-item-renderer') || null;
     let cooldownUntil = 0;
 
     feedObserver = new MutationObserver(() => {
-      if (!activePlaylistId) return;
-
-      // Throttle: skip if we recently filtered and no new cards appeared
-      const now = Date.now();
-      if (now < cooldownUntil) return;
-
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
-        const currentCount = document.querySelectorAll('ytd-rich-item-renderer').length;
-        // Only re-filter if new cards were actually added
-        if (currentCount > lastFilteredCount) {
+        if (currentPage !== 'subscriptions') return;
+        if (!getSubscriptionsGrid()) return;
+
+        if (!filterHost?.isConnected && !injectFilterBar()) return;
+
+        if (!activePlaylistId) return;
+
+        // Throttle repeated feed updates, but still react when the page swaps the card tree.
+        const now = Date.now();
+        if (now < cooldownUntil) return;
+
+        const currentCount = getSubscriptionsGrid()?.querySelectorAll('ytd-rich-item-renderer').length || 0;
+        const currentFirstCard = getSubscriptionsGrid()?.querySelector('ytd-rich-item-renderer') || null;
+        if (currentCount !== lastFilteredCount || currentFirstCard !== lastFirstCard) {
           lastFilteredCount = currentCount;
+          lastFirstCard = currentFirstCard;
           applyFilter();
           // Cooldown: don't filter again for 500ms to prevent rapid loop
           cooldownUntil = Date.now() + 500;
@@ -372,7 +424,8 @@
       }, 150);
     });
 
-    feedObserver.observe(grid, { childList: true, subtree: true });
+    feedObserver.observe(browse, { childList: true, subtree: true });
+    return true;
   }
 
   // --- Channels List Page (/feed/channels) ---
@@ -515,11 +568,13 @@
       const closeHandler = (e) => {
         const path = e.composedPath();
         if (path.includes(host)) return;
+        clearDocumentCloseListener(channelListCloseState);
         activeChannelListDropdown = null;
         renderChannelListButton(shadow, host, handle, channelName, false);
-        document.removeEventListener('click', closeHandler, true);
       };
-      setTimeout(() => document.addEventListener('click', closeHandler, true), 0);
+      armDocumentCloseListener(channelListCloseState, closeHandler);
+    } else {
+      clearDocumentCloseListener(channelListCloseState);
     }
   }
 
@@ -560,6 +615,98 @@
 
   // --- Channel Page ---
 
+  function getChannelHeaderScope(container) {
+    return container?.closest('#page-header, ytd-c4-tabbed-header-renderer, yt-page-header-view-model') || null;
+  }
+
+  function isUsableChannelActionsContainer(container) {
+    if (!container || !container.isConnected || container.hasAttribute('hidden')) return false;
+
+    const scope = getChannelHeaderScope(container);
+    if (!isVisibleElement(scope || container)) return false;
+
+    return Boolean(
+      container.querySelector('button, button-view-model, .yt-flexible-actions-view-model-action, .yt-flexible-actions-view-model-wiz__action') ||
+      container.children.length > 0
+    );
+  }
+
+  function getVisibleChannelActionsContainer(handle) {
+    const containers = Array.from(document.querySelectorAll('yt-flexible-actions-view-model'))
+      .filter(isUsableChannelActionsContainer);
+
+    const exactMatch = containers.find(container => {
+      const scope = getChannelHeaderScope(container) || document;
+      return Array.from(scope.querySelectorAll('a[href*="/@"], a[href*="/channel/"]'))
+        .some(link => extractHandleFromUrl(link.getAttribute('href') || '') === handle);
+    });
+
+    if (exactMatch) return exactMatch;
+
+    return containers.find(container => {
+      const scope = getChannelHeaderScope(container);
+      if (!scope) return false;
+
+      const titleEl = scope.querySelector('h1, ytd-channel-name yt-formatted-string');
+      return Boolean(titleEl?.textContent?.trim());
+    }) || null;
+  }
+
+  function getChannelPageName(actionsContainer, fallbackHandle) {
+    const channelScope = getChannelHeaderScope(actionsContainer) || document;
+    const nameEl = channelScope.querySelector('yt-page-header-view-model h1')
+      || channelScope.querySelector('ytd-channel-name yt-formatted-string');
+    return nameEl?.textContent?.trim()?.replace(/\s+/g, ' ') || fallbackHandle;
+  }
+
+  function mountChannelQuickAdd(actionsContainer, handle, channelName) {
+    if (!actionsContainer) return false;
+
+    const existingHost = actionsContainer.querySelector(':scope > .syo-channel-qa-host');
+    if (existingHost?.shadowRoot) {
+      quickAddHandle = handle;
+      quickAddHost = existingHost;
+      quickAddShadow = existingHost.shadowRoot;
+      renderQuickAddButton(handle, channelName);
+      return true;
+    }
+
+    quickAddHandle = handle;
+    quickAddHost = document.createElement('div');
+    quickAddHost.className = 'syo-host syo-channel-qa-host ytFlexibleActionsViewModelAction';
+    quickAddHost.style.cssText = 'all: initial; display: inline-flex; vertical-align: middle; position: relative; z-index: 2000;';
+    actionsContainer.appendChild(quickAddHost);
+
+    quickAddShadow = quickAddHost.attachShadow({ mode: 'open' });
+    renderQuickAddButton(handle, channelName);
+    return true;
+  }
+
+  function observeChannelQuickAdd(handle, gen) {
+    if (quickAddObserver) {
+      quickAddObserver.disconnect();
+      quickAddObserver = null;
+    }
+
+    let debounceTimer = null;
+    quickAddObserver = new MutationObserver(() => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (gen !== initGeneration || currentPage !== 'channel') return;
+
+        const actionsContainer = getVisibleChannelActionsContainer(handle);
+        if (!actionsContainer) return;
+        if (quickAddHost?.isConnected && actionsContainer.contains(quickAddHost)) return;
+
+        const channelName = getChannelPageName(actionsContainer, handle);
+        if (!mountChannelQuickAdd(actionsContainer, handle, channelName)) return;
+        initSucceeded = true;
+      }, 150);
+    });
+
+    quickAddObserver.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
   async function initChannelPage(url, gen) {
     await loadData();
     if (!data || gen !== initGeneration) return;
@@ -568,50 +715,52 @@
 
     // Modern YouTube channel pages use yt-flexible-actions-view-model for the subscribe area
     // inside #page-header > yt-page-header-renderer > yt-page-header-view-model
-    const actionsContainer = await waitForElement('yt-flexible-actions-view-model');
+    const actionsContainer = await waitForElement(() => getVisibleChannelActionsContainer(handle));
     if (!actionsContainer || gen !== initGeneration) return;
 
-    // Get channel name from the page header title
-    const nameEl = document.querySelector('yt-page-header-view-model h1')
-      || document.querySelector('ytd-channel-name yt-formatted-string');
-    const channelName = nameEl?.textContent?.trim()?.replace(/\s+/g, ' ') || handle;
+    const channelName = getChannelPageName(actionsContainer, handle);
 
     sendMsg({ type: 'REGISTER_CHANNEL', handle, name: channelName });
 
-    // Insert as a new action item inside the flex container, next to Subscribe
-    quickAddHandle = handle;
-    quickAddHost = document.createElement('div');
-    quickAddHost.className = 'syo-host ytFlexibleActionsViewModelAction';
-    quickAddHost.style.cssText = 'all: initial; display: inline-flex; vertical-align: middle; position: relative; z-index: 2000;';
-    actionsContainer.appendChild(quickAddHost);
-
-    quickAddShadow = quickAddHost.attachShadow({ mode: 'open' });
-    renderQuickAddButton(handle, channelName);
+    if (!mountChannelQuickAdd(actionsContainer, handle, channelName)) return;
+    observeChannelQuickAdd(handle, gen);
     initSucceeded = true;
   }
 
   // --- Video Page ---
+
+  function getVisibleVideoTopRow() {
+    return Array.from(document.querySelectorAll('#top-row'))
+      .find(row => (
+        isVisibleElement(row) &&
+        row.querySelector('#owner') &&
+        row.querySelector('#subscribe-button')
+      )) || null;
+  }
+
+  function getVisibleVideoSubscribeButton() {
+    return getVisibleVideoTopRow()?.querySelector('#subscribe-button') || null;
+  }
 
   async function initVideoPage(gen) {
     await loadData();
     if (!data || gen !== initGeneration) return;
 
     // Video page layout: #top-row > #owner contains channel info + #subscribe-button
-    const subscribeBtn = await waitForElement('#top-row #subscribe-button');
+    const subscribeBtn = await waitForElement(getVisibleVideoSubscribeButton);
     if (!subscribeBtn || gen !== initGeneration) return;
 
     // Find channel handle from the owner section
-    const ownerEl = document.querySelector('#top-row #owner');
+    const ownerEl = getVisibleVideoTopRow()?.querySelector('#owner');
     const handleLink = ownerEl?.querySelector('a[href*="/@"]')
-      || document.querySelector('ytd-video-owner-renderer a[href*="/@"]');
+      || ownerEl?.querySelector('a[href*="/channel/"]');
 
     if (!handleLink) return;
 
-    const match = handleLink.getAttribute('href').match(/\/@([^/?]+)/);
-    if (!match) return;
+    const handle = extractHandleFromUrl(handleLink.getAttribute('href') || '');
+    if (!handle) return;
 
-    const handle = '@' + match[1];
-    const nameEl = ownerEl?.querySelector('ytd-channel-name a, yt-formatted-string a');
+    const nameEl = ownerEl?.querySelector('ytd-channel-name a, ytd-channel-name yt-formatted-string, yt-formatted-string a');
     const channelName = nameEl?.textContent?.trim() || handle;
 
     sendMsg({ type: 'REGISTER_CHANNEL', handle, name: channelName });
@@ -690,11 +839,13 @@
         // Check if click is inside shadow DOM
         const path = e.composedPath();
         if (path.includes(quickAddHost)) return;
+        clearDocumentCloseListener(quickAddCloseState);
         quickAddOpen = false;
         renderQuickAddButton(handle, channelName);
-        document.removeEventListener('click', closeHandler, true);
       };
-      setTimeout(() => document.addEventListener('click', closeHandler, true), 0);
+      armDocumentCloseListener(quickAddCloseState, closeHandler);
+    } else {
+      clearDocumentCloseListener(quickAddCloseState);
     }
   }
 
@@ -1039,21 +1190,46 @@
     return null;
   }
 
-  function waitForElement(selector, timeout = 10000) {
+  function waitForElement(selectorOrGetter, timeout = 10000) {
+    const getElement = typeof selectorOrGetter === 'function'
+      ? selectorOrGetter
+      : () => document.querySelector(selectorOrGetter);
+
     return new Promise((resolve) => {
       // Try immediately
-      const el = document.querySelector(selector);
+      const el = getElement();
       if (el) return resolve(el);
 
       // Retry with observer
       const observer = new MutationObserver(() => {
-        const el = document.querySelector(selector);
+        const el = getElement();
         if (el) { observer.disconnect(); clearTimeout(timer); resolve(el); }
       });
-      observer.observe(document.body, { childList: true, subtree: true });
+      observer.observe(document.documentElement, { childList: true, subtree: true });
 
       const timer = setTimeout(() => { observer.disconnect(); resolve(null); }, timeout);
     });
+  }
+
+  function clearDocumentCloseListener(state) {
+    if (state.timer) {
+      clearTimeout(state.timer);
+      state.timer = null;
+    }
+    if (state.handler) {
+      document.removeEventListener('click', state.handler, true);
+      state.handler = null;
+    }
+  }
+
+  function armDocumentCloseListener(state, handler) {
+    clearDocumentCloseListener(state);
+    state.handler = handler;
+    state.timer = setTimeout(() => {
+      if (state.handler !== handler) return;
+      document.addEventListener('click', handler, true);
+      state.timer = null;
+    }, 0);
   }
 
   function escapeHtml(str) {
