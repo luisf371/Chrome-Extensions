@@ -1,0 +1,20 @@
+{
+  "extName": {
+    "message": "Organizador de Inscri\u00e7\u00f5es do YouTube"
+  },
+  "extDescription": {
+    "message": "Organize suas inscri\u00e7\u00f5es do YouTube com playlists. Filtre seu feed por grupos criados."
+  },
+  "optPlaylists": {
+    "message": "Playlists"
+  },
+  "optChannels": {
+    "message": "Canais"
+  },
+  "optSelectPlaylist": {
+    "message": "Selecione uma playlist para gerenciar seus canais"
+  },
+  "optNoChannels": {
+    "message": "Nenhum canal nesta playlist. Adicione acima ou pelo YouTube."
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "extName": {
+    "message": "Organisateur d'abonnements YouTube"
+  },
+  "extDescription": {
+    "message": "Organisez vos abonnements YouTube avec des listes. Filtrez votre flux par groupes."
+  },
+  "optPlaylists": {
+    "message": "Listes"
+  },
+  "optChannels": {
+    "message": "Cha\u00eenes"
+  },
+  "optSelectPlaylist": {
+    "message": "S\u00e9lectionnez une liste pour g\u00e9rer ses cha\u00eenes"
+  },
+  "optNoChannels": {
+    "message": "Aucune cha\u00eene dans cette liste. Ajoutez-en ci-dessus ou depuis YouTube."
+  }
+}

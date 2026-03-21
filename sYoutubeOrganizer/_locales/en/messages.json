@@ -1,0 +1,26 @@
+{
+  "extName": {
+    "message": "YouTube Subscriptions Organizer",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Organize your YouTube subscriptions with playlists. Filter your feed by groups you create.",
+    "description": "Extension description"
+  },
+  "optPlaylists": {
+    "message": "Playlists",
+    "description": "Playlists section header"
+  },
+  "optChannels": {
+    "message": "Channels",
+    "description": "Channels section header"
+  },
+  "optSelectPlaylist": {
+    "message": "Select a playlist to manage its channels",
+    "description": "Empty state when no playlist selected"
+  },
+  "optNoChannels": {
+    "message": "No channels in this playlist yet. Add channels above or from YouTube.",
+    "description": "Empty state when playlist has no channels"
+  }
+}

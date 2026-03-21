@@ -1,0 +1,20 @@
+{
+  "extName": {
+    "message": "Organizador de Suscripciones de YouTube"
+  },
+  "extDescription": {
+    "message": "Organiza tus suscripciones de YouTube con listas. Filtra tu feed por grupos que crees."
+  },
+  "optPlaylists": {
+    "message": "Listas"
+  },
+  "optChannels": {
+    "message": "Canales"
+  },
+  "optSelectPlaylist": {
+    "message": "Selecciona una lista para gestionar sus canales"
+  },
+  "optNoChannels": {
+    "message": "A\u00fan no hay canales en esta lista. A\u00f1ade canales arriba o desde YouTube."
+  }
+}

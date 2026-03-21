@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="extName">YouTube Subscriptions Organizer</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body data-theme="dark">
+
+<div class="container">
+  <header>
+    <h1 data-i18n="extName">YouTube Subscriptions Organizer</h1>
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+      <svg class="icon-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+      <svg class="icon-moon" viewBox="0 0 24 24">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+    </button>
+  </header>
+
+  <main>
+    <div class="split-layout">
+      <!-- Left: Playlist List -->
+      <div class="panel panel-left">
+        <div class="form-section">
+          <div class="section-header">
+            <h2 data-i18n="optPlaylists">Playlists</h2>
+            <button class="btn btn-add" id="addPlaylistBtn" title="Add playlist">+</button>
+          </div>
+          <div class="add-row" id="addPlaylistRow" style="display:none;">
+            <input type="text" id="newPlaylistName" class="add-row-input" placeholder="New playlist name..." maxlength="50">
+            <input type="color" id="newPlaylistColor" class="add-row-input" value="#4a9eff" title="Color">
+          </div>
+          <div id="playlistList" class="item-list"></div>
+        </div>
+      </div>
+
+      <!-- Right: Playlist Detail -->
+      <div class="panel panel-right" id="detailPanel">
+        <div class="empty-state" id="emptyDetail">
+          <p data-i18n="optSelectPlaylist">Select a playlist to manage its channels</p>
+        </div>
+
+        <div id="playlistDetail" style="display: none;">
+          <!-- Channels Section -->
+          <div class="form-section">
+            <div class="section-header">
+              <h2 data-i18n="optChannels">Channels</h2>
+              <button class="btn btn-add" id="addChannelBtn" title="Add channel">+</button>
+            </div>
+            <div class="add-row" id="addChannelRow" style="display:none;">
+              <input type="text" id="addChannelHandle" class="add-row-input" placeholder="@handle or channel name..." maxlength="100">
+            </div>
+            <input type="text" id="channelSearch" placeholder="Search channels..." class="search-input">
+            <div id="channelList" class="item-list channel-list"></div>
+            <div id="noChannels" class="empty-state small" style="display: none;">
+              <p data-i18n="optNoChannels">No channels in this playlist yet. Add channels above or from YouTube.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-actions">
+        <button class="btn btn-export" id="exportBtn" title="Export playlists">Export</button>
+        <button class="btn btn-export" id="importBtn" title="Import playlists">Import</button>
+        <input type="file" id="importFile" accept=".json" style="display:none;">
+      </div>
+      <span>Contact: <a href="mailto:extension@tekky.cc">extension@tekky.cc</a></span>
+      <span>Developer: <a href="https://tekky.cc">tekky.cc</a></span>
+    </div>
+  </main>
+</div>
+
+<div id="toast" class="toast">
+  <span class="toast-icon">&#10003;</span>
+  <span class="toast-message">Saved</span>
+</div>
+
+<script src="options.js"></script>
+</body>
+</html>
