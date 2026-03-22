@@ -1,6 +1,6 @@
 {
   "extName": {
-    "message": "YouTube\u8ba2\u9605\u6574\u7406"
+    "message": "sYoutubePlaylist"
   },
   "extDescription": {
     "message": "\u7528\u64ad\u653e\u5217\u8868\u6574\u7406\u4f60\u7684YouTube\u8ba2\u9605\u3002\u6309\u5206\u7ec4\u7b5b\u9009\u4f60\u7684\u8ba2\u9605\u6d41\u3002"
@@ -16,5 +16,14 @@
   },
   "optNoChannels": {
     "message": "\u6b64\u64ad\u653e\u5217\u8868\u4e2d\u8fd8\u6ca1\u6709\u9891\u9053\u3002\u8bf7\u4ece\u4e0a\u65b9\u6216 YouTube \u6dfb\u52a0\u9891\u9053\u3002"
+  },
+  "optSubscriptionsSettings": {
+    "message": "\u8ba2\u9605\u8bbe\u7f6e"
+  },
+  "optHideShorts": {
+    "message": "\u9690\u85cf Shorts \u677f\u5757"
+  },
+  "optHideMostRelevant": {
+    "message": "\u9690\u85cf\u6700\u76f8\u5173\u677f\u5757"
   }
 }

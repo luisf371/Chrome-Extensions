@@ -3,13 +3,29 @@
 let data = null;
 let selectedPlaylistId = null;
 let editingPlaylistId = null;
+const MAX_MESSAGE_RETRIES = 2;
+const MESSAGE_RETRY_DELAY_MS = 200;
+const RETRYABLE_MESSAGE_TYPES = new Set([
+  'GET_ALL_DATA',
+  'REGISTER_CHANNEL',
+  'ASSIGN_CHANNEL_PLAYLIST',
+  'UPDATE_SETTINGS',
+  'DELETE_PLAYLIST',
+  'UPDATE_PLAYLIST',
+  'REORDER_PLAYLISTS'
+]);
 
 // --- Init ---
 
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
+  initSectionToggles();
   initI18n();
-  await loadData();
+  try {
+    await loadData();
+  } catch (error) {
+    showToast(error.message || 'Could not load extension data', 'error');
+  }
   render();
   attachListeners();
 });
@@ -19,21 +35,75 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
   const keys = ['playlists', 'channels', 'channelPlaylists', 'settings'];
   if (keys.some(k => k in changes)) {
-    loadData().then(() => render());
+    loadData().then(() => render()).catch((error) => {
+      showToast(error.message || 'Could not refresh data', 'error');
+    });
   }
 });
 
 // --- Data ---
 
 async function loadData() {
-  data = await chrome.runtime.sendMessage({ type: 'GET_ALL_DATA' });
+  data = await sendRuntimeMessage({ type: 'GET_ALL_DATA' });
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function normalizeRuntimeError(error) {
+  if (error instanceof Error) return error;
+  if (typeof error === 'string' && error) return new Error(error);
+  return new Error('Extension request failed');
+}
+
+function isRetryableRuntimeError(type, error) {
+  if (!RETRYABLE_MESSAGE_TYPES.has(type) || !chrome.runtime?.id) return false;
+  const message = error?.message || '';
+  return (
+    /receiving end does not exist/i.test(message) ||
+    /message port closed/i.test(message) ||
+    /could not establish connection/i.test(message)
+  );
+}
+
+async function sendRuntimeMessage(message) {
+  if (!message?.type) {
+    throw new Error('Invalid extension request');
+  }
+
+  const maxRetries = RETRYABLE_MESSAGE_TYPES.has(message.type) ? MAX_MESSAGE_RETRIES : 0;
+  let attempt = 0;
+
+  while (true) {
+    if (!chrome.runtime?.id) {
+      throw new Error('Extension unavailable. Reload the extension and try again.');
+    }
+
+    try {
+      const response = await chrome.runtime.sendMessage(message);
+      if (response?.error) {
+        throw new Error(response.error);
+      }
+      return response;
+    } catch (error) {
+      const normalizedError = normalizeRuntimeError(error);
+      if (attempt >= maxRetries || !isRetryableRuntimeError(message.type, normalizedError)) {
+        throw normalizedError;
+      }
+      await sleep(MESSAGE_RETRY_DELAY_MS * (2 ** attempt));
+      attempt += 1;
+    }
+  }
 }
 
 function getPlaylistsSorted() {
+  if (!data) return [];
   return Object.values(data.playlists || {}).sort((a, b) => a.order - b.order);
 }
 
 function getChannelsForPlaylist(playlistId) {
+  if (!data) return [];
   const handles = new Set();
 
   for (const [handle, plIds] of Object.entries(data.channelPlaylists || {})) {
@@ -49,6 +119,7 @@ function getChannelsForPlaylist(playlistId) {
 // --- Render ---
 
 function render() {
+  if (!data) return;
   renderPlaylistList();
   renderDetail();
 }
@@ -105,29 +176,38 @@ function renderPlaylistList() {
   list.querySelectorAll('.del-pl-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      const pl = data.playlists[btn.dataset.id];
-      if (!confirm(`Delete playlist "${pl.name}"?`)) return;
-      await chrome.runtime.sendMessage({ type: 'DELETE_PLAYLIST', id: btn.dataset.id });
-      if (selectedPlaylistId === btn.dataset.id) selectedPlaylistId = null;
-      await loadData();
-      render();
-      showToast('Playlist deleted');
+      try {
+        const pl = data.playlists[btn.dataset.id];
+        if (!pl) { await loadData(); render(); return; }
+        if (!confirm(`Delete playlist "${pl.name}"?`)) return;
+        await sendRuntimeMessage({ type: 'DELETE_PLAYLIST', id: btn.dataset.id });
+        if (selectedPlaylistId === btn.dataset.id) selectedPlaylistId = null;
+        await loadData();
+        render();
+        showToast('Playlist deleted');
+      } catch (error) {
+        showToast(error.message || 'Could not delete the playlist', 'error');
+      }
     });
   });
 
   // Edit inline
   list.querySelectorAll('.edit-pl-save').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const row = btn.closest('.edit-inline');
-      const id = row.dataset.id;
-      const name = row.querySelector('.edit-pl-name').value.trim();
-      const color = row.querySelector('.edit-pl-color').value;
-      if (!name) return;
-      await chrome.runtime.sendMessage({ type: 'UPDATE_PLAYLIST', id, name, color });
-      editingPlaylistId = null;
-      await loadData();
-      render();
-      showToast('Playlist updated');
+      try {
+        const row = btn.closest('.edit-inline');
+        const id = row.dataset.id;
+        const name = row.querySelector('.edit-pl-name').value.trim();
+        const color = row.querySelector('.edit-pl-color').value;
+        if (!name) return;
+        await sendRuntimeMessage({ type: 'UPDATE_PLAYLIST', id, name, color });
+        editingPlaylistId = null;
+        await loadData();
+        render();
+        showToast('Playlist updated');
+      } catch (error) {
+        showToast(error.message || 'Could not update the playlist', 'error');
+      }
     });
   });
 
@@ -189,7 +269,7 @@ function renderChannelList() {
     return `<div class="list-item channel-item" data-handle="${escapeAttr(ch.handle)}">
       <div class="channel-item-info">
         <div class="channel-item-name">${escapeHtml(ch.name)}</div>
-        <a class="channel-item-handle" href="https://www.youtube.com/${encodeURIComponent(ch.handle)}" target="_blank" rel="noopener">${escapeHtml(ch.handle)}</a>
+        <a class="channel-item-handle" href="https://www.youtube.com/${ch.handle.startsWith('@') ? '@' + encodeURIComponent(ch.handle.slice(1)) : 'channel/' + encodeURIComponent(ch.handle)}" target="_blank" rel="noopener">${escapeHtml(ch.handle)}</a>
       </div>
       <span class="item-actions" style="opacity:1;">
         <button class="btn btn-sm btn-danger remove-ch-btn" data-handle="${escapeAttr(ch.handle)}" title="Remove from playlist">&#10005;</button>
@@ -199,16 +279,20 @@ function renderChannelList() {
 
   list.querySelectorAll('.remove-ch-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const handle = btn.dataset.handle;
-      await chrome.runtime.sendMessage({
-        type: 'ASSIGN_CHANNEL_PLAYLIST',
-        handle,
-        playlistId: selectedPlaylistId,
-        assign: false
-      });
-      await loadData();
-      render();
-      showToast('Channel removed');
+      try {
+        const handle = btn.dataset.handle;
+        await sendRuntimeMessage({
+          type: 'ASSIGN_CHANNEL_PLAYLIST',
+          handle,
+          playlistId: selectedPlaylistId,
+          assign: false
+        });
+        await loadData();
+        render();
+        showToast('Channel removed');
+      } catch (error) {
+        showToast(error.message || 'Could not remove the channel', 'error');
+      }
     });
   });
 }
@@ -277,18 +361,22 @@ async function addPlaylist() {
   const name = nameInput.value.trim();
   if (!name) return;
 
-  const playlist = await chrome.runtime.sendMessage({
-    type: 'CREATE_PLAYLIST',
-    name,
-    color: colorInput.value
-  });
+  try {
+    const playlist = await sendRuntimeMessage({
+      type: 'CREATE_PLAYLIST',
+      name,
+      color: colorInput.value
+    });
 
-  nameInput.value = '';
-  document.getElementById('addPlaylistRow').style.display = 'none';
-  await loadData();
-  selectedPlaylistId = playlist.id;
-  render();
-  showToast('Playlist created');
+    nameInput.value = '';
+    document.getElementById('addPlaylistRow').style.display = 'none';
+    await loadData();
+    selectedPlaylistId = playlist.id;
+    render();
+    showToast('Playlist created');
+  } catch (error) {
+    showToast(error.message || 'Could not create the playlist', 'error');
+  }
 }
 
 async function addChannelManually() {
@@ -303,27 +391,31 @@ async function addChannelManually() {
 
   const { handle, displayName } = parsed;
 
-  // Register channel
-  await chrome.runtime.sendMessage({
-    type: 'REGISTER_CHANNEL',
-    handle,
-    name: displayName
-  });
+  try {
+    // Register channel
+    await sendRuntimeMessage({
+      type: 'REGISTER_CHANNEL',
+      handle,
+      name: displayName
+    });
 
-  // Assign to current playlist
-  await chrome.runtime.sendMessage({
-    type: 'ASSIGN_CHANNEL_PLAYLIST',
-    handle,
-    name: displayName,
-    playlistId: selectedPlaylistId,
-    assign: true
-  });
+    // Assign to current playlist
+    await sendRuntimeMessage({
+      type: 'ASSIGN_CHANNEL_PLAYLIST',
+      handle,
+      name: displayName,
+      playlistId: selectedPlaylistId,
+      assign: true
+    });
 
-  input.value = '';
-  document.getElementById('addChannelRow').style.display = 'none';
-  await loadData();
-  render();
-  showToast('Channel added');
+    input.value = '';
+    document.getElementById('addChannelRow').style.display = 'none';
+    await loadData();
+    render();
+    showToast('Channel added');
+  } catch (error) {
+    showToast(error.message || 'Could not add the channel', 'error');
+  }
 }
 
 function parseManualChannelInput(rawValue) {
@@ -369,7 +461,7 @@ function parseManualChannelInput(rawValue) {
   }
 
   const compact = value;
-  if (/^UC[A-Za-z0-9_-]{20,}$/.test(compact)) {
+  if (/^UC[A-Za-z0-9._-]{20,}$/.test(compact)) {
     return { handle: compact, displayName: compact };
   }
 
@@ -396,7 +488,7 @@ function exportPlaylists() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `syo-playlists-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `sYoutubePlaylist-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('Playlists exported');
@@ -420,7 +512,7 @@ async function importPlaylists(e) {
       'Replace all existing data?\n\nOK = Replace everything\nCancel = Merge with existing'
     ) ? 'replace' : 'merge';
 
-    const result = await chrome.runtime.sendMessage({
+    const result = await sendRuntimeMessage({
       type: 'IMPORT_DATA',
       playlists: imported.playlists,
       channels: imported.channels || {},
@@ -453,7 +545,35 @@ function initTheme() {
     const current = document.body.getAttribute('data-theme') || 'dark';
     const next = current === 'dark' ? 'light' : 'dark';
     document.body.setAttribute('data-theme', next);
-    chrome.runtime.sendMessage({ type: 'UPDATE_SETTINGS', settings: { theme: next } });
+    void sendRuntimeMessage({ type: 'UPDATE_SETTINGS', settings: { theme: next } }).catch((error) => {
+      document.body.setAttribute('data-theme', current);
+      showToast(error.message || 'Could not update the theme', 'error');
+    });
+  });
+}
+
+function initSectionToggles() {
+  const hideShortsEl = document.getElementById('hideShortsToggle');
+  const hideMostRelevantEl = document.getElementById('hideMostRelevantToggle');
+
+  // Load current state
+  chrome.storage.local.get(['settings'], (result) => {
+    hideShortsEl.checked = !!result.settings?.hideShorts;
+    hideMostRelevantEl.checked = !!result.settings?.hideMostRelevant;
+  });
+
+  hideShortsEl.addEventListener('change', () => {
+    void sendRuntimeMessage({ type: 'UPDATE_SETTINGS', settings: { hideShorts: hideShortsEl.checked } }).catch((error) => {
+      hideShortsEl.checked = !hideShortsEl.checked;
+      showToast(error.message || 'Could not update setting', 'error');
+    });
+  });
+
+  hideMostRelevantEl.addEventListener('change', () => {
+    void sendRuntimeMessage({ type: 'UPDATE_SETTINGS', settings: { hideMostRelevant: hideMostRelevantEl.checked } }).catch((error) => {
+      hideMostRelevantEl.checked = !hideMostRelevantEl.checked;
+      showToast(error.message || 'Could not update setting', 'error');
+    });
   });
 }
 
@@ -514,5 +634,5 @@ function escapeHtml(str) {
 }
 
 function escapeAttr(str) {
-  return (str || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

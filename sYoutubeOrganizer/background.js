@@ -1,6 +1,14 @@
 'use strict';
 
-const DEFAULT_SETTINGS = { theme: 'dark' };
+const DEFAULT_SETTINGS = {
+  theme: 'dark',
+  subscriptionsFilterPreference: null,
+  hideShorts: false,
+  hideMostRelevant: false
+};
+const STORAGE_STATE_KEYS = ['playlists', 'channels', 'channelPlaylists', 'settings'];
+const MUTATION_TIMEOUT_MS = 5000;
+let mutationQueue = Promise.resolve();
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
@@ -16,9 +24,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 // --- Storage helpers ---
 
 async function getAllData() {
-  const data = await chrome.storage.local.get([
-    'playlists', 'channels', 'channelPlaylists', 'settings'
-  ]);
+  const data = await chrome.storage.local.get(STORAGE_STATE_KEYS);
   return {
     playlists: data.playlists || {},
     channels: data.channels || {},
@@ -27,116 +33,339 @@ async function getAllData() {
   };
 }
 
+function withTimeout(promise, label, timeoutMs = MUTATION_TIMEOUT_MS) {
+  let timer = null;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+}
+
+async function setStoredState(state) {
+  await chrome.storage.local.set({
+    playlists: state.playlists,
+    channels: state.channels,
+    channelPlaylists: state.channelPlaylists,
+    settings: state.settings
+  });
+}
+
+function enqueueMutation(label, handler) {
+  const queuedWrite = mutationQueue
+    .catch(() => {})
+    .then(() => withTimeout((async () => {
+      const state = await getAllData();
+      const result = await handler(state) || {};
+      if (result.changed) {
+        await setStoredState(state);
+      }
+      return { state, result };
+    })(), label));
+
+  mutationQueue = queuedWrite.catch(() => {});
+
+  return queuedWrite.then(async ({ state, result }) => {
+    if (result.changed && result.broadcastKey) {
+      const broadcastData = result.broadcastKey === 'all'
+        ? null
+        : state[result.broadcastKey];
+      await broadcastChange(result.broadcastKey, broadcastData);
+    }
+    return result.response;
+  });
+}
+
+function normalizePlaylistName(name) {
+  if (typeof name !== 'string') return null;
+  const trimmed = name.trim();
+  return trimmed ? trimmed.slice(0, 50) : null;
+}
+
+function normalizePlaylistId(id) {
+  if (typeof id !== 'string') return null;
+  const trimmed = id.trim();
+  return trimmed || null;
+}
+
+function normalizeChannelName(name, fallback) {
+  if (typeof name === 'string' && name.trim()) {
+    return name.trim().slice(0, 100);
+  }
+  return fallback;
+}
+
+function normalizeChannelId(channelId) {
+  if (typeof channelId !== 'string') return '';
+  return channelId.trim().slice(0, 64);
+}
+
+function normalizeSettingsInput(newSettings) {
+  if (!isPlainObject(newSettings)) {
+    throw new Error('Invalid settings payload');
+  }
+
+  const normalized = {};
+  if (newSettings.theme !== undefined) {
+    normalized.theme = newSettings.theme === 'light' ? 'light' : 'dark';
+  }
+  if ('subscriptionsFilterPreference' in newSettings) {
+    const pref = newSettings.subscriptionsFilterPreference;
+    normalized.subscriptionsFilterPreference = pref && typeof pref === 'object'
+      ? pref
+      : null;
+  }
+  if (newSettings.hideShorts !== undefined) {
+    normalized.hideShorts = !!newSettings.hideShorts;
+  }
+  if (newSettings.hideMostRelevant !== undefined) {
+    normalized.hideMostRelevant = !!newSettings.hideMostRelevant;
+  }
+  return normalized;
+}
+
 async function createPlaylist({ name, color }) {
-  const { playlists } = await chrome.storage.local.get('playlists');
-  const all = playlists || {};
-  const id = 'pl_' + crypto.randomUUID().slice(0, 8);
-  const order = Object.keys(all).length;
-  const now = Date.now();
-  const playlist = { id, name, color, order, createdAt: now, updatedAt: now };
-  all[id] = playlist;
-  await chrome.storage.local.set({ playlists: all });
-  await broadcastChange('playlists', all);
-  return playlist;
+  const normalizedName = normalizePlaylistName(name);
+  if (!normalizedName) {
+    throw new Error('Playlist name is required');
+  }
+  const normalizedColor = normalizePlaylistColor(color);
+
+  return enqueueMutation('createPlaylist', async (state) => {
+    const playlists = state.playlists;
+    const id = 'pl_' + crypto.randomUUID().slice(0, 8);
+    const order = Object.values(playlists).reduce(
+      (max, playlist) => Math.max(max, Number.isFinite(playlist.order) ? playlist.order : -1),
+      -1
+    ) + 1;
+    const now = Date.now();
+    const playlist = {
+      id,
+      name: normalizedName,
+      color: normalizedColor,
+      order,
+      createdAt: now,
+      updatedAt: now
+    };
+    playlists[id] = playlist;
+    return {
+      changed: true,
+      broadcastKey: 'all',
+      response: playlist
+    };
+  });
 }
 
 async function updatePlaylist({ id, name, color, order }) {
-  const { playlists } = await chrome.storage.local.get('playlists');
-  const all = playlists || {};
-  if (!all[id]) return null;
-  if (name !== undefined) all[id].name = name;
-  if (color !== undefined) all[id].color = color;
-  if (order !== undefined) all[id].order = order;
-  all[id].updatedAt = Date.now();
-  await chrome.storage.local.set({ playlists: all });
-  await broadcastChange('playlists', all);
-  return all[id];
+  const normalizedId = normalizePlaylistId(id);
+  if (!normalizedId) {
+    throw new Error('Playlist ID is required');
+  }
+
+  const nextName = name !== undefined ? normalizePlaylistName(name) : undefined;
+  if (name !== undefined && !nextName) {
+    throw new Error('Playlist name cannot be empty');
+  }
+  const nextColor = color !== undefined ? normalizePlaylistColor(color) : undefined;
+  const nextOrder = order !== undefined && Number.isFinite(order) ? order : undefined;
+
+  return enqueueMutation('updatePlaylist', async (state) => {
+    const playlist = state.playlists[normalizedId];
+    if (!playlist) {
+      return { changed: false, response: null };
+    }
+
+    if (nextName !== undefined) playlist.name = nextName;
+    if (nextColor !== undefined) playlist.color = nextColor;
+    if (nextOrder !== undefined) playlist.order = nextOrder;
+    playlist.updatedAt = Date.now();
+
+    return {
+      changed: true,
+      broadcastKey: 'all',
+      response: playlist
+    };
+  });
 }
 
 async function deletePlaylist({ id }) {
-  const data = await chrome.storage.local.get(['playlists', 'channelPlaylists']);
-  const playlists = data.playlists || {};
-  const channelPlaylists = data.channelPlaylists || {};
-
-  delete playlists[id];
-
-  for (const handle of Object.keys(channelPlaylists)) {
-    channelPlaylists[handle] = (channelPlaylists[handle] || []).filter(pid => pid !== id);
-    if (channelPlaylists[handle].length === 0) delete channelPlaylists[handle];
+  const normalizedId = normalizePlaylistId(id);
+  if (!normalizedId) {
+    throw new Error('Playlist ID is required');
   }
 
-  await chrome.storage.local.set({ playlists, channelPlaylists });
-  await broadcastChange('all');
-  return { success: true };
+  return enqueueMutation('deletePlaylist', async (state) => {
+    if (!state.playlists[normalizedId]) {
+      return {
+        changed: false,
+        response: { success: true }
+      };
+    }
+
+    delete state.playlists[normalizedId];
+
+    for (const handle of Object.keys(state.channelPlaylists)) {
+      state.channelPlaylists[handle] = (state.channelPlaylists[handle] || []).filter(
+        playlistId => playlistId !== normalizedId
+      );
+      if (state.channelPlaylists[handle].length === 0) {
+        delete state.channelPlaylists[handle];
+      }
+    }
+
+    return {
+      changed: true,
+      broadcastKey: 'all',
+      response: { success: true }
+    };
+  });
 }
 
 async function registerChannel({ handle, channelId, name }) {
-  const { channels } = await chrome.storage.local.get('channels');
-  const all = channels || {};
-  all[handle] = {
-    handle,
-    channelId: channelId || all[handle]?.channelId || '',
-    name: name || all[handle]?.name || handle,
-    updatedAt: Date.now()
-  };
-  await chrome.storage.local.set({ channels: all });
-  return { success: true };
+  const normalizedHandle = normalizeStoredHandle(handle);
+  if (!normalizedHandle) {
+    throw new Error('Invalid channel handle');
+  }
+  const normalizedChannelId = normalizeChannelId(channelId);
+
+  return enqueueMutation('registerChannel', async (state) => {
+    const existing = state.channels[normalizedHandle];
+    const normalizedName = normalizeChannelName(name, existing?.name || normalizedHandle);
+    const nextChannel = {
+      handle: normalizedHandle,
+      channelId: normalizedChannelId || existing?.channelId || '',
+      name: normalizedName,
+      updatedAt: Date.now()
+    };
+
+    const changed = !existing
+      || existing.channelId !== nextChannel.channelId
+      || existing.name !== nextChannel.name;
+
+    if (!changed) {
+      return {
+        changed: false,
+        response: { success: true }
+      };
+    }
+
+    state.channels[normalizedHandle] = nextChannel;
+    return {
+      changed: true,
+      broadcastKey: null,
+      response: { success: true }
+    };
+  });
 }
 
 async function assignChannelPlaylist({ handle, name, playlistId, assign }) {
-  const data = await chrome.storage.local.get(['channelPlaylists', 'channels']);
-  const channelPlaylists = data.channelPlaylists || {};
-  const channels = data.channels || {};
-
-  // Auto-register channel if unknown
-  if (!channels[handle]) {
-    channels[handle] = { handle, channelId: '', name: name || handle, updatedAt: Date.now() };
-    await chrome.storage.local.set({ channels });
+  const normalizedHandle = normalizeStoredHandle(handle);
+  const normalizedPlaylistId = normalizePlaylistId(playlistId);
+  if (!normalizedHandle) {
+    throw new Error('Invalid channel handle');
+  }
+  if (!normalizedPlaylistId) {
+    throw new Error('Playlist ID is required');
+  }
+  if (typeof assign !== 'boolean') {
+    throw new Error('Assign flag must be boolean');
   }
 
-  const current = channelPlaylists[handle] || [];
-  if (assign) {
-    if (!current.includes(playlistId)) current.push(playlistId);
-  } else {
-    const idx = current.indexOf(playlistId);
-    if (idx !== -1) current.splice(idx, 1);
-  }
+  return enqueueMutation('assignChannelPlaylist', async (state) => {
+    if (!state.playlists[normalizedPlaylistId]) {
+      throw new Error('Playlist not found');
+    }
 
-  if (current.length > 0) {
-    channelPlaylists[handle] = current;
-  } else {
-    delete channelPlaylists[handle];
-  }
+    if (assign && !state.channels[normalizedHandle]) {
+      state.channels[normalizedHandle] = {
+        handle: normalizedHandle,
+        channelId: '',
+        name: normalizeChannelName(name, normalizedHandle),
+        updatedAt: Date.now()
+      };
+    }
 
-  await chrome.storage.local.set({ channelPlaylists });
-  await broadcastChange('channelPlaylists', channelPlaylists);
-  return { success: true };
+    const current = [...(state.channelPlaylists[normalizedHandle] || [])];
+    if (assign) {
+      if (!current.includes(normalizedPlaylistId)) current.push(normalizedPlaylistId);
+    } else {
+      const idx = current.indexOf(normalizedPlaylistId);
+      if (idx !== -1) current.splice(idx, 1);
+    }
+
+    if (current.length > 0) {
+      state.channelPlaylists[normalizedHandle] = current;
+    } else {
+      delete state.channelPlaylists[normalizedHandle];
+    }
+
+    return {
+      changed: true,
+      broadcastKey: 'all',
+      response: { success: true }
+    };
+  });
 }
 
 async function getChannelAssignments({ handle }) {
+  const normalizedHandle = normalizeStoredHandle(handle);
+  if (!normalizedHandle) {
+    throw new Error('Invalid channel handle');
+  }
+
   const data = await chrome.storage.local.get(['channelPlaylists']);
   return {
-    playlists: (data.channelPlaylists || {})[handle] || []
+    playlists: (data.channelPlaylists || {})[normalizedHandle] || []
   };
 }
 
 async function updateSettings(newSettings) {
-  const { settings } = await chrome.storage.local.get('settings');
-  const merged = { ...DEFAULT_SETTINGS, ...(settings || {}), ...newSettings };
-  await chrome.storage.local.set({ settings: merged });
-  await broadcastChange('settings', merged);
-  return merged;
+  const normalizedSettings = normalizeSettingsInput(newSettings);
+
+  return enqueueMutation('updateSettings', async (state) => {
+    state.settings = {
+      ...DEFAULT_SETTINGS,
+      ...(state.settings || {}),
+      ...normalizedSettings
+    };
+    return {
+      changed: true,
+      broadcastKey: 'all',
+      response: state.settings
+    };
+  });
 }
 
 async function reorderPlaylists({ orderedIds }) {
-  const { playlists } = await chrome.storage.local.get('playlists');
-  const all = playlists || {};
-  orderedIds.forEach((id, index) => {
-    if (all[id]) all[id].order = index;
+  if (!Array.isArray(orderedIds)) {
+    throw new Error('orderedIds must be an array');
+  }
+
+  const normalizedOrderedIds = [...new Set(
+    orderedIds
+      .map(normalizePlaylistId)
+      .filter(Boolean)
+  )];
+
+  return enqueueMutation('reorderPlaylists', async (state) => {
+    const currentIds = Object.keys(state.playlists);
+    const remainingIds = currentIds
+      .filter(id => !normalizedOrderedIds.includes(id))
+      .sort((a, b) => (state.playlists[a].order || 0) - (state.playlists[b].order || 0));
+    const finalOrder = [...normalizedOrderedIds.filter(id => state.playlists[id]), ...remainingIds];
+
+    finalOrder.forEach((playlistId, index) => {
+      state.playlists[playlistId].order = index;
+      state.playlists[playlistId].updatedAt = Date.now();
+    });
+
+    return {
+      changed: true,
+      broadcastKey: 'all',
+      response: { success: true }
+    };
   });
-  await chrome.storage.local.set({ playlists: all });
-  await broadcastChange('playlists', all);
-  return { success: true };
 }
 
 function isPlainObject(value) {
@@ -150,7 +379,7 @@ function normalizeStoredHandle(handle) {
   if (trimmed.startsWith('@')) {
     return /^@[A-Za-z0-9._-]+$/.test(trimmed) ? trimmed : null;
   }
-  return /^[A-Za-z0-9_-]{10,}$/.test(trimmed) ? trimmed : null;
+  return /^[A-Za-z0-9._-]{10,}$/.test(trimmed) ? trimmed : null;
 }
 
 function normalizePlaylistColor(color) {
@@ -253,11 +482,16 @@ async function broadcastChange(key, data) {
     const payload = key === 'all'
       ? { type: 'DATA_CHANGED', key: 'all', data: await getAllData() }
       : { type: 'DATA_CHANGED', key, data };
-    for (const tab of tabs) {
-      chrome.tabs.sendMessage(tab.id, payload).catch(() => {});
+    const results = await Promise.allSettled(
+      tabs.map(tab => chrome.tabs.sendMessage(tab.id, payload))
+    );
+    const failedCount = results.filter(result => result.status === 'rejected').length;
+    if (failedCount > 0) {
+      console.debug(`SYO broadcast skipped ${failedCount} tab(s)`, { key });
     }
-  } catch (e) {
+  } catch (error) {
     // Tabs may not be available
+    console.debug('SYO broadcast unavailable', error);
   }
 }
 
@@ -265,54 +499,76 @@ async function broadcastChange(key, data) {
 
 async function importData({ playlists, channels, channelPlaylists, mode }) {
   const imported = normalizeImportedData({ playlists, channels, channelPlaylists });
-  const current = await getAllData();
-
-  if (mode === 'replace') {
-    await chrome.storage.local.set(imported);
-    await broadcastChange('all');
-    return { success: true };
+  if (mode !== 'replace' && mode !== 'merge') {
+    throw new Error('Invalid import mode');
   }
 
-  // Merge mode: add new playlists, merge channels and assignments
-  const mergedPlaylists = { ...current.playlists };
-  const mergedChannels = { ...current.channels };
-  const mergedCP = { ...current.channelPlaylists };
-  const idMap = {};
-
-  // Map imported playlist IDs — reuse existing if same name, else create new
-  for (const [id, pl] of Object.entries(imported.playlists)) {
-    const existing = Object.values(mergedPlaylists).find(p => p.name === pl.name);
-    if (existing) {
-      idMap[id] = existing.id;
-    } else {
-      const maxOrder = Math.max(0, ...Object.values(mergedPlaylists).map(p => p.order || 0));
-      const newId = 'pl_' + crypto.randomUUID().slice(0, 8);
-      mergedPlaylists[newId] = { ...pl, id: newId, order: maxOrder + 1, createdAt: Date.now(), updatedAt: Date.now() };
-      idMap[id] = newId;
+  return enqueueMutation('importData', async (state) => {
+    if (mode === 'replace') {
+      state.playlists = imported.playlists;
+      state.channels = imported.channels;
+      state.channelPlaylists = imported.channelPlaylists;
+      return {
+        changed: true,
+        broadcastKey: 'all',
+        response: { success: true }
+      };
     }
-  }
 
-  // Merge channels
-  for (const [handle, ch] of Object.entries(imported.channels)) {
-    if (!mergedChannels[handle]) {
-      mergedChannels[handle] = { ...ch };
+    const mergedPlaylists = { ...state.playlists };
+    const mergedChannels = { ...state.channels };
+    const mergedChannelPlaylists = { ...state.channelPlaylists };
+    let nextOrder = Object.values(mergedPlaylists).reduce(
+      (max, playlist) => Math.max(max, Number.isFinite(playlist.order) ? playlist.order : -1),
+      -1
+    );
+
+    for (const [playlistId, playlist] of Object.entries(imported.playlists)) {
+      if (mergedPlaylists[playlistId]) {
+        mergedPlaylists[playlistId] = {
+          ...mergedPlaylists[playlistId],
+          name: playlist.name,
+          color: playlist.color,
+          updatedAt: Date.now()
+        };
+        continue;
+      }
+
+      nextOrder += 1;
+      mergedPlaylists[playlistId] = {
+        ...playlist,
+        order: nextOrder,
+        updatedAt: Date.now()
+      };
     }
-  }
 
-  // Merge assignments using mapped IDs
-  for (const [handle, plIds] of Object.entries(imported.channelPlaylists)) {
-    const existing = mergedCP[handle] || [];
-    const mapped = plIds.map(id => idMap[id] || id);
-    mergedCP[handle] = [...new Set([...existing, ...mapped])];
-  }
+    for (const [handle, channel] of Object.entries(imported.channels)) {
+      mergedChannels[handle] = mergedChannels[handle]
+        ? {
+            ...mergedChannels[handle],
+            channelId: channel.channelId || mergedChannels[handle].channelId || '',
+            name: channel.name || mergedChannels[handle].name || handle,
+            updatedAt: Date.now()
+          }
+        : { ...channel };
+    }
 
-  await chrome.storage.local.set({
-    playlists: mergedPlaylists,
-    channels: mergedChannels,
-    channelPlaylists: mergedCP
+    for (const [handle, playlistIds] of Object.entries(imported.channelPlaylists)) {
+      const existing = mergedChannelPlaylists[handle] || [];
+      const validPlaylistIds = playlistIds.filter(playlistId => mergedPlaylists[playlistId]);
+      mergedChannelPlaylists[handle] = [...new Set([...existing, ...validPlaylistIds])];
+    }
+
+    state.playlists = mergedPlaylists;
+    state.channels = mergedChannels;
+    state.channelPlaylists = mergedChannelPlaylists;
+
+    return {
+      changed: true,
+      broadcastKey: 'all',
+      response: { success: true }
+    };
   });
-  await broadcastChange('all');
-  return { success: true };
 }
 
 // --- Message router ---

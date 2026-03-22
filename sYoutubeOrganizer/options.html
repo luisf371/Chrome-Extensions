@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="extName">YouTube Subscriptions Organizer</title>
+  <title data-i18n="extName">sYoutubePlaylist</title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body data-theme="dark">
 
 <div class="container">
   <header>
-    <h1 data-i18n="extName">YouTube Subscriptions Organizer</h1>
+    <h1 data-i18n="extName">sYoutubePlaylist</h1>
     <button class="theme-toggle" id="themeToggle" title="Toggle theme">
       <svg class="icon-sun" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="5"></circle>
@@ -70,6 +70,21 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="form-section settings-section">
+      <div class="section-header">
+        <h2 data-i18n="optSubscriptionsSettings">Subscriptions Settings</h2>
+      </div>
+      <label class="toggle-row">
+        <input type="checkbox" id="hideShortsToggle">
+        <span data-i18n="optHideShorts">Hide Shorts section</span>
+      </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="hideMostRelevantToggle">
+        <span data-i18n="optHideMostRelevant">Hide Most Relevant section</span>
+      </label>
     </div>
 
     <!-- Footer -->

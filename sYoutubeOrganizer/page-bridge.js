@@ -1,10 +1,12 @@
 // MAIN world script - captures yt-navigate-finish and relays to ISOLATED world
 (function () {
   'use strict';
+  const NAV_EVENT_SOURCE = 'syp-page-bridge';
 
   function postNav() {
     window.postMessage({
-      type: 'SYO_NAV_EVENT',
+      type: 'SYP_NAV_EVENT',
+      source: NAV_EVENT_SOURCE,
       url: window.location.href
     }, '*');
   }

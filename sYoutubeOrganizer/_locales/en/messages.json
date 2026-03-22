@@ -1,10 +1,10 @@
 {
   "extName": {
-    "message": "YouTube Subscriptions Organizer",
+    "message": "sYoutubePlaylist",
     "description": "Extension name"
   },
   "extDescription": {
-    "message": "Organize your YouTube subscriptions with playlists. Filter your feed by groups you create.",
+    "message": "Manage your YouTube subscriptions with playlists. Filter your feed by the groups you create.",
     "description": "Extension description"
   },
   "optPlaylists": {
@@ -22,5 +22,17 @@
   "optNoChannels": {
     "message": "No channels in this playlist yet. Add channels above or from YouTube.",
     "description": "Empty state when playlist has no channels"
+  },
+  "optSubscriptionsSettings": {
+    "message": "Subscriptions Settings",
+    "description": "Settings section header for subscriptions page options"
+  },
+  "optHideShorts": {
+    "message": "Hide Shorts section",
+    "description": "Toggle to hide the Shorts shelf on subscriptions page"
+  },
+  "optHideMostRelevant": {
+    "message": "Hide Most Relevant section",
+    "description": "Toggle to hide the Most Relevant shelf on subscriptions page"
   }
 }

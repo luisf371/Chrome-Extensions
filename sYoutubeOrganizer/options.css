@@ -434,6 +434,28 @@ input:focus {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Settings toggles */
+.settings-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-dark);
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.toggle-row input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
 /* Footer */
 .footer {
   margin-top: 10px;
