@@ -1,5 +1,7 @@
 'use strict';
 
+const sharedCore = globalThis.SYPSharedCore;
+
 let data = null;
 let selectedPlaylistId = null;
 let editingPlaylistId = null;
@@ -419,57 +421,7 @@ async function addChannelManually() {
 }
 
 function parseManualChannelInput(rawValue) {
-  const value = rawValue.trim();
-  if (!value) return null;
-
-  if (/^https?:\/\//i.test(value)) {
-    let url;
-    try {
-      url = new URL(value);
-    } catch {
-      return { error: 'Enter a valid YouTube channel URL, @handle, or channel ID' };
-    }
-
-    const hostname = url.hostname.replace(/^www\./i, '').toLowerCase();
-    if (!['youtube.com', 'm.youtube.com'].includes(hostname)) {
-      return { error: 'Only YouTube channel URLs are supported' };
-    }
-
-    const pathname = url.pathname.replace(/\/+$/, '');
-    const handleMatch = pathname.match(/^\/@([^/?]+)/);
-    if (handleMatch) {
-      return { handle: '@' + handleMatch[1], displayName: handleMatch[1] };
-    }
-
-    const channelMatch = pathname.match(/^\/channel\/([^/?]+)/);
-    if (channelMatch) {
-      return { handle: channelMatch[1], displayName: channelMatch[1] };
-    }
-
-    return { error: 'Paste a YouTube channel URL, not a video or playlist URL' };
-  }
-
-  if (value.startsWith('@')) {
-    if (/\s/.test(value) || !/^@[A-Za-z0-9._-]+$/.test(value)) {
-      return { error: 'Enter a valid YouTube @handle' };
-    }
-    return { handle: value, displayName: value.slice(1) };
-  }
-
-  if (/\s/.test(value)) {
-    return { error: 'Enter a valid @handle, channel ID, or YouTube channel URL' };
-  }
-
-  const compact = value;
-  if (/^UC[A-Za-z0-9._-]{20,}$/.test(compact)) {
-    return { handle: compact, displayName: compact };
-  }
-
-  if (/^[A-Za-z0-9._-]+$/.test(compact)) {
-    return { handle: '@' + compact, displayName: compact };
-  }
-
-  return { error: 'Enter a valid @handle, channel ID, or YouTube channel URL' };
+  return sharedCore.parseManualChannelInput(rawValue);
 }
 
 // --- Export ---

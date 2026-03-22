@@ -1,11 +1,10 @@
 'use strict';
 
-const DEFAULT_SETTINGS = {
-  theme: 'dark',
-  subscriptionsFilterPreference: null,
-  hideShorts: false,
-  hideMostRelevant: false
-};
+importScripts('shared-core.js');
+
+const sharedCore = globalThis.SYPSharedCore;
+
+const DEFAULT_SETTINGS = { ...sharedCore.DEFAULT_SETTINGS };
 const STORAGE_STATE_KEYS = ['playlists', 'channels', 'channelPlaylists', 'settings'];
 const MUTATION_TIMEOUT_MS = 5000;
 let mutationQueue = Promise.resolve();
@@ -78,77 +77,31 @@ function enqueueMutation(label, handler) {
 }
 
 function normalizePlaylistName(name) {
-  if (typeof name !== 'string') return null;
-  const trimmed = name.trim();
-  return trimmed ? trimmed.slice(0, 50) : null;
+  return sharedCore.normalizePlaylistName(name);
 }
 
 function normalizePlaylistId(id) {
-  if (typeof id !== 'string') return null;
-  const trimmed = id.trim();
-  return trimmed || null;
+  return sharedCore.normalizePlaylistId(id);
 }
 
 function normalizeChannelName(name, fallback) {
-  if (typeof name === 'string' && name.trim()) {
-    return name.trim().slice(0, 100);
-  }
-  return fallback;
+  return sharedCore.normalizeChannelName(name, fallback);
 }
 
 function normalizeChannelId(channelId) {
-  if (typeof channelId !== 'string') return '';
-  return channelId.trim().slice(0, 64);
+  return sharedCore.normalizeChannelId(channelId);
 }
 
 function normalizeSettingsInput(newSettings) {
-  if (!isPlainObject(newSettings)) {
-    throw new Error('Invalid settings payload');
-  }
-
-  const normalized = {};
-  if (newSettings.theme !== undefined) {
-    normalized.theme = newSettings.theme === 'light' ? 'light' : 'dark';
-  }
-  if ('subscriptionsFilterPreference' in newSettings) {
-    const pref = newSettings.subscriptionsFilterPreference;
-    normalized.subscriptionsFilterPreference = pref && typeof pref === 'object'
-      ? pref
-      : null;
-  }
-  if (newSettings.hideShorts !== undefined) {
-    normalized.hideShorts = !!newSettings.hideShorts;
-  }
-  if (newSettings.hideMostRelevant !== undefined) {
-    normalized.hideMostRelevant = !!newSettings.hideMostRelevant;
-  }
-  return normalized;
+  return sharedCore.normalizeSettingsInput(newSettings);
 }
 
 async function createPlaylist({ name, color }) {
-  const normalizedName = normalizePlaylistName(name);
-  if (!normalizedName) {
-    throw new Error('Playlist name is required');
-  }
-  const normalizedColor = normalizePlaylistColor(color);
-
   return enqueueMutation('createPlaylist', async (state) => {
-    const playlists = state.playlists;
-    const id = 'pl_' + crypto.randomUUID().slice(0, 8);
-    const order = Object.values(playlists).reduce(
-      (max, playlist) => Math.max(max, Number.isFinite(playlist.order) ? playlist.order : -1),
-      -1
-    ) + 1;
-    const now = Date.now();
-    const playlist = {
-      id,
-      name: normalizedName,
-      color: normalizedColor,
-      order,
-      createdAt: now,
-      updatedAt: now
-    };
-    playlists[id] = playlist;
+    const playlist = sharedCore.applyCreatePlaylistMutation(state, { name, color }, {
+      now: () => Date.now(),
+      randomUUID: () => crypto.randomUUID()
+    });
     return {
       changed: true,
       broadcastKey: 'all',
@@ -260,50 +213,19 @@ async function registerChannel({ handle, channelId, name }) {
 }
 
 async function assignChannelPlaylist({ handle, name, playlistId, assign }) {
-  const normalizedHandle = normalizeStoredHandle(handle);
-  const normalizedPlaylistId = normalizePlaylistId(playlistId);
-  if (!normalizedHandle) {
-    throw new Error('Invalid channel handle');
-  }
-  if (!normalizedPlaylistId) {
-    throw new Error('Playlist ID is required');
-  }
-  if (typeof assign !== 'boolean') {
-    throw new Error('Assign flag must be boolean');
-  }
-
   return enqueueMutation('assignChannelPlaylist', async (state) => {
-    if (!state.playlists[normalizedPlaylistId]) {
-      throw new Error('Playlist not found');
-    }
-
-    if (assign && !state.channels[normalizedHandle]) {
-      state.channels[normalizedHandle] = {
-        handle: normalizedHandle,
-        channelId: '',
-        name: normalizeChannelName(name, normalizedHandle),
-        updatedAt: Date.now()
-      };
-    }
-
-    const current = [...(state.channelPlaylists[normalizedHandle] || [])];
-    if (assign) {
-      if (!current.includes(normalizedPlaylistId)) current.push(normalizedPlaylistId);
-    } else {
-      const idx = current.indexOf(normalizedPlaylistId);
-      if (idx !== -1) current.splice(idx, 1);
-    }
-
-    if (current.length > 0) {
-      state.channelPlaylists[normalizedHandle] = current;
-    } else {
-      delete state.channelPlaylists[normalizedHandle];
-    }
-
+    const response = sharedCore.applyAssignChannelPlaylistMutation(state, {
+      handle,
+      name,
+      playlistId,
+      assign
+    }, {
+      now: () => Date.now()
+    });
     return {
       changed: true,
       broadcastKey: 'all',
-      response: { success: true }
+      response
     };
   });
 }
@@ -321,18 +243,12 @@ async function getChannelAssignments({ handle }) {
 }
 
 async function updateSettings(newSettings) {
-  const normalizedSettings = normalizeSettingsInput(newSettings);
-
   return enqueueMutation('updateSettings', async (state) => {
-    state.settings = {
-      ...DEFAULT_SETTINGS,
-      ...(state.settings || {}),
-      ...normalizedSettings
-    };
+    const response = sharedCore.applyUpdateSettingsMutation(state, newSettings);
     return {
       changed: true,
       broadcastKey: 'all',
-      response: state.settings
+      response
     };
   });
 }
@@ -369,109 +285,19 @@ async function reorderPlaylists({ orderedIds }) {
 }
 
 function isPlainObject(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  return sharedCore.isPlainObject(value);
 }
 
 function normalizeStoredHandle(handle) {
-  if (typeof handle !== 'string') return null;
-  const trimmed = handle.trim();
-  if (!trimmed) return null;
-  if (trimmed.startsWith('@')) {
-    return /^@[A-Za-z0-9._-]+$/.test(trimmed) ? trimmed : null;
-  }
-  return /^[A-Za-z0-9._-]{10,}$/.test(trimmed) ? trimmed : null;
+  return sharedCore.normalizeStoredHandle(handle);
 }
 
 function normalizePlaylistColor(color) {
-  return typeof color === 'string' && /^#[0-9A-Fa-f]{6}$/.test(color)
-    ? color
-    : '#4a9eff';
+  return sharedCore.normalizePlaylistColor(color);
 }
 
 function normalizeImportedData({ playlists, channels, channelPlaylists }) {
-  if (!isPlainObject(playlists)) {
-    throw new Error('Invalid import: playlists must be an object');
-  }
-  if (channels !== undefined && !isPlainObject(channels)) {
-    throw new Error('Invalid import: channels must be an object');
-  }
-  if (channelPlaylists !== undefined && !isPlainObject(channelPlaylists)) {
-    throw new Error('Invalid import: channelPlaylists must be an object');
-  }
-
-  const now = Date.now();
-  const normalizedPlaylists = {};
-  const playlistEntries = Object.entries(playlists)
-    .filter(([id, playlist]) => (
-      typeof id === 'string' &&
-      id.trim() &&
-      isPlainObject(playlist) &&
-      typeof playlist.name === 'string' &&
-      playlist.name.trim()
-    ))
-    .sort(([, a], [, b]) => {
-      const orderA = Number.isFinite(a.order) ? a.order : Number.MAX_SAFE_INTEGER;
-      const orderB = Number.isFinite(b.order) ? b.order : Number.MAX_SAFE_INTEGER;
-      return orderA - orderB;
-    });
-
-  if (playlistEntries.length === 0) {
-    throw new Error('Invalid import: no valid playlists found');
-  }
-
-  playlistEntries.forEach(([id, playlist], index) => {
-    const playlistId = id.trim();
-    normalizedPlaylists[playlistId] = {
-      id: playlistId,
-      name: playlist.name.trim().slice(0, 50),
-      color: normalizePlaylistColor(playlist.color),
-      order: index,
-      createdAt: Number.isFinite(playlist.createdAt) ? playlist.createdAt : now,
-      updatedAt: now
-    };
-  });
-
-  const normalizedChannels = {};
-  for (const [rawHandle, channel] of Object.entries(channels || {})) {
-    const handle = normalizeStoredHandle(rawHandle);
-    if (!handle) continue;
-    normalizedChannels[handle] = {
-      handle,
-      channelId: typeof channel?.channelId === 'string' ? channel.channelId.trim() : '',
-      name: typeof channel?.name === 'string' && channel.name.trim() ? channel.name.trim() : handle,
-      updatedAt: now
-    };
-  }
-
-  const normalizedChannelPlaylists = {};
-  for (const [rawHandle, playlistIds] of Object.entries(channelPlaylists || {})) {
-    const handle = normalizeStoredHandle(rawHandle);
-    if (!handle || !Array.isArray(playlistIds)) continue;
-
-    const validPlaylistIds = [...new Set(
-      playlistIds
-        .map(id => typeof id === 'string' ? id.trim() : '')
-        .filter(id => id && normalizedPlaylists[id])
-    )];
-
-    if (validPlaylistIds.length === 0) continue;
-
-    normalizedChannelPlaylists[handle] = validPlaylistIds;
-    if (!normalizedChannels[handle]) {
-      normalizedChannels[handle] = {
-        handle,
-        channelId: '',
-        name: handle,
-        updatedAt: now
-      };
-    }
-  }
-
-  return {
-    playlists: normalizedPlaylists,
-    channels: normalizedChannels,
-    channelPlaylists: normalizedChannelPlaylists
-  };
+  return sharedCore.normalizeImportedData({ playlists, channels, channelPlaylists });
 }
 
 // --- Broadcast ---
@@ -498,75 +324,19 @@ async function broadcastChange(key, data) {
 // --- Import ---
 
 async function importData({ playlists, channels, channelPlaylists, mode }) {
-  const imported = normalizeImportedData({ playlists, channels, channelPlaylists });
-  if (mode !== 'replace' && mode !== 'merge') {
-    throw new Error('Invalid import mode');
-  }
-
   return enqueueMutation('importData', async (state) => {
-    if (mode === 'replace') {
-      state.playlists = imported.playlists;
-      state.channels = imported.channels;
-      state.channelPlaylists = imported.channelPlaylists;
-      return {
-        changed: true,
-        broadcastKey: 'all',
-        response: { success: true }
-      };
-    }
-
-    const mergedPlaylists = { ...state.playlists };
-    const mergedChannels = { ...state.channels };
-    const mergedChannelPlaylists = { ...state.channelPlaylists };
-    let nextOrder = Object.values(mergedPlaylists).reduce(
-      (max, playlist) => Math.max(max, Number.isFinite(playlist.order) ? playlist.order : -1),
-      -1
-    );
-
-    for (const [playlistId, playlist] of Object.entries(imported.playlists)) {
-      if (mergedPlaylists[playlistId]) {
-        mergedPlaylists[playlistId] = {
-          ...mergedPlaylists[playlistId],
-          name: playlist.name,
-          color: playlist.color,
-          updatedAt: Date.now()
-        };
-        continue;
-      }
-
-      nextOrder += 1;
-      mergedPlaylists[playlistId] = {
-        ...playlist,
-        order: nextOrder,
-        updatedAt: Date.now()
-      };
-    }
-
-    for (const [handle, channel] of Object.entries(imported.channels)) {
-      mergedChannels[handle] = mergedChannels[handle]
-        ? {
-            ...mergedChannels[handle],
-            channelId: channel.channelId || mergedChannels[handle].channelId || '',
-            name: channel.name || mergedChannels[handle].name || handle,
-            updatedAt: Date.now()
-          }
-        : { ...channel };
-    }
-
-    for (const [handle, playlistIds] of Object.entries(imported.channelPlaylists)) {
-      const existing = mergedChannelPlaylists[handle] || [];
-      const validPlaylistIds = playlistIds.filter(playlistId => mergedPlaylists[playlistId]);
-      mergedChannelPlaylists[handle] = [...new Set([...existing, ...validPlaylistIds])];
-    }
-
-    state.playlists = mergedPlaylists;
-    state.channels = mergedChannels;
-    state.channelPlaylists = mergedChannelPlaylists;
-
+    const response = sharedCore.applyImportDataMutation(state, {
+      playlists,
+      channels,
+      channelPlaylists,
+      mode
+    }, {
+      now: () => Date.now()
+    });
     return {
       changed: true,
       broadcastKey: 'all',
-      response: { success: true }
+      response
     };
   });
 }

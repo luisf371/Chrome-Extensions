@@ -1,0 +1,7 @@
+{
+  "name": "syoutubeplaylist",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}
