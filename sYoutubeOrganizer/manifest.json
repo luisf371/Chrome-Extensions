@@ -24,13 +24,23 @@
   "content_scripts": [
     {
       "matches": ["https://www.youtube.com/*"],
-      "js": ["page-bridge.js"],
+      "js": ["content/bridge/page-bridge.js"],
       "world": "MAIN",
       "run_at": "document_start"
     },
     {
       "matches": ["https://www.youtube.com/*"],
-      "js": ["content.js"],
+      "js": [
+        "content/core/state.js",
+        "content/core/helpers.js",
+        "content/core/runtime.js",
+        "content/features/quick-add.js",
+        "content/pages/subscriptions.js",
+        "content/pages/channels-list.js",
+        "content/pages/channel.js",
+        "content/pages/video.js",
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
