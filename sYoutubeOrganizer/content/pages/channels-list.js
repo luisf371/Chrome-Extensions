@@ -115,21 +115,27 @@
     if (isOpen) {
       shadow.querySelectorAll('input[data-playlist]').forEach((cb) => {
         cb.addEventListener('change', async () => {
+          const playlistId = cb.dataset.playlist;
+          const item = cb.closest('.syp-dd-item');
+          if (!playlistId || !item) return;
+
+          api.setPlaylistItemCheckedState(item, playlistId, cb.checked);
+
           try {
             await api.sendMsg({
               type: 'ASSIGN_CHANNEL_PLAYLIST',
               handle,
               name: channelName,
-              playlistId: cb.dataset.playlist,
+              playlistId,
               assign: cb.checked
             });
             state.data = await api.sendMsg({ type: 'GET_ALL_DATA' });
             api.buildLookupMaps();
             state.activeChannelListDropdown = { shadow, host, handle, channelName };
-            renderChannelListButton(shadow, host, handle, channelName, true);
+            api.syncPlaylistDropdownState(shadow, handle);
           } catch (error) {
             api.handleActionError(error);
-            cb.checked = !cb.checked;
+            api.setPlaylistItemCheckedState(item, playlistId, !cb.checked);
           }
         });
       });
@@ -173,6 +179,11 @@
       const channelName = nameEl?.textContent?.trim() || handle;
 
       const isOpen = state.activeChannelListDropdown?.handle === handle;
+      if (isOpen) {
+        state.activeChannelListDropdown = { shadow: host.shadowRoot, host, handle, channelName };
+        api.syncPlaylistDropdownState(host.shadowRoot, handle);
+        return;
+      }
       renderChannelListButton(host.shadowRoot, host, handle, channelName, isOpen);
     });
   }

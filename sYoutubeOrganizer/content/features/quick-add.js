@@ -236,6 +236,51 @@
     return html;
   };
 
+  api.setPlaylistItemCheckedState = function setPlaylistItemCheckedState(item, playlistId, isChecked) {
+    if (!item) return;
+
+    const input = item.querySelector('input[data-playlist]');
+    if (input) input.checked = isChecked;
+
+    item.classList.toggle('checked', isChecked);
+
+    const check = item.querySelector('.syp-dd-check');
+    if (!check) return;
+
+    const playlist = state.data?.playlists?.[playlistId];
+    check.style.background = isChecked && playlist?.color ? playlist.color : '';
+    check.style.borderColor = isChecked ? 'transparent' : '';
+  };
+
+  api.updatePlaylistTriggerBadge = function updatePlaylistTriggerBadge(shadowRoot, handle) {
+    const trigger = shadowRoot?.getElementById?.('syp-trigger');
+    if (!trigger) return;
+
+    trigger.textContent = '+ Playlist';
+
+    const assignedCount = ((state.data?.channelPlaylists || {})[handle] || []).length;
+    if (assignedCount <= 0) return;
+
+    trigger.append(document.createTextNode(' '));
+    const badge = document.createElement('span');
+    badge.className = 'syp-badge';
+    badge.textContent = String(assignedCount);
+    trigger.appendChild(badge);
+  };
+
+  api.syncPlaylistDropdownState = function syncPlaylistDropdownState(shadowRoot, handle) {
+    if (!shadowRoot) return;
+
+    api.updatePlaylistTriggerBadge(shadowRoot, handle);
+
+    const assignments = new Set((state.data?.channelPlaylists || {})[handle] || []);
+    shadowRoot.querySelectorAll('input[data-playlist]').forEach((cb) => {
+      const playlistId = cb.dataset.playlist;
+      if (!playlistId) return;
+      api.setPlaylistItemCheckedState(cb.closest('.syp-dd-item'), playlistId, assignments.has(playlistId));
+    });
+  };
+
   api.attachInlineCreateListener = function attachInlineCreateListener(shadowRoot, onCreated) {
     const addBtn = shadowRoot.querySelector('[data-action="add-inline"]');
     if (!addBtn) return;
@@ -315,20 +360,26 @@
 
     state.quickAddShadow.querySelectorAll('input[data-playlist]').forEach((cb) => {
       cb.addEventListener('change', async () => {
+        const playlistId = cb.dataset.playlist;
+        const item = cb.closest('.syp-dd-item');
+        if (!playlistId || !item) return;
+
+        api.setPlaylistItemCheckedState(item, playlistId, cb.checked);
+
         try {
           await api.sendMsg({
             type: 'ASSIGN_CHANNEL_PLAYLIST',
             handle,
             name: channelName,
-            playlistId: cb.dataset.playlist,
+            playlistId,
             assign: cb.checked
           });
           state.data = await api.sendMsg({ type: 'GET_ALL_DATA' });
           api.buildLookupMaps();
-          api.renderQuickAddButton(handle, channelName);
+          api.syncPlaylistDropdownState(state.quickAddShadow, handle);
         } catch (error) {
           api.handleActionError(error);
-          cb.checked = !cb.checked;
+          api.setPlaylistItemCheckedState(item, playlistId, !cb.checked);
         }
       });
     });
@@ -439,6 +490,12 @@
 
   api.updateQuickAddState = function updateQuickAddState() {
     if (!state.quickAddHandle || !state.quickAddShadow || !state.quickAddHost?.isConnected) return;
+
+    if (state.quickAddOpen && state.quickAddShadow.querySelector('.syp-dropdown')) {
+      api.syncPlaylistDropdownState(state.quickAddShadow, state.quickAddHandle);
+      return;
+    }
+
     const name = api.getQuickAddChannelName();
     api.renderQuickAddButton(state.quickAddHandle, name || state.quickAddHandle);
   };
