@@ -105,6 +105,18 @@
                 <small class="help-text" data-i18n="helpModel">Pick the exact model identifier that should process
                   summaries (e.g., gpt5.2, claude-4.6-sonnet).</small>
               </div>
+              <div id="openrouter-config-fields" hidden>
+                <div class="form-group form-group-toggle">
+                  <div class="toggle-header">
+                    <label for="openrouter-disable-reasoning" data-i18n="labelOpenrouterDisableReasoning">Disable OpenRouter reasoning / thinking</label>
+                    <small class="help-text inline-help" data-i18n="helpOpenrouterDisableReasoning">Sends `reasoning: { effort: "none" }` with OpenRouter requests. Helpful when reasoning models stall, stop mid-stream, or you want plain-answer behavior.</small>
+                  </div>
+                  <div class="toggle-switch">
+                    <input type="checkbox" id="openrouter-disable-reasoning" name="openrouter-disable-reasoning">
+                    <label class="slider" for="openrouter-disable-reasoning"></label>
+                  </div>
+                </div>
+              </div>
               <div class="form-group">
                 <label for="api-key" class="required" data-i18n="labelApiKey">API Key</label>
                 <div class="password-input-wrapper">

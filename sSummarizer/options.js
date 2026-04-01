@@ -95,9 +95,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const apiUrlInput = document.getElementById('api-url');
   const apiProviderSelect = document.getElementById('api-provider');
   const azureConfigFields = document.getElementById('azure-config-fields');
+  const openrouterConfigFields = document.getElementById('openrouter-config-fields');
   const azureResourceInput = document.getElementById('azure-resource');
   const azureDeploymentInput = document.getElementById('azure-deployment');
   const azureApiVersionInput = document.getElementById('azure-api-version');
+  const openrouterDisableReasoningInput = document.getElementById('openrouter-disable-reasoning');
   const modelInput = document.getElementById('model');
   const systemPromptInput = document.getElementById('system-prompt');
   const includeTimestampsInput = document.getElementById('include-timestamps');
@@ -197,6 +199,10 @@ document.addEventListener('DOMContentLoaded', function () {
     return (provider || '').toLowerCase() === 'azure';
   }
 
+  function isOpenRouterProviderSelected(provider = apiProviderSelect?.value) {
+    return (provider || '').toLowerCase() === 'openrouter';
+  }
+
   function getResolvedApiUrl(values) {
     if (isAzureProviderSelected(values?.apiProvider)) {
       return buildAzureApiUrl(values);
@@ -211,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function buildTestConnectionRequest(values) {
-    const { apiProvider, apiUrl, apiKey, model } = values;
+    const { apiProvider, apiUrl, apiKey, model, openrouterDisableReasoning } = values;
     const providerKind = (apiProvider || 'openai').toLowerCase();
     const provider = providerKind;
     const trimmedModel = model?.trim();
@@ -272,6 +278,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (trimmedModel) {
       body.model = trimmedModel;
+    }
+
+    if (providerKind === 'openrouter' && openrouterDisableReasoning) {
+      body.reasoning = { effort: 'none' };
     }
 
     return {
@@ -346,6 +356,7 @@ If and ONLY if timestamps are provided;
       azureResource: normalizeAzureResourceName(azureResourceInput?.value || ''),
       azureDeployment: (azureDeploymentInput?.value || '').trim(),
       azureApiVersion: (azureApiVersionInput?.value || '').trim(),
+      openrouterDisableReasoning: openrouterDisableReasoningInput?.checked || false,
       model: modelInput.value.trim(),
       systemPrompt: systemPromptInput.value.trim(),
       timestampPrompt: timestampPromptInput.value.trim(),
@@ -363,7 +374,7 @@ If and ONLY if timestamps are provided;
 
   function loadSavedOptions() {
     try {
-      chrome.storage.local.get(['apiKey', 'apiUrl', 'apiProvider', 'azureResource', 'azureDeployment', 'azureApiVersion', 'model', 'systemPrompt', 'timestampPrompt', 'includeTimestamps', 'defaultFontSize', 'subtitlePriority', 'preferredLanguage', 'redditMaxComments', 'redditDepth', 'redditSort', 'enableContextMenu', 'enableDebugMode'], function (result) {
+      chrome.storage.local.get(['apiKey', 'apiUrl', 'apiProvider', 'azureResource', 'azureDeployment', 'azureApiVersion', 'openrouterDisableReasoning', 'model', 'systemPrompt', 'timestampPrompt', 'includeTimestamps', 'defaultFontSize', 'subtitlePriority', 'preferredLanguage', 'redditMaxComments', 'redditDepth', 'redditSort', 'enableContextMenu', 'enableDebugMode'], function (result) {
         if (chrome.runtime.lastError) {
           showStatus('Error loading saved settings: ' + chrome.runtime.lastError.message, 'error');
           return;
@@ -386,6 +397,7 @@ If and ONLY if timestamps are provided;
         if (redditSortInput) redditSortInput.value = result.redditSort || 'current';
         if (enableContextMenuInput) enableContextMenuInput.checked = result.enableContextMenu ?? true;
         if (enableDebugModeInput) enableDebugModeInput.checked = result.enableDebugMode || false;
+        if (openrouterDisableReasoningInput) openrouterDisableReasoningInput.checked = result.openrouterDisableReasoning || false;
         if (azureResourceInput) azureResourceInput.value = result.azureResource || '';
         if (azureDeploymentInput) azureDeploymentInput.value = result.azureDeployment || '';
         if (azureApiVersionInput) azureApiVersionInput.value = result.azureApiVersion || DEFAULT_AZURE_API_VERSION;
@@ -477,6 +489,7 @@ If and ONLY if timestamps are provided;
     apiUrlInput.dataset.enforceSuffix = getEnforceSuffixForSelection(key);
     apiUrlInput.disabled = true;
     toggleAzureFields(key);
+    toggleOpenRouterFields(key);
     if (shouldResetUrl || !apiUrlInput.value.trim()) {
       apiUrlInput.value = config.url || '';
     }
@@ -490,6 +503,11 @@ If and ONLY if timestamps are provided;
   function toggleAzureFields(providerKey) {
     if (!azureConfigFields) return;
     azureConfigFields.hidden = !isAzureProviderSelected(providerKey);
+  }
+
+  function toggleOpenRouterFields(providerKey) {
+    if (!openrouterConfigFields) return;
+    openrouterConfigFields.hidden = !isOpenRouterProviderSelected(providerKey);
   }
 
   function syncAzurePreviewUrl() {

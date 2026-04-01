@@ -83,6 +83,14 @@
     "message": "OpenRouter",
     "description": "OpenRouter option"
   },
+  "labelOpenrouterDisableReasoning": {
+    "message": "Disable OpenRouter reasoning / thinking",
+    "description": "OpenRouter reasoning toggle label"
+  },
+  "helpOpenrouterDisableReasoning": {
+    "message": "Sends `reasoning: { effort: \"none\" }` with OpenRouter requests. Helpful when reasoning models stall, stop mid-stream, or you want plain-answer behavior.",
+    "description": "OpenRouter reasoning toggle help text"
+  },
   "providerGlm": {
     "message": "GLM (Coding Plan)"
   },

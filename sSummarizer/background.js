@@ -21,6 +21,7 @@ let cancelledRequests = new Set();
 let responseAccumulators = new Map();
 // Track heartbeat ports from content scripts while streams are active
 let heartbeatPorts = new Set();
+let streamStates = new Map();
 
 // Configuration constants
 const CONFIG = {
@@ -116,6 +117,20 @@ const OpenAIAdapter = {
       return jsonData.choices[0].message.content;
     }
     return null;
+  },
+
+  parseReasoning(jsonData) {
+    const reasoning = jsonData.choices?.[0]?.delta?.reasoning
+      ?? jsonData.choices?.[0]?.delta?.reasoning_content
+      ?? jsonData.choices?.[0]?.message?.reasoning
+      ?? jsonData.choices?.[0]?.message?.reasoning_content;
+    return typeof reasoning === 'string' && reasoning.length > 0 ? reasoning : null;
+  },
+
+  parseReasoningDetails(jsonData) {
+    const reasoningDetails = jsonData.choices?.[0]?.delta?.reasoning_details
+      ?? jsonData.choices?.[0]?.message?.reasoning_details;
+    return Array.isArray(reasoningDetails) && reasoningDetails.length > 0 ? reasoningDetails : null;
   },
 
   isStreamEnd(data) {
@@ -294,6 +309,38 @@ function getAdapter(provider) {
 
   // Default to OpenAI (works for OpenAI, Azure, Groq, and other OpenAI-compatible APIs)
   return OpenAIAdapter;
+}
+
+function createStreamState() {
+  return {
+    sawTerminal: false,
+    sawDone: false,
+    errorMessage: null,
+    reasoning: '',
+    reasoning_details: []
+  };
+}
+
+function getAssistantMessagePayload(uniqueId, fullResponse) {
+  const streamState = streamStates.get(uniqueId);
+  const assistantMessage = {
+    role: 'assistant',
+    content: fullResponse
+  };
+
+  if (streamState?.reasoning) {
+    assistantMessage.reasoning = streamState.reasoning;
+  }
+
+  if (Array.isArray(streamState?.reasoning_details) && streamState.reasoning_details.length > 0) {
+    assistantMessage.reasoning_details = streamState.reasoning_details;
+  }
+
+  return assistantMessage;
+}
+
+function clearStreamState(uniqueId) {
+  streamStates.delete(uniqueId);
 }
 
 // ===== END PROVIDER ADAPTERS =====
@@ -545,9 +592,10 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
     apiProvider,
     azureResource,
     azureDeployment,
-    azureApiVersion
+    azureApiVersion,
+    openrouterDisableReasoning
   } = await chrome.storage.local.get(
-    ['apiUrl', 'model', 'systemPrompt', 'timestampPrompt', 'apiKey', 'enableDebugMode', 'includeTimestamps', 'apiProvider', 'azureResource', 'azureDeployment', 'azureApiVersion']
+    ['apiUrl', 'model', 'systemPrompt', 'timestampPrompt', 'apiKey', 'enableDebugMode', 'includeTimestamps', 'apiProvider', 'azureResource', 'azureDeployment', 'azureApiVersion', 'openrouterDisableReasoning']
   );
 
   const adapter = getAdapter(apiProvider);
@@ -705,9 +753,14 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
 
   // Initialize response accumulator
   responseAccumulators.set(uniqueId, '');
+  streamStates.set(uniqueId, createStreamState());
 
   try {
     const requestBody = adapter.transformRequest(messages, model, effectiveSystemPrompt);
+
+    if (providerKind === 'openrouter' && openrouterDisableReasoning) {
+      requestBody.reasoning = { effort: 'none' };
+    }
 
     let fetchUrl = resolvedApiUrl;
     const shouldForceGeminiUrl = providerKind === 'gemini';
@@ -764,8 +817,32 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
 
         const { done, value } = await reader.read();
         if (done) {
+          let processResult = null;
           if (buffer.length > 0) {
-            processBuffer(buffer + '\n', uniqueId, adapter);
+            processResult = processBuffer(buffer + '\n', uniqueId, adapter);
+            buffer = processResult.buffer;
+          }
+
+          if (processResult?.errorMessage) {
+            await handleApiError(uniqueId, processResult.errorMessage);
+            clearStreamState(uniqueId);
+            abortControllers.delete(uniqueId);
+            cancelledRequests.delete(uniqueId);
+            break;
+          }
+
+          const streamState = streamStates.get(uniqueId);
+          if (!streamState?.sawTerminal) {
+            await sendUiRecoveryMessages(
+              tab,
+              uniqueId,
+              '[Info] Stream interrupted before the provider sent a completion marker. You can ask a follow-up to continue.'
+            );
+            clearStreamState(uniqueId);
+            abortControllers.delete(uniqueId);
+            cancelledRequests.delete(uniqueId);
+            responseAccumulators.delete(uniqueId);
+            break;
           }
 
           const fullResponse = responseAccumulators.get(uniqueId) || '';
@@ -773,30 +850,68 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
             action: 'streamEnd',
             uniqueId,
             fullResponse,
-            originalContext
+            originalContext,
+            assistantMessage: getAssistantMessagePayload(uniqueId, fullResponse)
           });
 
           await sendMessageSafely(tab, { action: 'hideLoading', uniqueId });
+          clearStreamState(uniqueId);
+          abortControllers.delete(uniqueId);
+          cancelledRequests.delete(uniqueId);
+          responseAccumulators.delete(uniqueId);
+          break;
+        }
+        buffer += decoder.decode(value, { stream: true });
+        const processResult = processBuffer(buffer, uniqueId, adapter);
+        buffer = processResult.buffer;
+
+        if (processResult.shouldStop) {
+          try { reader.cancel(); } catch (e) { /* already closed */ }
+
+          if (processResult.stopReason === 'cancelled') {
+            clearStreamState(uniqueId);
+            break;
+          }
+
+          if (processResult.errorMessage) {
+            await handleApiError(uniqueId, processResult.errorMessage);
+          } else {
+            await sendUiRecoveryMessages(
+              tab,
+              uniqueId,
+              '[Info] Stream interrupted before the provider sent a completion marker. You can ask a follow-up to continue.'
+            );
+            responseAccumulators.delete(uniqueId);
+          }
+
+          clearStreamState(uniqueId);
           abortControllers.delete(uniqueId);
           cancelledRequests.delete(uniqueId);
           break;
         }
-        buffer += decoder.decode(value, { stream: true });
-        buffer = processBuffer(buffer, uniqueId, adapter);
       }
     } catch (error) {
       if (error.name === 'AbortError') {
-        // User-initiated cancel — silent
+        if (!cancelledRequests.has(uniqueId)) {
+          await sendUiRecoveryMessages(
+            tab,
+            uniqueId,
+            '[Info] Stream interrupted while waiting for more output. You can ask a follow-up to continue.'
+          );
+          responseAccumulators.delete(uniqueId);
+        }
       } else {
         console.log('[API] Stream reading error:', error);
         await handleApiError(uniqueId, `Stream error: ${error.message}`);
       }
+      clearStreamState(uniqueId);
       abortControllers.delete(uniqueId);
       cancelledRequests.delete(uniqueId);
     }
   } catch (err) {
     clearTimeout(timeoutId);
     abortControllers.delete(uniqueId);
+    clearStreamState(uniqueId);
     responseAccumulators.delete(uniqueId);
     console.log('[API] call error:', err);
 
@@ -839,6 +954,7 @@ async function stopApiRequest(uniqueId, fallbackTabId = null) {
     }
 
     abortControllers.delete(uniqueId);
+    clearStreamState(uniqueId);
 
     // Send notification to UI that request was stopped
     const tab = tabIdMap.get(uniqueId) || fallbackTabId;
@@ -854,6 +970,7 @@ async function stopApiRequest(uniqueId, fallbackTabId = null) {
     if (tab) {
       await sendUiRecoveryMessages(tab, uniqueId, '[Info] Request was interrupted or already ended.');
     }
+    clearStreamState(uniqueId);
     tabIdMap.delete(uniqueId);
     responseAccumulators.delete(uniqueId);
   }
@@ -869,6 +986,7 @@ async function handleApiError(uniqueId, message) {
     clearTimeout(abortInfo.timeoutId);
     abortControllers.delete(uniqueId);
   }
+  clearStreamState(uniqueId);
 
   const tab = tabIdMap.get(uniqueId);
   if (tab) {
@@ -896,7 +1014,7 @@ async function handleApiError(uniqueId, message) {
 function processBuffer(buffer, uniqueId, adapter) {
   const abortInfo = abortControllers.get(uniqueId);
   if (!abortInfo) {
-    return '';
+    return { buffer: '', shouldStop: true, stopReason: 'cancelled' };
   }
 
   const lines = buffer.split('\n');
@@ -904,19 +1022,39 @@ function processBuffer(buffer, uniqueId, adapter) {
 
   for (const line of lines) {
     if (!abortControllers.get(uniqueId)) {
-      return '';
+      return { buffer: '', shouldStop: true, stopReason: 'cancelled' };
     }
 
     const trimmedLine = line.trim();
-    if (trimmedLine.startsWith('data:')) {
-      const jsonLine = trimmedLine.substring(5).trim();
-      if (jsonLine === '[DONE]') {
-        continue;
+    if (!trimmedLine || trimmedLine.startsWith(':')) {
+      continue;
+    }
+
+    if (!trimmedLine.startsWith('data:')) {
+      continue;
+    }
+
+    const jsonLine = trimmedLine.substring(5).trim();
+    if (!jsonLine) {
+      continue;
+    }
+
+    if (jsonLine === '[DONE]') {
+      const streamState = streamStates.get(uniqueId);
+      if (streamState) {
+        streamState.sawDone = true;
+        streamState.sawTerminal = true;
       }
-      handleJsonLine(jsonLine, uniqueId, adapter);
+      continue;
+    }
+
+    const result = handleJsonLine(jsonLine, uniqueId, adapter);
+    if (result?.errorMessage) {
+      return { buffer: '', shouldStop: true, stopReason: 'error', errorMessage: result.errorMessage };
     }
   }
-  return buffer;
+
+  return { buffer, shouldStop: false };
 }
 
 function handleJsonLine(jsonLine, uniqueId, adapter) {
@@ -929,9 +1067,22 @@ function handleJsonLine(jsonLine, uniqueId, adapter) {
     }
 
     const data = JSON.parse(jsonLine);
+    const streamState = streamStates.get(uniqueId);
+    if (!streamState) {
+      return null;
+    }
+
+    if (data?.error?.message) {
+      streamState.errorMessage = `Stream error: ${data.error.message}`;
+      streamState.sawTerminal = true;
+      return { errorMessage: streamState.errorMessage };
+    }
+
     const tab = tabIdMap.get(uniqueId);
 
     const contentChunk = adapter.parseStreamChunk(data);
+    const reasoningChunk = typeof adapter.parseReasoning === 'function' ? adapter.parseReasoning(data) : null;
+    const reasoningDetails = typeof adapter.parseReasoningDetails === 'function' ? adapter.parseReasoningDetails(data) : null;
 
     if (tab && contentChunk) {
       chrome.tabs.sendMessage(tab, {
@@ -945,7 +1096,25 @@ function handleJsonLine(jsonLine, uniqueId, adapter) {
       const current = responseAccumulators.get(uniqueId) || '';
       responseAccumulators.set(uniqueId, current + contentChunk);
     }
+
+    if (reasoningChunk) {
+      streamState.reasoning += reasoningChunk;
+    }
+
+    if (reasoningDetails) {
+      streamState.reasoning_details.push(...reasoningDetails);
+    }
+
+    if (adapter.isStreamEnd(data)) {
+      streamState.sawTerminal = true;
+      if (data?.choices?.[0]?.finish_reason === 'error') {
+        streamState.errorMessage = streamState.errorMessage || 'Stream error: The provider terminated the response unexpectedly.';
+        return { errorMessage: streamState.errorMessage };
+      }
+    }
   } catch (e) {
     console.warn('[API] Failed to parse JSON line:', e.message);
   }
+
+  return null;
 }

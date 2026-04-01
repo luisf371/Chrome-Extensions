@@ -978,7 +978,7 @@
   // ———— Chat Functionality ————
 
   function handleStreamEnd(request) {
-    const { uniqueId, fullResponse, originalContext } = request;
+    const { uniqueId, fullResponse, originalContext, assistantMessage } = request;
     flushContentRender(uniqueId);
 
     // Initialize history if not present
@@ -992,8 +992,18 @@
       history.push({ role: 'user', content: originalContext });
     }
 
-    // Add the assistant's response
-    history.push({ role: 'assistant', content: fullResponse });
+    // Add the assistant's response, preserving reasoning metadata when provided.
+    const storedAssistantMessage = {
+      role: 'assistant',
+      content: typeof assistantMessage?.content === 'string' ? assistantMessage.content : fullResponse
+    };
+    if (typeof assistantMessage?.reasoning === 'string' && assistantMessage.reasoning.length > 0) {
+      storedAssistantMessage.reasoning = assistantMessage.reasoning;
+    }
+    if (Array.isArray(assistantMessage?.reasoning_details) && assistantMessage.reasoning_details.length > 0) {
+      storedAssistantMessage.reasoning_details = assistantMessage.reasoning_details;
+    }
+    history.push(storedAssistantMessage);
 
     const win = floatingWindows.get(uniqueId); // ShadowRoot
     if (win) {
