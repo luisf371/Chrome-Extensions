@@ -26,6 +26,22 @@
     return getSubscriptionsGrid()?.querySelector('#contents') || null;
   }
 
+  function getSubscriptionsFilterSnapshot() {
+    const cards = Array.from(getSubscriptionsGrid()?.querySelectorAll('ytd-rich-item-renderer') || []);
+    let unresolvedCount = 0;
+    cards.forEach((card) => {
+      if (!extractHandleFromCard(card)) {
+        unresolvedCount += 1;
+      }
+    });
+    return {
+      cards,
+      count: cards.length,
+      firstCard: cards[0] || null,
+      unresolvedCount
+    };
+  }
+
   function getSubscriptionsMountParent() {
     return getSubscriptionsGrid()?.parentElement || null;
   }
@@ -274,9 +290,34 @@
     restoreSavedSubscriptionsPreference();
     if (!injectFilterBar()) return;
     applySectionVisibility();
-    applyFilter();
-    if (!observeFeed()) return;
+    const filterResult = applyFilter();
+    if (!observeFeed(filterResult)) return;
+    scheduleSubscriptionsFilterRetry(gen, filterResult.unresolvedCount);
     state.initSucceeded = true;
+  }
+
+  function scheduleSubscriptionsFilterRetry(gen, unresolvedCount, attempt = 0) {
+    clearTimeout(state.subscriptionsFilterRetryTimer);
+    state.subscriptionsFilterRetryTimer = null;
+
+    if (!hasActiveSubscriptionsFilter() || unresolvedCount === 0 || attempt >= 6) return;
+
+    state.subscriptionsFilterRetryTimer = setTimeout(() => {
+      state.subscriptionsFilterRetryTimer = null;
+
+      const rerunFilter = () => {
+        if (state.currentPage !== 'subscriptions' || gen !== state.initGeneration) return;
+        const nextResult = applyFilter();
+        scheduleSubscriptionsFilterRetry(gen, nextResult.unresolvedCount, attempt + 1);
+      };
+
+      if (typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(rerunFilter);
+        return;
+      }
+
+      rerunFilter();
+    }, attempt === 0 ? 80 : 150);
   }
 
   function applySectionVisibility() {
@@ -611,13 +652,14 @@
   }
 
   function applyFilter() {
-    const cards = getSubscriptionsGrid()?.querySelectorAll('ytd-rich-item-renderer') || [];
+    const snapshot = getSubscriptionsFilterSnapshot();
+    const { cards } = snapshot;
 
     if (state.subscriptionsFilterMode === constants.FILTER_MODE_ALL) {
       cards.forEach((card) => {
         card.style.display = '';
       });
-      return;
+      return snapshot;
     }
 
     let allowedHandles = null;
@@ -645,6 +687,8 @@
       }
       card.style.display = show ? '' : 'none';
     });
+
+    return snapshot;
   }
 
   function extractHandleFromCard(card) {
@@ -661,12 +705,13 @@
     return null;
   }
 
-  function observeFeed() {
+  function observeFeed(initialSnapshot = getSubscriptionsFilterSnapshot()) {
     const browse = getActiveSubscriptionsBrowse();
     if (!browse) return false;
 
-    let lastFilteredCount = getSubscriptionsGrid()?.querySelectorAll('ytd-rich-item-renderer').length || 0;
-    let lastFirstCard = getSubscriptionsGrid()?.querySelector('ytd-rich-item-renderer') || null;
+    let lastFilteredCount = initialSnapshot.count;
+    let lastFirstCard = initialSnapshot.firstCard;
+    let lastUnresolvedCount = initialSnapshot.unresolvedCount;
     let cooldownUntil = 0;
 
     state.feedObserver = new MutationObserver(() => {
@@ -684,12 +729,16 @@
         const now = Date.now();
         if (now < cooldownUntil) return;
 
-        const currentCount = getSubscriptionsGrid()?.querySelectorAll('ytd-rich-item-renderer').length || 0;
-        const currentFirstCard = getSubscriptionsGrid()?.querySelector('ytd-rich-item-renderer') || null;
-        if (currentCount !== lastFilteredCount || currentFirstCard !== lastFirstCard) {
-          lastFilteredCount = currentCount;
-          lastFirstCard = currentFirstCard;
-          applyFilter();
+        const currentSnapshot = getSubscriptionsFilterSnapshot();
+        if (
+          currentSnapshot.count !== lastFilteredCount
+          || currentSnapshot.firstCard !== lastFirstCard
+          || currentSnapshot.unresolvedCount !== lastUnresolvedCount
+        ) {
+          const filterResult = applyFilter();
+          lastFilteredCount = filterResult.count;
+          lastFirstCard = filterResult.firstCard;
+          lastUnresolvedCount = filterResult.unresolvedCount;
           cooldownUntil = Date.now() + 500;
         }
       }, 150);
@@ -705,7 +754,8 @@
       syncSubscriptionsFilterState();
       renderFilterBar();
       applySectionVisibility();
-      applyFilter();
+      const filterResult = applyFilter();
+      scheduleSubscriptionsFilterRetry(state.initGeneration, filterResult.unresolvedCount);
     },
     resetState: resetSubscriptionsFilterState
   };

@@ -67,6 +67,8 @@
 
     clearTimeout(state.feedObserverDebounceTimer);
     state.feedObserverDebounceTimer = null;
+    clearTimeout(state.subscriptionsFilterRetryTimer);
+    state.subscriptionsFilterRetryTimer = null;
     clearTimeout(state.channelsListDebounceTimer);
     state.channelsListDebounceTimer = null;
     clearTimeout(state.quickAddObserverDebounceTimer);

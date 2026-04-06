@@ -32,6 +32,7 @@
     pollInterval: null,
     feedObserver: null,
     feedObserverDebounceTimer: null,
+    subscriptionsFilterRetryTimer: null,
     quickAddObserver: null,
     quickAddObserverDebounceTimer: null,
     channelsListObserver: null,
