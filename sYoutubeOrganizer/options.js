@@ -505,26 +505,25 @@ function initTheme() {
 }
 
 function initSectionToggles() {
-  const hideShortsEl = document.getElementById('hideShortsToggle');
-  const hideMostRelevantEl = document.getElementById('hideMostRelevantToggle');
+  const toggles = [
+    { element: document.getElementById('hideShortsToggle'), key: 'hideShorts' },
+    { element: document.getElementById('hideMostRelevantToggle'), key: 'hideMostRelevant' },
+    { element: document.getElementById('redirectRootToSubscriptionsToggle'), key: 'redirectRootToSubscriptions' }
+  ];
 
   // Load current state
   chrome.storage.local.get(['settings'], (result) => {
-    hideShortsEl.checked = !!result.settings?.hideShorts;
-    hideMostRelevantEl.checked = !!result.settings?.hideMostRelevant;
-  });
-
-  hideShortsEl.addEventListener('change', () => {
-    void sendRuntimeMessage({ type: 'UPDATE_SETTINGS', settings: { hideShorts: hideShortsEl.checked } }).catch((error) => {
-      hideShortsEl.checked = !hideShortsEl.checked;
-      showToast(error.message || 'Could not update setting', 'error');
+    toggles.forEach(({ element, key }) => {
+      element.checked = !!result.settings?.[key];
     });
   });
 
-  hideMostRelevantEl.addEventListener('change', () => {
-    void sendRuntimeMessage({ type: 'UPDATE_SETTINGS', settings: { hideMostRelevant: hideMostRelevantEl.checked } }).catch((error) => {
-      hideMostRelevantEl.checked = !hideMostRelevantEl.checked;
-      showToast(error.message || 'Could not update setting', 'error');
+  toggles.forEach(({ element, key }) => {
+    element.addEventListener('change', () => {
+      void sendRuntimeMessage({ type: 'UPDATE_SETTINGS', settings: { [key]: element.checked } }).catch((error) => {
+        element.checked = !element.checked;
+        showToast(error.message || 'Could not update setting', 'error');
+      });
     });
   });
 }

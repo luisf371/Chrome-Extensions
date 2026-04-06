@@ -7,6 +7,20 @@
   if (window.__syoLoaded) return;
   window.__syoLoaded = true;
 
+  function getTrustedBridgeData(event) {
+    if (event.source !== window) return null;
+    const data = event.data;
+    if (!data || data.source !== constants.NAV_EVENT_SOURCE) return null;
+    if (typeof data.type !== 'string' || typeof data.url !== 'string') return null;
+
+    try {
+      const url = new URL(data.url);
+      return url.origin === window.location.origin ? data : null;
+    } catch {
+      return null;
+    }
+  }
+
   function scheduleNavigation(url) {
     if (url === state.lastUrl && (state.initSucceeded || state.initInProgress)) return;
     clearTimeout(state.navDebounceTimer);
@@ -16,18 +30,62 @@
     }, 80);
   }
 
-  function isTrustedNavigationMessage(event) {
-    if (event.source !== window) return false;
-    const data = event.data;
-    if (!data || data.type !== 'SYP_NAV_EVENT' || data.source !== constants.NAV_EVENT_SOURCE) return false;
-    if (typeof data.url !== 'string' || data.url !== window.location.href) return false;
-
+  function isBaseYouTubeUrl(url) {
     try {
-      const url = new URL(data.url);
-      return url.origin === window.location.origin;
+      const parsed = new URL(url);
+      return parsed.origin === window.location.origin && parsed.pathname === '/';
     } catch {
       return false;
     }
+  }
+
+  function consumeManualHomeNavigationOverride() {
+    const now = Date.now();
+    if (state.manualHomeNavigationUntil > now) {
+      state.manualHomeNavigationUntil = 0;
+      try {
+        window.sessionStorage.removeItem(constants.HOME_REDIRECT_BYPASS_SESSION_KEY);
+      } catch {}
+      return true;
+    }
+
+    state.manualHomeNavigationUntil = 0;
+
+    try {
+      const storedAt = Number(window.sessionStorage.getItem(constants.HOME_REDIRECT_BYPASS_SESSION_KEY) || '0');
+      window.sessionStorage.removeItem(constants.HOME_REDIRECT_BYPASS_SESSION_KEY);
+      return storedAt > 0 && (now - storedAt) <= constants.HOME_REDIRECT_BYPASS_TTL_MS;
+    } catch {
+      return false;
+    }
+  }
+
+  async function maybeRedirectRootToSubscriptions(url, gen) {
+    if (!isBaseYouTubeUrl(url)) return false;
+
+    if (!state.data?.settings) {
+      try {
+        await api.loadData();
+      } catch (error) {
+        console.warn('SYO failed to load settings for root redirect', error);
+        return false;
+      }
+    }
+
+    if (gen !== state.initGeneration) {
+      return false;
+    }
+
+    if (!state.data?.settings?.redirectRootToSubscriptions) {
+      return false;
+    }
+
+    if (consumeManualHomeNavigationOverride()) {
+      return false;
+    }
+
+    window.location.replace(new URL(constants.SUBSCRIPTIONS_FEED_PATH, window.location.origin).href);
+    return true;
   }
 
   function startUrlPoll() {
@@ -94,31 +152,49 @@
     }
   }
 
-  function handleNavigation(url) {
+  async function handleNavigation(url) {
     cleanup();
     state.initSucceeded = false;
     state.initInProgress = true;
     const gen = ++state.initGeneration;
 
-    const done = () => {
+    try {
+      const redirected = await maybeRedirectRootToSubscriptions(url, gen);
+      if (gen !== state.initGeneration) return;
+      if (redirected) {
+        state.currentPage = null;
+        state.initSucceeded = true;
+        return;
+      }
+
+      const currentPage = getCurrentPage(url);
+      if (!currentPage || !pages[currentPage]) {
+        state.currentPage = null;
+        state.initSucceeded = true;
+        return;
+      }
+
+      state.currentPage = currentPage;
+      await Promise.resolve(pages[currentPage].init({ url, gen }));
+    } catch (error) {
+      console.warn('SYO navigation init failed', error);
+    } finally {
       if (gen === state.initGeneration) state.initInProgress = false;
-    };
-
-    const currentPage = getCurrentPage(url);
-    if (!currentPage || !pages[currentPage]) {
-      state.currentPage = null;
-      state.initSucceeded = true;
-      state.initInProgress = false;
-      return;
     }
-
-    state.currentPage = currentPage;
-    Promise.resolve(pages[currentPage].init({ url, gen })).then(done, done);
   }
 
   window.addEventListener('message', (event) => {
-    if (!isTrustedNavigationMessage(event)) return;
-    scheduleNavigation(event.data.url);
+    const data = getTrustedBridgeData(event);
+    if (!data) return;
+
+    if (data.type === constants.HOME_NAV_INTENT_EVENT && data.url === window.location.href) {
+      state.manualHomeNavigationUntil = Date.now() + constants.HOME_REDIRECT_BYPASS_TTL_MS;
+      return;
+    }
+
+    if (data.type === 'SYP_NAV_EVENT' && data.url === window.location.href) {
+      scheduleNavigation(data.url);
+    }
   });
 
   chrome.runtime.onMessage.addListener((message) => {

@@ -25,5 +25,8 @@
   },
   "optHideMostRelevant": {
     "message": "Ocultar secci\u00f3n M\u00e1s relevantes"
+  },
+  "optRedirectRootToSubscriptions": {
+    "message": "Redirigir youtube.com a Suscripciones salvo si se hizo clic manualmente en Inicio"
   }
 }

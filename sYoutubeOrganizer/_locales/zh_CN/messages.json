@@ -25,5 +25,8 @@
   },
   "optHideMostRelevant": {
     "message": "\u9690\u85cf\u6700\u76f8\u5173\u677f\u5757"
+  },
+  "optRedirectRootToSubscriptions": {
+    "message": "\u5c06 youtube.com \u91cd\u5b9a\u5411\u5230\u8ba2\u9605\uff0c\u9664\u975e\u4f60\u662f\u624b\u52a8\u70b9\u51fb\u4e86\u9996\u9875"
   }
 }

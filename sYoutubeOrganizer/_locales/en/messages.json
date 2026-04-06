@@ -34,5 +34,9 @@
   "optHideMostRelevant": {
     "message": "Hide Most Relevant section",
     "description": "Toggle to hide the Most Relevant shelf on subscriptions page"
+  },
+  "optRedirectRootToSubscriptions": {
+    "message": "Redirect youtube.com to Subscriptions unless Home was clicked manually",
+    "description": "Toggle to redirect YouTube root to the subscriptions feed except for manual Home navigation"
   }
 }

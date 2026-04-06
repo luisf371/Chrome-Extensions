@@ -12,6 +12,10 @@
     FILTER_MODE_UNCATEGORIZED: 'uncategorized',
     SUBSCRIPTIONS_FILTER_PREFERENCE_KEY: 'subscriptionsFilterPreference',
     NAV_EVENT_SOURCE: 'syp-page-bridge',
+    HOME_NAV_INTENT_EVENT: 'SYP_HOME_NAV_INTENT',
+    HOME_REDIRECT_BYPASS_SESSION_KEY: 'syp-manual-home-nav',
+    HOME_REDIRECT_BYPASS_TTL_MS: 3000,
+    SUBSCRIPTIONS_FEED_PATH: '/feed/subscriptions',
     MAX_MESSAGE_RETRIES: 2,
     MESSAGE_RETRY_DELAY_MS: 200,
     RETRYABLE_MESSAGE_TYPES: new Set([
@@ -61,7 +65,8 @@
     quickAddHost: null,
     quickAddShadow: null,
     quickAddOpen: false,
-    quickAddHandle: null
+    quickAddHandle: null,
+    manualHomeNavigationUntil: 0
   };
 
   app.api = app.api || {};

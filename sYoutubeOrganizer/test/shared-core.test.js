@@ -175,6 +175,7 @@ test('applyUpdateSettingsMutation normalizes theme and boolean settings', () => 
     theme: 'unknown',
     hideShorts: 1,
     hideMostRelevant: 0,
+    redirectRootToSubscriptions: 'yes',
     subscriptionsFilterPreference: 'bad'
   });
 
@@ -182,7 +183,8 @@ test('applyUpdateSettingsMutation normalizes theme and boolean settings', () => 
     theme: 'dark',
     subscriptionsFilterPreference: null,
     hideShorts: true,
-    hideMostRelevant: false
+    hideMostRelevant: false,
+    redirectRootToSubscriptions: true
   });
 });
 

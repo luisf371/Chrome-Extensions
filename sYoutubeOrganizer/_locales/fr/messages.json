@@ -25,5 +25,8 @@
   },
   "optHideMostRelevant": {
     "message": "Masquer la section Les plus pertinents"
+  },
+  "optRedirectRootToSubscriptions": {
+    "message": "Rediriger youtube.com vers Abonnements sauf si Accueil a \u00e9t\u00e9 cliqu\u00e9 manuellement"
   }
 }

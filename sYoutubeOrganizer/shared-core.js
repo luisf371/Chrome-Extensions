@@ -11,7 +11,8 @@
     theme: 'dark',
     subscriptionsFilterPreference: null,
     hideShorts: false,
-    hideMostRelevant: false
+    hideMostRelevant: false,
+    redirectRootToSubscriptions: false
   };
 
   function isPlainObject(value) {
@@ -76,6 +77,9 @@
     }
     if (newSettings.hideMostRelevant !== undefined) {
       normalized.hideMostRelevant = !!newSettings.hideMostRelevant;
+    }
+    if (newSettings.redirectRootToSubscriptions !== undefined) {
+      normalized.redirectRootToSubscriptions = !!newSettings.redirectRootToSubscriptions;
     }
     return normalized;
   }
