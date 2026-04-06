@@ -26,7 +26,8 @@ let streamStates = new Map();
 // Configuration constants
 const CONFIG = {
   REQUEST_TIMEOUT: 30000, // 30 seconds timeout for API requests
-  CONTEXT_MENU_ID: "summarize-selection"
+  CONTEXT_MENU_ID: "summarize-selection",
+  OPENROUTER_RETRY_BACKOFF_MS: 1500
 };
 
 // DEFAULT_AZURE_API_VERSION, normalizeAzureResourceName, buildAzureApiUrl
@@ -311,13 +312,17 @@ function getAdapter(provider) {
   return OpenAIAdapter;
 }
 
-function createStreamState() {
+function createStreamState(overrides = {}) {
   return {
     sawTerminal: false,
     sawDone: false,
     errorMessage: null,
     reasoning: '',
-    reasoning_details: []
+    reasoning_details: [],
+    requestDiagnostics: null,
+    recentEvents: [],
+    resumeDeduper: null,
+    ...overrides
   };
 }
 
@@ -341,6 +346,117 @@ function getAssistantMessagePayload(uniqueId, fullResponse) {
 
 function clearStreamState(uniqueId) {
   streamStates.delete(uniqueId);
+}
+
+function truncateForLog(value, maxLength = 400) {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
+}
+
+function summarizeMessageForDiagnostics(message) {
+  const content = message?.content;
+  return {
+    role: message?.role || 'unknown',
+    contentType: Array.isArray(content) ? 'array' : typeof content,
+    contentLength: typeof content === 'string' ? content.length : Array.isArray(content) ? content.length : 0,
+    hasReasoning: typeof message?.reasoning === 'string' && message.reasoning.length > 0,
+    reasoningLength: typeof message?.reasoning === 'string' ? message.reasoning.length : 0,
+    reasoningDetailsCount: Array.isArray(message?.reasoning_details) ? message.reasoning_details.length : 0,
+    toolCallCount: Array.isArray(message?.tool_calls) ? message.tool_calls.length : 0
+  };
+}
+
+function buildRequestDiagnostics({ uniqueId, providerKind, model, fetchUrl, requestBody, messages, openrouterDisableReasoning, isFollowUp, retryAttempt }) {
+  return {
+    uniqueId,
+    providerKind,
+    model: model?.trim() || null,
+    fetchUrl,
+    isFollowUp,
+    retryAttempt,
+    openrouterDisableReasoning: Boolean(openrouterDisableReasoning),
+    requestBodyKeys: Object.keys(requestBody || {}),
+    reasoningConfig: requestBody?.reasoning || null,
+    messageCount: Array.isArray(messages) ? messages.length : 0,
+    messageSummary: Array.isArray(messages) ? messages.map(summarizeMessageForDiagnostics) : []
+  };
+}
+
+function appendStreamDiagnostic(uniqueId, entry) {
+  const streamState = streamStates.get(uniqueId);
+  if (!streamState) {
+    return;
+  }
+  streamState.recentEvents.push({
+    at: Date.now(),
+    ...entry
+  });
+  if (streamState.recentEvents.length > 8) {
+    streamState.recentEvents.shift();
+  }
+}
+
+function logOpenRouterDiagnostics(label, details) {
+  console.log(`[OpenRouter Diagnostics] ${label}`, details);
+}
+
+function cloneReasoningDetails(reasoningDetails) {
+  return Array.isArray(reasoningDetails) ? reasoningDetails.map((detail) => ({ ...detail })) : [];
+}
+
+function buildContinuationRetryPrompt() {
+  return 'Continue exactly from where you stopped. Do not restart, summarize, or repeat prior text unless needed to finish the interrupted sentence. Continue the existing answer only.';
+}
+
+function getPartialAssistantMessage(uniqueId) {
+  const fullResponse = responseAccumulators.get(uniqueId) || '';
+  return getAssistantMessagePayload(uniqueId, fullResponse);
+}
+
+function shouldRetryProviderOverload(errorResult, providerKind, retryAttempt, uniqueId) {
+  const accumulatedResponse = responseAccumulators.get(uniqueId) || '';
+  return (
+    providerKind === 'openrouter' &&
+    retryAttempt < 1 &&
+    errorResult?.errorCode === 503 &&
+    errorResult?.errorMetadata?.error_type === 'provider_overloaded' &&
+    accumulatedResponse.trim().length > 0
+  );
+}
+
+function applyResumeOverlapDedupe(uniqueId, chunk) {
+  if (!chunk) {
+    return chunk;
+  }
+
+  const streamState = streamStates.get(uniqueId);
+  const resumeDeduper = streamState?.resumeDeduper;
+  if (!resumeDeduper?.active) {
+    return chunk;
+  }
+
+  resumeDeduper.pending += chunk;
+  const { existingText, pending } = resumeDeduper;
+  const maxOverlap = Math.min(existingText.length, pending.length);
+  let overlapLength = 0;
+
+  for (let i = maxOverlap; i > 0; i--) {
+    if (existingText.endsWith(pending.slice(0, i))) {
+      overlapLength = i;
+      break;
+    }
+  }
+
+  if (pending.length === overlapLength) {
+    return '';
+  }
+
+  const dedupedChunk = pending.slice(overlapLength);
+  resumeDeduper.active = false;
+  resumeDeduper.pending = '';
+  return dedupedChunk;
 }
 
 // ===== END PROVIDER ADAPTERS =====
@@ -565,7 +681,15 @@ async function sendMessageSafely(tabId, message) {
 // Note: YouTube transcript fetching is now handled entirely by the content script
 // using the same approach as the Python youtube-transcript-api implementation
 
-async function makeApiCall(inputData, uniqueId, customUserPrompt = null, commandName = null) {
+async function makeApiCall(inputData, uniqueId, customUserPrompt = null, commandName = null, retryOptions = {}) {
+  const {
+    preserveAccumulator = false,
+    preservedOriginalContext = null,
+    retryAttempt = 0,
+    inheritedReasoning = '',
+    inheritedReasoningDetails = [],
+    resumeFromText = ''
+  } = retryOptions;
   // Check if the request was explicitly cancelled
   if (cancelledRequests.has(uniqueId)) {
     cancelledRequests.delete(uniqueId);
@@ -666,7 +790,7 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
 
   // Determine if this is an initial request (string) or follow-up (array)
   let messages = [];
-  let originalContext = null; // Only set for initial request
+  let originalContext = preservedOriginalContext; // Only set for initial request
 
   let effectiveSystemPrompt = systemPrompt?.trim() || 'You are a helpful assistant that summarizes content concisely.';
 
@@ -752,8 +876,20 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
   abortControllers.set(uniqueId, { controller, timeoutId, reader: null });
 
   // Initialize response accumulator
-  responseAccumulators.set(uniqueId, '');
-  streamStates.set(uniqueId, createStreamState());
+  if (!preserveAccumulator || !responseAccumulators.has(uniqueId)) {
+    responseAccumulators.set(uniqueId, '');
+  }
+  streamStates.set(uniqueId, createStreamState({
+    reasoning: inheritedReasoning,
+    reasoning_details: cloneReasoningDetails(inheritedReasoningDetails),
+    resumeDeduper: resumeFromText
+      ? {
+        active: true,
+        existingText: resumeFromText,
+        pending: ''
+      }
+      : null
+  }));
 
   try {
     const requestBody = adapter.transformRequest(messages, model, effectiveSystemPrompt);
@@ -769,6 +905,25 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
       fetchUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:streamGenerateContent?alt=sse`;
     }
 
+    const streamState = streamStates.get(uniqueId);
+    if (streamState) {
+      streamState.requestDiagnostics = buildRequestDiagnostics({
+        uniqueId,
+        providerKind,
+        model,
+        fetchUrl,
+        requestBody,
+        messages,
+        openrouterDisableReasoning,
+        isFollowUp: Array.isArray(inputData),
+        retryAttempt
+      });
+    }
+
+    if (providerKind === 'openrouter' && streamState?.requestDiagnostics) {
+      logOpenRouterDiagnostics('request-start', streamState.requestDiagnostics);
+    }
+
     const response = await fetch(fetchUrl, {
       method: 'POST',
       headers: adapter.buildHeaders(apiKey),
@@ -781,6 +936,14 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
     if (!response.ok) {
       const errorText = await response.text();
       console.log('[API] Error response body:', errorText);
+      if (providerKind === 'openrouter') {
+        logOpenRouterDiagnostics('http-error', {
+          request: streamStates.get(uniqueId)?.requestDiagnostics || null,
+          status: response.status,
+          statusText: response.statusText,
+          errorText: truncateForLog(errorText, 800)
+        });
+      }
       abortControllers.delete(uniqueId);
       throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText.substring(0, 200)}`);
     }
@@ -824,6 +987,42 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
           }
 
           if (processResult?.errorMessage) {
+            if (shouldRetryProviderOverload(processResult, providerKind, retryAttempt, uniqueId)) {
+              const accumulatedResponse = responseAccumulators.get(uniqueId) || '';
+              const currentStreamState = streamStates.get(uniqueId);
+              const retryMessages = [
+                ...messages,
+                getPartialAssistantMessage(uniqueId),
+                { role: 'user', content: buildContinuationRetryPrompt() }
+              ];
+              if (providerKind === 'openrouter') {
+                logOpenRouterDiagnostics('auto-retry-continuation', {
+                  request: currentStreamState?.requestDiagnostics || null,
+                  recentEvents: currentStreamState?.recentEvents || [],
+                  retryAttempt: retryAttempt + 1,
+                  accumulatedResponseLength: accumulatedResponse.length
+                });
+              }
+              clearStreamState(uniqueId);
+              abortControllers.delete(uniqueId);
+              cancelledRequests.delete(uniqueId);
+              await new Promise((resolve) => setTimeout(resolve, CONFIG.OPENROUTER_RETRY_BACKOFF_MS));
+              return makeApiCall(retryMessages, uniqueId, null, null, {
+                preserveAccumulator: true,
+                preservedOriginalContext: originalContext,
+                retryAttempt: retryAttempt + 1,
+                inheritedReasoning: currentStreamState?.reasoning || '',
+                inheritedReasoningDetails: currentStreamState?.reasoning_details || [],
+                resumeFromText: accumulatedResponse
+              });
+            }
+            if (providerKind === 'openrouter') {
+              logOpenRouterDiagnostics('stream-error-before-eof', {
+                request: streamStates.get(uniqueId)?.requestDiagnostics || null,
+                recentEvents: streamStates.get(uniqueId)?.recentEvents || [],
+                errorMessage: processResult.errorMessage
+              });
+            }
             await handleApiError(uniqueId, processResult.errorMessage);
             clearStreamState(uniqueId);
             abortControllers.delete(uniqueId);
@@ -833,6 +1032,13 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
 
           const streamState = streamStates.get(uniqueId);
           if (!streamState?.sawTerminal) {
+            if (providerKind === 'openrouter') {
+              logOpenRouterDiagnostics('eof-without-terminal-marker', {
+                request: streamState?.requestDiagnostics || null,
+                recentEvents: streamState?.recentEvents || [],
+                accumulatedResponseLength: (responseAccumulators.get(uniqueId) || '').length
+              });
+            }
             await sendUiRecoveryMessages(
               tab,
               uniqueId,
@@ -874,8 +1080,51 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
           }
 
           if (processResult.errorMessage) {
+            if (shouldRetryProviderOverload(processResult, providerKind, retryAttempt, uniqueId)) {
+              const accumulatedResponse = responseAccumulators.get(uniqueId) || '';
+              const currentStreamState = streamStates.get(uniqueId);
+              const retryMessages = [
+                ...messages,
+                getPartialAssistantMessage(uniqueId),
+                { role: 'user', content: buildContinuationRetryPrompt() }
+              ];
+              if (providerKind === 'openrouter') {
+                logOpenRouterDiagnostics('auto-retry-continuation', {
+                  request: currentStreamState?.requestDiagnostics || null,
+                  recentEvents: currentStreamState?.recentEvents || [],
+                  retryAttempt: retryAttempt + 1,
+                  accumulatedResponseLength: accumulatedResponse.length
+                });
+              }
+              clearStreamState(uniqueId);
+              abortControllers.delete(uniqueId);
+              cancelledRequests.delete(uniqueId);
+              await new Promise((resolve) => setTimeout(resolve, CONFIG.OPENROUTER_RETRY_BACKOFF_MS));
+              return makeApiCall(retryMessages, uniqueId, null, null, {
+                preserveAccumulator: true,
+                preservedOriginalContext: originalContext,
+                retryAttempt: retryAttempt + 1,
+                inheritedReasoning: currentStreamState?.reasoning || '',
+                inheritedReasoningDetails: currentStreamState?.reasoning_details || [],
+                resumeFromText: accumulatedResponse
+              });
+            }
+            if (providerKind === 'openrouter') {
+              logOpenRouterDiagnostics('stream-error-mid-read', {
+                request: streamStates.get(uniqueId)?.requestDiagnostics || null,
+                recentEvents: streamStates.get(uniqueId)?.recentEvents || [],
+                errorMessage: processResult.errorMessage
+              });
+            }
             await handleApiError(uniqueId, processResult.errorMessage);
           } else {
+            if (providerKind === 'openrouter') {
+              logOpenRouterDiagnostics('stream-stop-without-error', {
+                request: streamStates.get(uniqueId)?.requestDiagnostics || null,
+                recentEvents: streamStates.get(uniqueId)?.recentEvents || [],
+                accumulatedResponseLength: (responseAccumulators.get(uniqueId) || '').length
+              });
+            }
             await sendUiRecoveryMessages(
               tab,
               uniqueId,
@@ -893,6 +1142,13 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
     } catch (error) {
       if (error.name === 'AbortError') {
         if (!cancelledRequests.has(uniqueId)) {
+          if (providerKind === 'openrouter') {
+            logOpenRouterDiagnostics('abort-error-during-stream', {
+              request: streamStates.get(uniqueId)?.requestDiagnostics || null,
+              recentEvents: streamStates.get(uniqueId)?.recentEvents || [],
+              errorMessage: error.message
+            });
+          }
           await sendUiRecoveryMessages(
             tab,
             uniqueId,
@@ -902,6 +1158,14 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
         }
       } else {
         console.log('[API] Stream reading error:', error);
+        if (providerKind === 'openrouter') {
+          logOpenRouterDiagnostics('reader-exception', {
+            request: streamStates.get(uniqueId)?.requestDiagnostics || null,
+            recentEvents: streamStates.get(uniqueId)?.recentEvents || [],
+            errorMessage: error.message,
+            stack: truncateForLog(error.stack || '', 1200)
+          });
+        }
         await handleApiError(uniqueId, `Stream error: ${error.message}`);
       }
       clearStreamState(uniqueId);
@@ -910,6 +1174,14 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
     }
   } catch (err) {
     clearTimeout(timeoutId);
+    if (providerKind === 'openrouter') {
+      logOpenRouterDiagnostics('request-exception', {
+        request: streamStates.get(uniqueId)?.requestDiagnostics || null,
+        recentEvents: streamStates.get(uniqueId)?.recentEvents || [],
+        errorMessage: err.message,
+        stack: truncateForLog(err.stack || '', 1200)
+      });
+    }
     abortControllers.delete(uniqueId);
     clearStreamState(uniqueId);
     responseAccumulators.delete(uniqueId);
@@ -1045,12 +1317,13 @@ function processBuffer(buffer, uniqueId, adapter) {
         streamState.sawDone = true;
         streamState.sawTerminal = true;
       }
+      appendStreamDiagnostic(uniqueId, { type: 'done' });
       continue;
     }
 
     const result = handleJsonLine(jsonLine, uniqueId, adapter);
     if (result?.errorMessage) {
-      return { buffer: '', shouldStop: true, stopReason: 'error', errorMessage: result.errorMessage };
+      return { buffer: '', shouldStop: true, stopReason: 'error', ...result };
     }
   }
 
@@ -1073,16 +1346,50 @@ function handleJsonLine(jsonLine, uniqueId, adapter) {
     }
 
     if (data?.error?.message) {
+      appendStreamDiagnostic(uniqueId, {
+        type: 'error',
+        errorCode: data.error.code || null,
+        errorMessage: truncateForLog(data.error.message, 500),
+        provider: data.provider || null,
+        model: data.model || null,
+        metadata: data.error.metadata || null
+      });
+      if (streamState.requestDiagnostics?.providerKind === 'openrouter') {
+        logOpenRouterDiagnostics('sse-error-chunk', {
+          request: streamState.requestDiagnostics,
+          recentEvents: streamState.recentEvents,
+          errorChunk: data
+        });
+      }
       streamState.errorMessage = `Stream error: ${data.error.message}`;
       streamState.sawTerminal = true;
-      return { errorMessage: streamState.errorMessage };
+      return {
+        errorMessage: streamState.errorMessage,
+        errorCode: data.error.code || null,
+        errorMetadata: data.error.metadata || null,
+        provider: data.provider || null,
+        model: data.model || null
+      };
     }
 
     const tab = tabIdMap.get(uniqueId);
 
-    const contentChunk = adapter.parseStreamChunk(data);
+    const rawContentChunk = adapter.parseStreamChunk(data);
+    const contentChunk = applyResumeOverlapDedupe(uniqueId, rawContentChunk);
     const reasoningChunk = typeof adapter.parseReasoning === 'function' ? adapter.parseReasoning(data) : null;
     const reasoningDetails = typeof adapter.parseReasoningDetails === 'function' ? adapter.parseReasoningDetails(data) : null;
+    appendStreamDiagnostic(uniqueId, {
+      type: 'chunk',
+      finishReason: data?.choices?.[0]?.finish_reason || null,
+      hasContent: Boolean(rawContentChunk),
+      contentLength: rawContentChunk?.length || 0,
+      dedupedContentLength: contentChunk?.length || 0,
+      hasReasoning: Boolean(reasoningChunk),
+      reasoningLength: reasoningChunk?.length || 0,
+      reasoningDetailsCount: Array.isArray(reasoningDetails) ? reasoningDetails.length : 0,
+      provider: data?.provider || null,
+      model: data?.model || null
+    });
 
     if (tab && contentChunk) {
       chrome.tabs.sendMessage(tab, {
@@ -1109,10 +1416,30 @@ function handleJsonLine(jsonLine, uniqueId, adapter) {
       streamState.sawTerminal = true;
       if (data?.choices?.[0]?.finish_reason === 'error') {
         streamState.errorMessage = streamState.errorMessage || 'Stream error: The provider terminated the response unexpectedly.';
-        return { errorMessage: streamState.errorMessage };
+        return {
+          errorMessage: streamState.errorMessage,
+          errorCode: null,
+          errorMetadata: null,
+          provider: data?.provider || null,
+          model: data?.model || null
+        };
       }
     }
   } catch (e) {
+    appendStreamDiagnostic(uniqueId, {
+      type: 'parse-failure',
+      message: e.message,
+      rawLine: truncateForLog(jsonLine, 600)
+    });
+    const streamState = streamStates.get(uniqueId);
+    if (streamState?.requestDiagnostics?.providerKind === 'openrouter') {
+      logOpenRouterDiagnostics('json-parse-failure', {
+        request: streamState.requestDiagnostics,
+        recentEvents: streamState.recentEvents,
+        parseError: e.message,
+        rawLine: truncateForLog(jsonLine, 1000)
+      });
+    }
     console.warn('[API] Failed to parse JSON line:', e.message);
   }
 
