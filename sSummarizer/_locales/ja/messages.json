@@ -107,7 +107,7 @@
     "description": "Model label"
   },
   "helpModel": {
-    "message": "要約を処理する正確なモデル識別子を選択してください（例：gpt5.2, claude-4.6-sonnet）。",
+    "message": "要約を処理する正確なモデル識別子を選択してください（例：gpt-5.2, claude-sonnet-4-6）。",
     "description": "Model help text"
   },
   "labelApiKey": {

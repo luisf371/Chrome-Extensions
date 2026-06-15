@@ -107,7 +107,7 @@
     "description": "Model label"
   },
   "helpModel": {
-    "message": "选择将处理摘要的确切模型标识符（例如，gpt5.2, claude-4.6-sonnet）。",
+    "message": "选择将处理摘要的确切模型标识符（例如，gpt-5.2, claude-sonnet-4-6）。",
     "description": "Model help text"
   },
   "labelApiKey": {
