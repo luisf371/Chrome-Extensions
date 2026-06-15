@@ -29,14 +29,6 @@ function enc(v) {
   return encodeURIComponent(v ?? "");
 }
 
-function dec(v) {
-  try {
-    return decodeURIComponent(v ?? "");
-  } catch {
-    return v ?? "";
-  }
-}
-
 function setStatus(text) {
   $("status").textContent = text;
 }
@@ -85,12 +77,6 @@ function tabGroupsUpdate(groupId, options) {
 
 function tabsRemove(tabId) {
   return chromePromisify(chrome.tabs.remove, tabId);
-}
-
-function parseBool01(v, fallback = false) {
-  if (v === "1") return true;
-  if (v === "0") return false;
-  return fallback;
 }
 
 function safeTabTitle(tab) {
