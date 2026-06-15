@@ -952,6 +952,8 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
     if (!tab) {
       console.log('[API] No tab found for uniqueId:', uniqueId);
       abortControllers.delete(uniqueId);
+      clearStreamState(uniqueId);
+      responseAccumulators.delete(uniqueId);
       return;
     }
 
