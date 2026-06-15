@@ -163,7 +163,7 @@ function renderBroken(brokenList) {
         <strong>${escapeHtml(item.title)}</strong><br>
         <span class="path-col">${escapeHtml(item.path)}</span>
       </td>
-      <td><a href="${item.url}" target="_blank" class="url-col">${escapeHtml(item.url)}</a></td>
+      <td><a href="${safeHref(item.url)}" target="_blank" rel="noopener noreferrer" class="url-col">${escapeHtml(item.url)}</a></td>
       <td><span class="status-badge ${item.status == 404 ? 'status-404' : 'status-error'}" data-status="${item.status}">${getStatusLabel(item.status)}</span></td>
     `;
     elements.brokenTableBody.appendChild(tr);
@@ -218,7 +218,7 @@ function renderDuplicates(duplicatesMap) {
 
     group.innerHTML = `
       <div class="dup-header">
-        <a href="${url}" target="_blank">${escapeHtml(url)}</a>
+        <a href="${safeHref(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(url)}</a>
       </div>
       ${itemsHtml}
     `;
@@ -270,6 +270,20 @@ function escapeHtml(text) {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
+}
+
+// Return a safe href value: escaped and restricted to known-safe schemes.
+// Prevents javascript:-scheme injection and attribute breakout via the URL.
+function safeHref(url) {
+  if (!url) return '#';
+  const safeSchemes = ['http:', 'https:', 'ftp:', 'mailto:'];
+  try {
+    const parsed = new URL(url, document.baseURI);
+    if (!safeSchemes.includes(parsed.protocol)) return '#';
+  } catch (e) {
+    return '#';
+  }
+  return escapeHtml(url);
 }
 
 function getSelectedIds(selector) {
