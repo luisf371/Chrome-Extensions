@@ -531,6 +531,10 @@ ${commentsText.join('\n\n')}
   }
 }
 
+// Cap replies extracted per comment level so deep/wide threads don't
+// produce unbounded output (matches the "top N replies" intent below).
+const MAX_REPLIES_PER_LEVEL = 3;
+
 // Helper for Shreddit recursive extraction
 function extractCommentTree(commentNode, currentDepth, maxDepth) {
     const author = commentNode.getAttribute('author') || 'User';
@@ -548,7 +552,7 @@ function extractCommentTree(commentNode, currentDepth, maxDepth) {
         const directChildren = Array.from(commentNode.querySelectorAll(':scope > [slot="children"] > shreddit-comment, :scope > shreddit-comment'));
         
         // Limit replies per level to avoid explosion (e.g. top 3 replies)
-        const replies = directChildren.map(child => extractCommentTree(child, currentDepth + 1, maxDepth)).filter(Boolean);
+        const replies = directChildren.slice(0, MAX_REPLIES_PER_LEVEL).map(child => extractCommentTree(child, currentDepth + 1, maxDepth)).filter(Boolean);
         
         if (replies.length > 0) {
             text += '\n' + replies.join('\n');
@@ -572,7 +576,8 @@ function extractLegacyCommentTree(commentNode, currentDepth, maxDepth) {
     if (currentDepth < maxDepth) {
         // Legacy nesting: :scope > .child > .sitetable > .thing.comment
         const directChildren = Array.from(commentNode.querySelectorAll(':scope > .child > .sitetable > .thing.comment'));
-        const replies = directChildren.map(child => extractLegacyCommentTree(child, currentDepth + 1, maxDepth)).filter(Boolean);
+        // Limit replies per level to avoid explosion (e.g. top 3 replies)
+        const replies = directChildren.slice(0, MAX_REPLIES_PER_LEVEL).map(child => extractLegacyCommentTree(child, currentDepth + 1, maxDepth)).filter(Boolean);
         if (replies.length > 0) {
             text += '\n' + replies.join('\n');
         }
