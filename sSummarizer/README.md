@@ -1,7 +1,7 @@
 ![Project Banner](./images/ss-banner.png)
 <!-- Main project branding banner -->
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg) ![Language: JavaScript](https://img.shields.io/badge/Language-JavaScript-F7DF1E.svg) ![Version: 1.4](https://img.shields.io/badge/Version-1.0.3-green.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg) ![Language: JavaScript](https://img.shields.io/badge/Language-JavaScript-F7DF1E.svg) ![Version: 1.5](https://img.shields.io/badge/Version-1.5-green.svg)
 
 🌍 **Supported Languages:** English, Spanish, French, Japanese, Portuguese (Brazil), Chinese (Simplified)
 
@@ -56,7 +56,7 @@ A: Yes! It automatically pulls the transcript from the current video and summari
 A: Yes. Edit the global "System Prompt" in settings or use custom Slash Commands to instruct the AI exactly how to write your summary.
 
 **Q: Is my browsing data private?**
-A: Absolutely. Content goes directly to your AI provider. We never see it, store it, or sell it.
+A: Page content is sent only to the AI provider you configure, over HTTPS. The extension has no backend server, so the developer never receives your content, browsing data, or API key.
 
 **Q: Can I ask follow-up questions after generating a summary?**
 A: Yes! After the initial summary completes, you can continue the chat to ask follow-up questions, request deeper explanations, or clarify specific parts of the text.
@@ -66,12 +66,12 @@ A: Yes! After the initial summary completes, you can continue the chat to ask fo
 sSummarizer minimally requests only the following browser permissions to function properly:
 *   **activeTab**: To read the page you're currently viewing when you activate the extension
 *   **scripting**: To inject our content extractor for complex sites like YouTube/Reddit
-*   **storage**: To securely save your API keys and custom slash commands locally
+*   **storage**: To save your API keys and custom slash commands locally on your device
 *   **contextMenus**: To add "Summarize selection" to your right-click menu
 
 ## Privacy
 
-sSummarizer is designed with a strict privacy-first approach. It only accesses webpage content dynamically when you explicitly activate it to generate a summary. The carefully extracted text is then sent directly and securely to your configured AI provider's API. Our extension does not collect, store, transmit, or monetize your personal data, detailed browsing history, or API keys to any third-party servers.
+sSummarizer is designed with a privacy-first approach. It only accesses webpage content when you explicitly activate it to generate a summary. The extracted text is then sent over HTTPS to your configured AI provider's API, and to no one else. Your API key is stored locally in `chrome.storage.local`; note that this storage is not encrypted at rest, so it offers the same protection as other data saved in your browser profile. The key is sent only to the provider endpoint you configure, to authenticate your requests. The extension has no backend of its own, so it does not collect, store, transmit, or monetize your personal data, browsing history, or API keys.
 
 ## License
 

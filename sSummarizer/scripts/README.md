@@ -35,7 +35,7 @@ The Reddit extractor (`extractRedditThread`) is designed to capture complex disc
 
 *   **Layout Support**: Native support for both **Modern (Shreddit)** and **Legacy (Classic)** Reddit interfaces.
 *   **Dynamic Sorting**:
-    *   If the user selects a sort (e.g., Top, New, Controversial) that differs from the current view, the script performs a background `fetch` of the sorted page to get the correct data.
+    *   If the user selects a sort (e.g., Best, Top, New) that differs from the current view, the script performs a background `fetch` of the sorted page to get the correct data.
 *   **Recursive Threading**:
     *   Uses a recursive tree-walking algorithm (`extractCommentTree`) to capture nested replies.
     *   **Indentation Styling**: Replies are formatted with specific indentation (e.g., `    > Reply`) to help the AI understand the flow of conversation.
