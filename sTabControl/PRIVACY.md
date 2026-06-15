@@ -15,7 +15,6 @@ The extension stores your preferences (tab position, close behavior, theme) usin
 - `tabs`: Reorder and focus tabs
 - `storage`: Save your preferences
 - `webNavigation`: Detect duplicate URLs
-- `scripting`: Apply duplicate prevention logic
 
 ## Third Parties
 No third-party services, analytics, or tracking of any kind.
