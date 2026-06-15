@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
       url: 'https://api.openai.com/v1/chat/completions',
       placeholder: 'https://api.openai.com/v1/chat',
       enforceSuffix: '/completions',
-      modelHint: 'gpt5.2'
+      modelHint: 'gpt-4o'
     },
     azure: {
       label: 'Azure OpenAI',
@@ -152,14 +152,14 @@ document.addEventListener('DOMContentLoaded', function () {
       url: 'https://api.z.ai/api/coding/paas/v4/chat/completions',
       placeholder: 'https://api.z.ai/api/coding/paas/v4/chat',
       enforceSuffix: '/completions',
-      modelHint: 'glm-5'
+      modelHint: 'glm-4.6'
     },
     anthropic: {
       label: 'Anthropic Claude',
       url: 'https://api.anthropic.com/v1/messages',
       placeholder: 'https://api.anthropic.com/v1/messages',
       enforceSuffix: '',
-      modelHint: 'claude-3-5-sonnet-20240620'
+      modelHint: 'claude-sonnet-4-6'
     },
     gemini: {
       label: 'Google Gemini',
@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function () {
             'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
-            model: trimmedModel || 'claude-3-5-sonnet-latest',
+            model: trimmedModel || 'claude-sonnet-4-6',
             max_tokens: 20,
             stream: false,
             messages: [{ role: 'user', content: userMessage }]

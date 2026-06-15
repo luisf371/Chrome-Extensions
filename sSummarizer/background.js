@@ -102,7 +102,7 @@ const OpenAIAdapter = {
     }
     formattedMessages.push(...messages);
     return {
-      model: model?.trim() || 'gpt5.2',
+      model: model?.trim() || 'gpt-4o',
       messages: formattedMessages,
       stream: true
     };
@@ -155,7 +155,7 @@ const GLMAdapter = {
     }
     formattedMessages.push(...messages);
     return {
-      model: model?.trim() || 'glm-5',
+      model: model?.trim() || 'glm-4.6',
       messages: formattedMessages,
       stream: true,
       thinking: { type: 'disabled' }
@@ -191,7 +191,7 @@ const AnthropicAdapter = {
     // Messages must alternate user/assistant, no system role in messages
     const filteredMessages = messages.filter(m => m.role !== 'system');
     return {
-      model: model?.trim() || 'claude-3-sonnet-20240229',
+      model: model?.trim() || 'claude-sonnet-4-6',
       system: systemPrompt || undefined,
       messages: filteredMessages,
       max_tokens: 4096,
