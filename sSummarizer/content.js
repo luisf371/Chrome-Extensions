@@ -752,11 +752,18 @@
   function convertMarkdownToHtml(markdown) {
     const processInline = (text) => {
       if (!text) return '';
+      // HTML-escape raw text first so untrusted model output cannot inject
+      // markup. Markdown patterns below only emit a known-safe tag allowlist,
+      // and newlines are converted to <br> after escaping (see paragraph path).
       return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
         .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`([^`]+)`/g, '<code>$1</code>');
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\n/g, '<br>');
     };
 
     const lines = markdown.trim().split('\n');
@@ -852,7 +859,7 @@
       if (line.trim()) {
         let paragraphContent = line;
         while (i + 1 < lines.length && lines[i + 1].trim() && !lines[i + 1].match(/^-{3,}$/) && !lines[i + 1].match(/^#{1,6}\s/) && !lines[i + 1].match(/^(\s*)([-*]|\d+\.)\s/)) {
-          paragraphContent += '<br>' + lines[i + 1];
+          paragraphContent += '\n' + lines[i + 1];
           i++;
         }
         html += `<p>${processInline(paragraphContent)}</p>\n`;
