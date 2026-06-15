@@ -87,6 +87,10 @@ function tabsRemove(tabId) {
   return chromePromisify(chrome.tabs.remove, tabId);
 }
 
+function windowsUpdate(windowId, options) {
+  return chromePromisify(chrome.windows.update, windowId, options);
+}
+
 function parseBool01(v, fallback = false) {
   if (v === "1") return true;
   if (v === "0") return false;
@@ -381,6 +385,11 @@ async function restoreFromExportText(windowsSpec) {
   let skippedTabs = 0;
   const errors = [];
 
+  // Track which created window should receive focus once at the end, to avoid
+  // focus thrashing while multiple windows are being created.
+  let focusWindowId = null;
+  let lastCreatedWindowId = null;
+
   for (const winSpec of windowsSpec) {
     const allTabs = winSpec.groups.flatMap((g) => g.tabs);
     const restorableTabsCount = allTabs.reduce((n, t) => n + (isRestorableUrl(t.url) ? 1 : 0), 0);
@@ -391,11 +400,16 @@ async function restoreFromExportText(windowsSpec) {
 
     const createdWin = await windowsCreate({
       type: WINDOW_TYPES.includes(winSpec.type) ? winSpec.type : "normal",
-      focused: !!winSpec.focused
+      // Create unfocused; focus is applied once after all windows are created.
+      focused: false
     });
     createdWindows += 1;
 
     const windowId = createdWin.id;
+    lastCreatedWindowId = windowId;
+    if (winSpec.focused && focusWindowId === null) {
+      focusWindowId = windowId;
+    }
     const seedTab = createdWin.tabs?.[0];
 
     /** @type {{tabId:number, groupIndex:number, pinned:boolean}[]} */
@@ -489,6 +503,17 @@ async function restoreFromExportText(windowsSpec) {
       } catch (e) {
         errors.push(`Group restore failed (${g.title || "Group"}): ${String(e?.message ?? e)}`);
       }
+    }
+  }
+
+  // Focus exactly one window at the end: the originally-focused window if present,
+  // otherwise the last window we created.
+  const targetWindowId = focusWindowId ?? lastCreatedWindowId;
+  if (targetWindowId !== null) {
+    try {
+      await windowsUpdate(targetWindowId, { focused: true });
+    } catch (e) {
+      errors.push(`Focus window failed: ${String(e?.message ?? e)}`);
     }
   }
 
