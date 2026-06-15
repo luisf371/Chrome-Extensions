@@ -755,15 +755,25 @@
       // HTML-escape raw text first so untrusted model output cannot inject
       // markup. Markdown patterns below only emit a known-safe tag allowlist,
       // and newlines are converted to <br> after escaping (see paragraph path).
-      return text
+      let escaped = text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
+        .replace(/>/g, '&gt;');
+      // Extract inline-code spans before applying emphasis so that markdown
+      // characters inside backticks (e.g. `a * b`, `**kwargs`) render literally
+      // instead of being consumed by the bold/italic rules. NUL sentinels can't
+      // appear in the escaped text and aren't matched by the patterns below.
+      const codeSpans = [];
+      escaped = escaped.replace(/`([^`]+)`/g, (match, code) => {
+        codeSpans.push(`<code>${code}</code>`);
+        return `\x00${codeSpans.length - 1}\x00`;
+      });
+      escaped = escaped
         .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
         .replace(/\n/g, '<br>');
+      return escaped.replace(/\x00(\d+)\x00/g, (match, idx) => codeSpans[Number(idx)]);
     };
 
     const lines = markdown.trim().split('\n');

@@ -289,7 +289,7 @@ async function extractFromTranscriptPanel() {
   try {
     // Try to find and click transcript button
     const transcriptButton = document.querySelector('button[aria-label*="transcript" i], button[aria-label*="Show transcript" i]');
-    if (transcriptButton && !transcriptButton.getAttribute('aria-pressed')) {
+    if (transcriptButton && transcriptButton.getAttribute('aria-pressed') !== 'true') {
       transcriptButton.click();
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
