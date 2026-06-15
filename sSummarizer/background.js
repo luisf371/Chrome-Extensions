@@ -102,7 +102,7 @@ const OpenAIAdapter = {
     }
     formattedMessages.push(...messages);
     return {
-      model: model?.trim() || 'gpt5.2',
+      model: model?.trim() || 'gpt-5.2',
       messages: formattedMessages,
       stream: true
     };
@@ -191,7 +191,7 @@ const AnthropicAdapter = {
     // Messages must alternate user/assistant, no system role in messages
     const filteredMessages = messages.filter(m => m.role !== 'system');
     return {
-      model: model?.trim() || 'claude-3-sonnet-20240229',
+      model: model?.trim() || 'claude-sonnet-4-6',
       system: systemPrompt || undefined,
       messages: filteredMessages,
       max_tokens: 4096,
