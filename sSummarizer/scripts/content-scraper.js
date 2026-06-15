@@ -49,6 +49,7 @@ function extractVideoIdFromUrl(url) {
     /[?&]v=([a-zA-Z0-9_-]{11})/,
     /\/embed\/([a-zA-Z0-9_-]{11})/,
     /\/watch\/([a-zA-Z0-9_-]{11})/,
+    /\/shorts\/([a-zA-Z0-9_-]{11})/,
     /youtu\.be\/([a-zA-Z0-9_-]{11})/
   ];
   
