@@ -79,6 +79,12 @@
     updateUIState();
   }
 
+  function clampMaxHistory(value) {
+    const parsed = parseInt(value, 10);
+    if (!Number.isFinite(parsed)) return DEFAULT_SETTINGS.maxHistory;
+    return Math.min(50000, Math.max(100, parsed));
+  }
+
   async function saveSettings() {
     const settings = {
       highlightColor: elements.highlightColor.value,
@@ -88,7 +94,7 @@
       autoChangeTheme: elements.autoChangeTheme.checked,
       themeStartTime: elements.themeStartTime.value,
       themeEndTime: elements.themeEndTime.value,
-      maxHistory: parseInt(elements.maxHistory.value, 10) || DEFAULT_SETTINGS.maxHistory,
+      maxHistory: clampMaxHistory(elements.maxHistory.value),
     };
     
     await chrome.storage.local.set({ settings });
