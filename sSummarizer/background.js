@@ -1246,6 +1246,13 @@ async function stopApiRequest(uniqueId, fallbackTabId = null) {
     tabIdMap.delete(uniqueId);
     responseAccumulators.delete(uniqueId);
   }
+
+  // Clear the cancellation flag now that the stop has been fully handled.
+  // The in-flight stream loop can exit via a non-throwing break (when the
+  // abort lands between reads) without ever clearing this flag, which would
+  // otherwise leak here and silently drop a later follow-up that reuses the
+  // same uniqueId (makeApiCall returns early when the id is still cancelled).
+  cancelledRequests.delete(uniqueId);
 }
 
 /**
