@@ -102,7 +102,7 @@ const OpenAIAdapter = {
     }
     formattedMessages.push(...messages);
     return {
-      model: model?.trim() || 'gpt-4o',
+      model: model?.trim() || 'gpt-5.2',
       messages: formattedMessages,
       stream: true
     };
@@ -155,7 +155,7 @@ const GLMAdapter = {
     }
     formattedMessages.push(...messages);
     return {
-      model: model?.trim() || 'glm-4.6',
+      model: model?.trim() || 'glm-5',
       messages: formattedMessages,
       stream: true,
       thinking: { type: 'disabled' }

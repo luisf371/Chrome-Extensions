@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
       url: 'https://api.openai.com/v1/chat/completions',
       placeholder: 'https://api.openai.com/v1/chat',
       enforceSuffix: '/completions',
-      modelHint: 'gpt-4o'
+      modelHint: 'gpt-5.2'
     },
     azure: {
       label: 'Azure OpenAI',
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
       url: 'https://api.z.ai/api/coding/paas/v4/chat/completions',
       placeholder: 'https://api.z.ai/api/coding/paas/v4/chat',
       enforceSuffix: '/completions',
-      modelHint: 'glm-4.6'
+      modelHint: 'glm-5'
     },
     anthropic: {
       label: 'Anthropic Claude',

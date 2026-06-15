@@ -107,7 +107,7 @@
     "description": "Model label"
   },
   "helpModel": {
-    "message": "Elige el identificador exacto del modelo que procesará los resúmenes (ej., gpt5.2, claude-4.6-sonnet).",
+    "message": "Elige el identificador exacto del modelo que procesará los resúmenes (ej., gpt-5.2, claude-sonnet-4-6).",
     "description": "Model help text"
   },
   "labelApiKey": {
