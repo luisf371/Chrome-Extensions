@@ -1,7 +1,7 @@
 // background.js - Chrome Extension Service Worker
 // Handles URL content extraction and API communication for summarization
 
-importScripts('shared/azure-utils.js');
+importScripts('shared/azure-utils.js', 'shared/error-utils.js');
 
 // Handle expected AbortErrors from cancelled API requests
 self.addEventListener('unhandledrejection', event => {
@@ -935,6 +935,7 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
 
     if (!response.ok) {
       const errorText = await response.text();
+      const retryAfter = response.headers.get('retry-after');
       console.log('[API] Error response body:', errorText);
       if (providerKind === 'openrouter') {
         logOpenRouterDiagnostics('http-error', {
@@ -945,7 +946,17 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
         });
       }
       abortControllers.delete(uniqueId);
-      throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText.substring(0, 200)}`);
+      // Throw a generic error for logging/control flow, but carry a friendly,
+      // status-aware message for the user on `userMessage` (see outer catch).
+      const httpError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+      httpError.userMessage = formatHttpError({
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText,
+        providerKind,
+        retryAfter
+      });
+      throw httpError;
     }
 
     const tab = tabIdMap.get(uniqueId);
@@ -1168,7 +1179,12 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
             stack: truncateForLog(error.stack || '', 1200)
           });
         }
-        await handleApiError(uniqueId, `Stream error: ${error.message}`);
+        // The connection dropped mid-stream. Distinguish a transport-level
+        // disconnect from other read failures so the user gets actionable text.
+        const streamErrorMessage = isNetworkError(error)
+          ? formatNetworkError(error, { providerKind, apiUrl: resolvedApiUrl })
+          : `The connection to the endpoint was interrupted while streaming the response (${error.message}). You can ask a follow-up to continue.`;
+        await handleApiError(uniqueId, streamErrorMessage);
       }
       clearStreamState(uniqueId);
       abortControllers.delete(uniqueId);
@@ -1189,13 +1205,23 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
     responseAccumulators.delete(uniqueId);
     console.log('[API] call error:', err);
 
-    let errorMessage = 'API request failed';
-    if (err.name === 'AbortError') {
-      errorMessage = 'Request timed out. Please try again.';
-    } else if (err.message.includes('HTTP')) {
-      errorMessage = `API error: ${err.message}`;
-    } else if (err.message.includes('fetch')) {
-      errorMessage = 'Network error. Please check your connection.';
+    // User cancelled while the initial request was still in flight: the stop
+    // handler already reported it, so don't surface a spurious timeout/error.
+    if (err.name === 'AbortError' && cancelledRequests.has(uniqueId)) {
+      cancelledRequests.delete(uniqueId);
+      return;
+    }
+
+    let errorMessage;
+    if (err.userMessage) {
+      // Already formatted by the !response.ok branch above.
+      errorMessage = err.userMessage;
+    } else if (err.name === 'AbortError') {
+      errorMessage = `The request timed out after ${Math.round(CONFIG.REQUEST_TIMEOUT / 1000)} seconds with no response. The endpoint may be slow, unreachable, or disconnected — check your API URL and try again.`;
+    } else if (isNetworkError(err)) {
+      errorMessage = formatNetworkError(err, { providerKind, apiUrl: resolvedApiUrl });
+    } else {
+      errorMessage = `Unexpected error: ${err.message}`;
     }
 
     await handleApiError(uniqueId, errorMessage);
@@ -1370,9 +1396,15 @@ function handleJsonLine(jsonLine, uniqueId, adapter) {
           errorChunk: data
         });
       }
-      streamState.errorMessage = `Stream error: ${data.error.message}`;
+      streamState.errorMessage = formatStreamError({
+        message: data.error.message,
+        code: data.error.code,
+        providerKind: streamState.requestDiagnostics?.providerKind
+      });
       streamState.sawTerminal = true;
       return {
+        // Keep the raw numeric code on the return value — the OpenRouter
+        // auto-retry path matches on errorCode === 503 / provider_overloaded.
         errorMessage: streamState.errorMessage,
         errorCode: data.error.code || null,
         errorMetadata: data.error.metadata || null,
@@ -1424,7 +1456,7 @@ function handleJsonLine(jsonLine, uniqueId, adapter) {
     if (adapter.isStreamEnd(data)) {
       streamState.sawTerminal = true;
       if (data?.choices?.[0]?.finish_reason === 'error') {
-        streamState.errorMessage = streamState.errorMessage || 'Stream error: The provider terminated the response unexpectedly.';
+        streamState.errorMessage = streamState.errorMessage || 'The provider ended the response with an error before it finished. This is usually temporary — try again, or ask a follow-up to continue.';
         return {
           errorMessage: streamState.errorMessage,
           errorCode: null,
