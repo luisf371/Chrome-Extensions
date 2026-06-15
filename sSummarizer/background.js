@@ -485,7 +485,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     handleIconClick(tab, info.selectionText).catch(err => {
       console.log('[Background] Context menu handler error:', err);
     });
-  } else if (info.menuItemId.startsWith('slash-cmd-')) {
+  } else if (typeof info.menuItemId === 'string' && info.menuItemId.startsWith('slash-cmd-')) {
     // New: Slash command clicked from extension icon menu
     const index = parseInt(info.menuItemId.replace('slash-cmd-', ''), 10);
 
