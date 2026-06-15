@@ -208,13 +208,13 @@ function restoreOptions() {
     const widthSelect = document.getElementById("width");
     widthSelect.value = result.width || "3";
 
-    // Restore rocker
+    // Restore rocker (default OFF unless explicitly enabled, matching content script)
     const rockerCheckbox = document.getElementById('rocker');
-    rockerCheckbox.checked = result.rocker !== false;
+    rockerCheckbox.checked = result.rocker === true;
 
-    // Restore trail
+    // Restore trail (default OFF unless explicitly enabled, matching content script)
     const trailCheckbox = document.getElementById('trail');
-    trailCheckbox.checked = result.trail !== false;
+    trailCheckbox.checked = result.trail === true;
 
     // Restore gestures
     gestures.forEach(gesture => {
