@@ -218,7 +218,10 @@ async function exportTabsToDownload() {
 function parseExportTxt(text) {
   const rawLines = text.split(/\r?\n/);
   const lines = rawLines
-    .map((line, index) => ({ raw: line.trimEnd(), lineNumber: index + 1 }))
+    // Strip only trailing spaces/CR, never tabs: an empty final field (e.g. an
+    // untitled group/tab) is a significant trailing tab and must be preserved
+    // so the field count stays correct.
+    .map((line, index) => ({ raw: line.replace(/[ \r]+$/, ""), lineNumber: index + 1 }))
     .filter(({ raw }) => raw.length > 0 && !raw.startsWith("#"));
 
   if (lines.length === 0) {
