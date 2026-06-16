@@ -9,15 +9,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 	document.body.classList.remove('theme-light', 'theme-dark');
 
 	// Apply theme based on settings
-	if(settings.theme === "2"){
+	if(settings.theme === "light"){
 		// Light mode
 		document.body.classList.add('theme-light');
 	}
 
-	if(settings.theme === "3"){
+	if(settings.theme === "dark"){
 		// Dark mode
 		document.body.classList.add('theme-dark');
 	}
 
-	// If theme === "1" (System), let CSS @media handle it
+	// Otherwise (e.g. "system"), let CSS @media handle it
 });
