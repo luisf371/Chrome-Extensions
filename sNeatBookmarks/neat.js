@@ -1246,7 +1246,10 @@
             case 'Escape': // esc
                 e.preventDefault();
                 const active = body.querySelector('.active');
-                if (active) active.classList.remove('active').focus();
+                if (active){
+                    active.classList.remove('active');
+                    active.focus();
+                }
                 clearMenu();
         }
     };
