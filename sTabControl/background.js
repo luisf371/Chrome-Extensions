@@ -287,6 +287,21 @@ async function handleTabMoved(tabId, moveInfo) {
    if (state.activeTabId === tabId) {
       state.activeTabIndex = moveInfo.toIndex;
       await persistSessionState();
+   } else if (state.activeTabId !== null) {
+      // Another tab moved past the active one: its tracked index must shift too,
+      // otherwise the "left"/"right" after-close activation targets the wrong tab.
+      const { fromIndex, toIndex } = moveInfo;
+      const activeIndex = state.activeTabIndex;
+      let shifted = activeIndex;
+      if (fromIndex < activeIndex && toIndex >= activeIndex) {
+         shifted -= 1;
+      } else if (fromIndex > activeIndex && toIndex <= activeIndex) {
+         shifted += 1;
+      }
+      if (shifted !== activeIndex) {
+         state.activeTabIndex = shifted;
+         await persistSessionState();
+      }
    }
 }
 
