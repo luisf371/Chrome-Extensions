@@ -480,7 +480,7 @@ function getElapsedTime(ms){
 
 function cleanInvalidTabs(){
 	chrome.tabs.query({}, async function(tabs) {
-		await navigator.locks.request('simpleUndoClose_data', async (lock) => {
+		await navigator.locks.request('sUndoClose_data', async (lock) => {
 			let data = await getStorage(['TabListIndex']);
 			let tabListIndex = data.TabListIndex || [];
 			
