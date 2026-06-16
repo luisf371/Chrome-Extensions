@@ -46,8 +46,8 @@ function updateBadge(tabId, count) {
   const text = count > 0 ? (count > 999 ? '999+' : String(count)) : '';
   const color = count > 0 ? '#4CAF50' : '#666666';
   
-  chrome.action.setBadgeText({ text, tabId });
-  chrome.action.setBadgeBackgroundColor({ color, tabId });
+  chrome.action.setBadgeText({ text, tabId }).catch(() => {});
+  chrome.action.setBadgeBackgroundColor({ color, tabId }).catch(() => {});
 }
 
 // Get settings with defaults
