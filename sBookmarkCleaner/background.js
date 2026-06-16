@@ -129,25 +129,15 @@ async function startSort(scope = 'parent') {
 }
 
 async function startScan(mode) {
-  // 1. Get Settings
-  const settings = await chrome.storage.local.get(['scanTimeout', 'autoSort', 'sortScope']);
-  const timeout = settings.scanTimeout || 5000;
-  
-  // Auto Sort if requested
-  if (settings.autoSort) {
-    await startSort(settings.sortScope || 'parent');
-  }
-
-  // 2. Reset State specific to the new scan, keep the other results
+  // Mark the scan active AND reset per-scan state immediately, so getStatus
+  // reflects the new scan right away. Auto-sort (below) can take several
+  // seconds; without this the popup polls a stale/idle state, never starts its
+  // progress interval, and the scan looks dead.
   scanState.isScanning = true;
   scanState.mode = mode;
   scanState.total = 0;
   scanState.currentIndex = 0;
   scanState.queue = [];
-  // Store timeout in scanState or just pass it? 
-  // Storing in scanState implies it persists across resumes which is good.
-  scanState.timeout = timeout; 
-  
   if (mode === 'broken') {
     scanState.broken = [];
     scanState.lastScanDateBroken = null;
@@ -155,7 +145,19 @@ async function startScan(mode) {
     scanState.duplicates = {};
     scanState.lastScanDateDuplicates = null;
   }
+  await chrome.storage.local.set({ scanState });
 
+  // 1. Get Settings
+  const settings = await chrome.storage.local.get(['scanTimeout', 'autoSort', 'sortScope']);
+  const timeout = settings.scanTimeout || 5000;
+
+  // Auto Sort if requested
+  if (settings.autoSort) {
+    await startSort(settings.sortScope || 'parent');
+  }
+
+  // 2. Store the resolved timeout (persists across resumes).
+  scanState.timeout = timeout;
   await chrome.storage.local.set({ scanState });
 
   // Create Keep-Alive Alarm (fires every 30s)

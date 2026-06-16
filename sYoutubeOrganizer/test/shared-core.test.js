@@ -101,6 +101,25 @@ test('normalizeImportedData filters invalid entries and normalizes assignments',
   });
 });
 
+test('normalizeImportedData drops playlist IDs with unsafe characters', () => {
+  const maliciousId = 'x"><img src=x onerror=alert(1)>';
+  const normalized = core.normalizeImportedData({
+    playlists: {
+      [maliciousId]: { name: 'Evil', color: '#ff0000', order: 0 },
+      safe: { name: 'Safe', color: '#123456', order: 1 }
+    },
+    channels: {},
+    channelPlaylists: {
+      '@Creator': [maliciousId, 'safe']
+    }
+  }, { now: () => 0 });
+
+  assert.deepEqual(Object.keys(normalized.playlists), ['safe']);
+  assert.equal(normalized.playlists[maliciousId], undefined);
+  // Assignments referencing the dropped ID are filtered out too.
+  assert.deepEqual(normalized.channelPlaylists, { '@Creator': ['safe'] });
+});
+
 test('applyCreatePlaylistMutation adds a playlist with normalized values', () => {
   const state = createState({
     playlists: {

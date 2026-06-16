@@ -881,23 +881,27 @@ If and ONLY if timestamps are provided;
           showStatus('API connection successful! Your settings are working correctly.', 'success');
         } else {
           const errorText = await response.text();
-          let errorMessage = `API Error (${response.status}): `;
-          try {
-            const parsed = JSON.parse(errorText);
-            errorMessage +=
-              parsed?.error?.message ||
-              parsed?.message ||
-              parsed?.error?.details ||
-              'Unknown error';
-          } catch (e) {
-            errorMessage += response.statusText || 'Unknown error';
-          }
+          const errorMessage = formatHttpError({
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText,
+            providerKind: (currentValues.apiProvider || 'openai').toLowerCase(),
+            retryAfter: response.headers.get('retry-after')
+          });
           showStatus(errorMessage, 'error');
         }
       } catch (error) {
-        let errorMessage = 'Connection failed: ';
-        if (error.name === 'AbortError') errorMessage += 'Request timed out.';
-        else errorMessage += error.message;
+        let errorMessage;
+        if (error.name === 'AbortError') {
+          errorMessage = 'Connection timed out after 10 seconds. The endpoint may be slow, unreachable, or disconnected — verify the API URL.';
+        } else if (isNetworkError(error)) {
+          errorMessage = formatNetworkError(error, {
+            providerKind: (currentValues.apiProvider || 'openai').toLowerCase(),
+            apiUrl: currentValues.apiUrl
+          });
+        } else {
+          errorMessage = `Connection failed: ${error.message}`;
+        }
         showStatus(errorMessage, 'error');
       } finally {
         testButton.disabled = false;

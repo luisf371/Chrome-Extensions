@@ -104,13 +104,12 @@ const commands = {
     return "no active tab";
   },
   closeall: async () => {
-    const tabs = await chrome.tabs.query({ currentWindow: true });
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tabs.length > 0) {
-      const ids = tabs.map(tab => tab.id);
-      await chrome.tabs.remove(ids);
-      return "tabs closed";
+      await chrome.windows.remove(tabs[0].windowId);
+      return "window closed";
     }
-    return "no tabs to close";
+    return "no window to close";
   },
   ping: async () => {
     return "pong";

@@ -373,7 +373,7 @@ img { filter: sepia(100%) contrast(1.2) !important; opacity: 0.9 !important; }
         $('reset-button').addEventListener('click', function() {
             if (confirm(_m('resetText', [_m('extName')]) + '\n\nAre you sure?')) {
                 chrome.storage.local.clear();
-                chrome.action.setIcon({ path: 'icon.png' });
+                chrome.action.setIcon({ path: 'icons/icon.png' });
                 location.reload();
             }
         });

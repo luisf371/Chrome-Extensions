@@ -45,6 +45,12 @@
     return trimmed || null;
   }
 
+  function normalizeImportedPlaylistId(id) {
+    if (typeof id !== 'string') return null;
+    const trimmed = id.trim();
+    return /^[A-Za-z0-9._-]+$/.test(trimmed) ? trimmed : null;
+  }
+
   function normalizeChannelName(name, fallback) {
     if (typeof name === 'string' && name.trim()) {
       return name.trim().slice(0, 100);
@@ -117,8 +123,7 @@
     const normalizedPlaylists = {};
     const playlistEntries = Object.entries(playlists)
       .filter(([id, playlist]) => (
-        typeof id === 'string' &&
-        id.trim() &&
+        normalizeImportedPlaylistId(id) &&
         isPlainObject(playlist) &&
         typeof playlist.name === 'string' &&
         playlist.name.trim()
@@ -134,7 +139,7 @@
     }
 
     playlistEntries.forEach(([id, playlist], index) => {
-      const playlistId = id.trim();
+      const playlistId = normalizeImportedPlaylistId(id);
       normalizedPlaylists[playlistId] = {
         id: playlistId,
         name: playlist.name.trim().slice(0, 50),
@@ -388,6 +393,7 @@
     isPlainObject,
     normalizePlaylistName,
     normalizePlaylistId,
+    normalizeImportedPlaylistId,
     normalizeChannelName,
     normalizeChannelId,
     normalizeSettingsInput,
