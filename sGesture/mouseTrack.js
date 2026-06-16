@@ -231,7 +231,11 @@
         if (canvas) {
           canvas.style.display = 'none';
         }
-        state.link = null; // Reset link on right mouse up
+        // Note: state.link must NOT be cleared here. exeFunc() reads it
+        // asynchronously (inside a chrome.storage.local.get callback), so
+        // clearing it now would wipe the link before the "newtab" action runs,
+        // making "open link in new tab" gestures always open a blank tab.
+        // It is re-initialized at the start of every gesture on mousedown.
       }
 
       // Prevent default action if a rocker gesture was performed
