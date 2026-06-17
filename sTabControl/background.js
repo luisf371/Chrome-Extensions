@@ -14,6 +14,10 @@ const storageApi = chrome.storage || null;
 const sessionStorageAvailable = Boolean(storageApi && storageApi.session);
 const duplicateRemovals = new Set();
 const duplicateCheckInProgress = new Set();
+// Normalized URLs currently being de-duplicated, so two tabs that commit the
+// same URL in the same burst can't each treat the other as the duplicate and
+// remove it (a delete-both race).
+const duplicateUrlsInFlight = new Set();
 let readyPromise = bootstrap().catch(handleStartupError);
 
 if (storageApi && storageApi.onChanged && storageApi.onChanged.addListener) {
@@ -438,23 +442,37 @@ async function handleNavigationCommitted(details) {
    
    const { tabId, url, transitionType, transitionQualifiers } = details;
    
-   if (!url || url.startsWith('chrome') || url.startsWith('about:') || url.startsWith('edge:')) {
+   // Only de-duplicate real web pages; skip browser/internal and non-web schemes
+   // (chrome:, about:, edge:, file:, view-source:, data:, blob:, ...).
+   if (!url || !/^https?:\/\//i.test(url)) {
       return;
    }
-   
+
    if (transitionType === 'reload') return;
    if (transitionQualifiers && transitionQualifiers.includes('from_address_bar')) return;
    if (duplicateCheckInProgress.has(tabId)) return;
+
+   const normalizedUrl = normalizeUrl(url);
+   // URL-level lock (alongside the per-tab one): if another tab is already
+   // de-duplicating this exact URL, bail so the two handlers can't remove each
+   // other. The check-and-add is synchronous (no await between), so it is
+   // race-free within the event loop.
+   if (duplicateUrlsInFlight.has(normalizedUrl)) return;
    duplicateCheckInProgress.add(tabId);
+   duplicateUrlsInFlight.add(normalizedUrl);
 
    try {
       const currentTab = await chrome.tabs.get(tabId);
       const tabs = await chrome.tabs.query({}); // Query all windows for global duplicates
-      const normalizedUrl = normalizeUrl(url);
-      
+
       const existingTab = tabs.find(tab => {
          if (tab.id === tabId) return false;
-         return normalizeUrl(tab.url || tab.pendingUrl || '') === normalizedUrl;
+         // Stay within the same incognito context — never act on an incognito
+         // tab from a normal-window navigation (or vice versa).
+         if (tab.incognito !== currentTab.incognito) return false;
+         // Match committed URLs only; pendingUrl can mis-target a tab that is
+         // still mid-navigation and may never actually load this URL.
+         return normalizeUrl(tab.url || '') === normalizedUrl;
       });
       
       if (existingTab) {
@@ -503,6 +521,7 @@ async function handleNavigationCommitted(details) {
        logIgnorableError(error);
     } finally {
        duplicateCheckInProgress.delete(tabId);
+       duplicateUrlsInFlight.delete(normalizedUrl);
     }
 }
 
