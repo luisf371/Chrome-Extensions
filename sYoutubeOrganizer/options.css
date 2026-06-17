@@ -337,6 +337,12 @@ input:focus {
   cursor: grabbing;
 }
 
+.list-item.dragging {
+  opacity: 0.55;
+  background: var(--bg-input);
+  cursor: grabbing;
+}
+
 /* Theme Toggle */
 .theme-toggle {
   background: var(--toggle-bg);
