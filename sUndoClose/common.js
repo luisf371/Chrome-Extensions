@@ -138,8 +138,12 @@ export function multiFind(data, strings, settings) {
     let target = "";
     
     if (data) {
-        if (settings.searchMode === 1) target = data.title;
-        else if (settings.searchMode === 2) target = data.url;
+        // searchMode may be a number (default) or a string from the saved
+        // <select> value; coerce so "1"/"2" still match and the Title/URL
+        // scope isn't silently lost to the default after the options are saved.
+        const mode = parseInt(settings.searchMode, 10);
+        if (mode === 1) target = data.title;
+        else if (mode === 2) target = data.url;
         else target = data.url + " " + data.title;
     }
 
