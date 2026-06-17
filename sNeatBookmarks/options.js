@@ -343,7 +343,14 @@ img { filter: sepia(100%) contrast(1.2) !important; opacity: 0.9 !important; }
             }
             setSetting('customIcon', dataObj);
         };
-        
+
+        customIconPreview.onerror = function() {
+            // The placeholder image failing to load must still clear the guard,
+            // otherwise the user's first uploaded icon is swallowed by the
+            // initial-load skip above.
+            dontLoad = false;
+        };
+
         if (settings.customIcon) {
             const customIcon = settings.customIcon;
             const imageData = ctx.getImageData(0, 0, 19, 19);

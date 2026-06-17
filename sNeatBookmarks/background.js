@@ -60,7 +60,7 @@ if (chrome.omnibox) {
                 return;
             }
             const v = value.replace(/([-.*+?^${}()|[\]/\\])/g, '\\$1');
-            const vPattern = new RegExp('^' + v.replace(/\s+/g, '.*'), 'ig');
+            const vPattern = new RegExp('^' + v.replace(/\s+/g, '.*'), 'i');
             
             if (results.length > 1) {
                 results.sort((a, b) => {
