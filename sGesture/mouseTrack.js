@@ -20,6 +20,7 @@
     myColor: "red",
     myWidth: 3,
     rocked: false,
+    skip: false,
   };
   const pi = Math.PI;
   let canvas, ctx;
@@ -36,6 +37,7 @@
       canvas.style.top = '0';
       canvas.style.left = '0';
       canvas.style.zIndex = '10000';
+      canvas.style.pointerEvents = 'none';
       document.body.appendChild(canvas);
       ctx = canvas.getContext('2d');
     }
@@ -64,8 +66,9 @@
         return;
       }
       
-      const gesturesToGet = state.move.split('').filter((v, i, a) => a.indexOf(v) === i);
-      chrome.storage.local.get(gesturesToGet, (gests) => {
+      // Look up the full gesture string (e.g. "DR") — that's the key the action
+      // is stored under, not its individual direction characters.
+      chrome.storage.local.get([state.move], (gests) => {
         if (chrome.runtime.lastError) {
           console.error("sGesture: Error getting gestures from storage:", chrome.runtime.lastError.message);
           return;
@@ -174,7 +177,16 @@
           console.log("sGesture: Rocker (L->R) detected. state.rocked = true");
           event.preventDefault();
         } else {
-          // Start of a normal gesture
+          // Start of a normal gesture.
+          // Clear any stale rocker flag from a previous sequence whose
+          // contextmenu never fired; otherwise the next gesture's mouseup
+          // (which requires !state.rocked) would be silently skipped.
+          state.rocked = false;
+          // Don't hijack right-clicks inside form fields / editable content —
+          // leave the native context menu (paste, spellcheck, ...) intact.
+          const tgt = event.target;
+          state.skip = !!(tgt && tgt.closest &&
+            tgt.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]'));
           state.moved = false;
           state.my = event.clientY;
           state.mx = event.clientX;
@@ -188,7 +200,7 @@
     });
 
     document.addEventListener('mousemove', (event) => {
-      if (state.rmousedown && !state.lmousedown) { // Only if right button is down (and not left)
+      if (state.rmousedown && !state.lmousedown && !state.skip) { // Right button down (not left), outside editable fields
         state.ny = event.clientY;
         state.nx = event.clientX;
         const r = Math.sqrt(Math.pow(state.nx - state.mx, 2) + Math.pow(state.ny - state.my, 2));

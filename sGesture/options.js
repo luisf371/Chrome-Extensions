@@ -210,11 +210,11 @@ function restoreOptions() {
 
     // Restore rocker
     const rockerCheckbox = document.getElementById('rocker');
-    rockerCheckbox.checked = result.rocker !== false;
+    rockerCheckbox.checked = result.rocker === true;
 
     // Restore trail
     const trailCheckbox = document.getElementById('trail');
-    trailCheckbox.checked = result.trail !== false;
+    trailCheckbox.checked = result.trail === true;
 
     // Restore gestures
     gestures.forEach(gesture => {
@@ -245,4 +245,10 @@ document.addEventListener('DOMContentLoaded', function() {
   initTheme();
   restoreOptions();
   initAutoSave();
+
+  // Render the version badge from the manifest so it never drifts out of sync.
+  const versionBadge = document.querySelector('.version-badge');
+  if (versionBadge) {
+    versionBadge.textContent = 'v' + chrome.runtime.getManifest().version;
+  }
 });
