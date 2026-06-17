@@ -1,16 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Reddit New Comments Highlighter",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Highlights new comments when you revisit a Reddit thread. Supports both old and new Reddit.",
-  "homepage_url": "https://github.com/example/Reddit-New-Comments-Highlighter",
   "permissions": [
     "storage"
   ],
   "host_permissions": [
     "https://www.reddit.com/*",
     "https://old.reddit.com/*",
-    "https://new.reddit.com/*"
+    "https://new.reddit.com/*",
+    "https://sh.reddit.com/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -21,7 +21,8 @@
       "matches": [
         "https://www.reddit.com/r/*/comments/*",
         "https://old.reddit.com/r/*/comments/*",
-        "https://new.reddit.com/r/*/comments/*"
+        "https://new.reddit.com/r/*/comments/*",
+        "https://sh.reddit.com/r/*/comments/*"
       ],
       "js": [
         "src/content.js"
