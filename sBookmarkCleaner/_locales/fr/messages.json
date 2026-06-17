@@ -175,6 +175,10 @@
     "message": "Tri terminé.",
     "description": "Sorting complete status"
   },
+  "statusSortingFailed": {
+    "message": "Échec du tri.",
+    "description": "Sorting failed status"
+  },
   "reportTitle": {
     "message": "Rapport d'analyse",
     "description": "Report page title"
