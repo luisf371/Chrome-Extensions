@@ -175,6 +175,10 @@
     "message": "Ordenación completada.",
     "description": "Sorting complete status"
   },
+  "statusSortingFailed": {
+    "message": "Error al ordenar.",
+    "description": "Sorting failed status"
+  },
   "reportTitle": {
     "message": "Informe de escaneo",
     "description": "Report page title"

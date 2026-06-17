@@ -175,6 +175,10 @@
     "message": "Sorting complete.",
     "description": "Sorting complete status"
   },
+  "statusSortingFailed": {
+    "message": "Sorting failed.",
+    "description": "Sorting failed status"
+  },
   "reportTitle": {
     "message": "Scan Report",
     "description": "Report page title"
