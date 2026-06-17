@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "sExport Tabs",
-  "version": "0.2",
+  "version": "0.3",
   "description": "Export all open tabs grouped by window/tab group to a text file, and restore them later.",
   "permissions": ["tabs", "tabGroups", "downloads"],
   "action": {
