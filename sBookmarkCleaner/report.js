@@ -18,7 +18,7 @@ const elements = {
   dupActions: document.getElementById('dup-actions'),
   clearReportBtn: document.getElementById('clear-report-btn'),
   
-  themeToggle: document.getElementById('theme-toggle'),
+  themeToggle: document.getElementById('themeToggle'),
   btnOptions: document.getElementById('btn-options')
 };
 
@@ -50,13 +50,16 @@ chrome.storage.local.get(['theme'], (result) => {
   document.body.setAttribute('data-theme', savedTheme);
 });
 
-// 2. Handle toggle
-elements.themeToggle.addEventListener('click', () => {
-  const currentTheme = document.body.getAttribute('data-theme');
-  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-  document.body.setAttribute('data-theme', newTheme);
-  chrome.storage.local.set({ theme: newTheme });
-});
+// 2. Handle toggle (guarded so one missing element can't abort the whole
+// report script at load time and leave the page un-rendered).
+if (elements.themeToggle) {
+  elements.themeToggle.addEventListener('click', () => {
+    const currentTheme = document.body.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    document.body.setAttribute('data-theme', newTheme);
+    chrome.storage.local.set({ theme: newTheme });
+  });
+}
 
 // 3. Listen for changes (Sync)
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -402,7 +405,12 @@ elements.openBtn.addEventListener('click', () => {
   }
   
   itemsToOpen.forEach(item => {
-    chrome.tabs.create({ url: item.url, active: false });
+    // Only hand http(s) URLs to tabs.create; skip file:/other schemes.
+    let proto = '';
+    try { proto = new URL(item.url).protocol; } catch (e) { return; }
+    if (proto === 'http:' || proto === 'https:') {
+      chrome.tabs.create({ url: item.url, active: false });
+    }
   });
 });
 

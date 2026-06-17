@@ -175,6 +175,10 @@
     "message": "排序完成。",
     "description": "Sorting complete status"
   },
+  "statusSortingFailed": {
+    "message": "排序失败。",
+    "description": "Sorting failed status"
+  },
   "reportTitle": {
     "message": "扫描报告",
     "description": "Report page title"

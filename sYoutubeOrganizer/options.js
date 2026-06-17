@@ -150,7 +150,7 @@ function renderPlaylistList() {
 
     const count = getChannelsForPlaylist(pl.id).length;
     return `<div class="list-item ${selectedPlaylistId === pl.id ? 'active' : ''}" data-id="${pl.id}">
-      <span class="drag-handle" title="Drag to reorder">&#8942;&#8942;</span>
+      <span class="drag-handle" title="Drag to reorder" aria-label="Drag to reorder">&#8942;&#8942;</span>
       <span class="item-dot" style="background:${pl.color}"></span>
       <span class="item-name">${escapeHtml(pl.name)}</span>
       <span class="item-count">${count}</span>
@@ -165,10 +165,13 @@ function renderPlaylistList() {
   list.querySelectorAll('.list-item[data-id]').forEach(item => {
     item.addEventListener('click', (e) => {
       if (e.target.closest('.item-actions')) return;
+      if (item.dataset.dragged === 'true') { delete item.dataset.dragged; return; }
       selectedPlaylistId = item.dataset.id;
       render();
     });
   });
+
+  attachReorderListeners(list);
 
   list.querySelectorAll('.edit-pl-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -227,6 +230,99 @@ function renderPlaylistList() {
     });
     input.focus();
   });
+}
+
+// --- Drag-and-drop reorder ---
+
+function getDragAfterElement(list, y) {
+  const rows = [...list.querySelectorAll('.list-item[data-id]:not(.dragging)')];
+  let closest = { offset: Number.NEGATIVE_INFINITY, element: null };
+  for (const row of rows) {
+    const box = row.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      closest = { offset, element: row };
+    }
+  }
+  return closest.element;
+}
+
+function attachReorderListeners(list) {
+  let dragId = null;
+
+  // Only allow a drag to start from the dedicated handle, so grabbing text
+  // (e.g. selecting a playlist name) does not begin a reorder.
+  list.querySelectorAll('.list-item[data-id]').forEach(item => {
+    const handle = item.querySelector('.drag-handle');
+    if (!handle) return;
+    // Clear any stale post-drag flag whenever a fresh interaction begins.
+    item.addEventListener('mousedown', () => { delete item.dataset.dragged; });
+    handle.addEventListener('mousedown', () => { item.setAttribute('draggable', 'true'); });
+    item.addEventListener('mouseup', () => item.removeAttribute('draggable'));
+    item.addEventListener('mouseleave', () => {
+      if (!item.classList.contains('dragging')) item.removeAttribute('draggable');
+    });
+
+    item.addEventListener('dragstart', (e) => {
+      dragId = item.dataset.id;
+      item.classList.add('dragging');
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        // Required for Firefox to initiate the drag session.
+        try { e.dataTransfer.setData('text/plain', dragId); } catch {}
+      }
+    });
+
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      item.removeAttribute('draggable');
+      // Flag so the synthetic click after a drag does not change selection.
+      item.dataset.dragged = 'true';
+      const orderedIds = [...list.querySelectorAll('.list-item[data-id]')].map(el => el.dataset.id);
+      const movedId = dragId;
+      dragId = null;
+      void commitPlaylistReorder(orderedIds, movedId);
+    });
+  });
+
+  list.addEventListener('dragover', (e) => {
+    if (!dragId) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    const dragging = list.querySelector('.list-item.dragging');
+    if (!dragging) return;
+    const afterElement = getDragAfterElement(list, e.clientY);
+    if (afterElement == null) {
+      list.appendChild(dragging);
+    } else if (afterElement !== dragging) {
+      list.insertBefore(dragging, afterElement);
+    }
+  });
+
+  list.addEventListener('drop', (e) => { if (dragId) e.preventDefault(); });
+}
+
+async function commitPlaylistReorder(orderedIds, movedId) {
+  if (!data) return;
+
+  const currentOrder = getPlaylistsSorted().map(pl => pl.id);
+  // No-op if the order did not actually change.
+  if (orderedIds.length === currentOrder.length &&
+      orderedIds.every((id, i) => id === currentOrder[i])) {
+    return;
+  }
+
+  try {
+    await sendRuntimeMessage({ type: 'REORDER_PLAYLISTS', orderedIds });
+    await loadData();
+    render();
+    showToast('Playlists reordered');
+  } catch (error) {
+    // Restore the persisted order on failure.
+    await loadData().catch(() => {});
+    render();
+    showToast(error.message || 'Could not reorder playlists', 'error');
+  }
 }
 
 function renderDetail() {

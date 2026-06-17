@@ -29,14 +29,6 @@ function enc(v) {
   return encodeURIComponent(v ?? "");
 }
 
-function dec(v) {
-  try {
-    return decodeURIComponent(v ?? "");
-  } catch {
-    return v ?? "";
-  }
-}
-
 function setStatus(text) {
   $("status").textContent = text;
 }
@@ -89,12 +81,6 @@ function tabsRemove(tabId) {
 
 function windowsUpdate(windowId, options) {
   return chromePromisify(chrome.windows.update, windowId, options);
-}
-
-function parseBool01(v, fallback = false) {
-  if (v === "1") return true;
-  if (v === "0") return false;
-  return fallback;
 }
 
 function safeTabTitle(tab) {
@@ -339,12 +325,15 @@ function parseExportTxt(text) {
 function isRestorableUrl(url) {
   const u = (url ?? "").trim();
   if (!u) return false;
-  return !(
-    u.startsWith("chrome://") ||
-    u.startsWith("chrome-extension://") ||
-    u.startsWith("devtools://") ||
-    u.startsWith("chrome-search://")
-  );
+  // Allow-list real web schemes only. The old deny-list let crafted/shared
+  // export files auto-open data:/file:/blob: tabs on restore (data:text/html
+  // renders attacker HTML in a top-level tab); never open those from a file.
+  try {
+    const protocol = new URL(u).protocol;
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 function summarizeRestorePlan(text) {
@@ -491,7 +480,9 @@ async function restoreFromExportText(windowsSpec) {
       const g = winSpec.groups[i];
       if (g.groupId === -1) continue;
 
-      const tabIds = created.filter((t) => t.groupIndex === i).map((t) => t.tabId);
+      // Chrome can't group pinned tabs; excluding them keeps a malformed
+      // (pinned + grouped) record from failing the whole group's creation.
+      const tabIds = created.filter((t) => t.groupIndex === i && !t.pinned).map((t) => t.tabId);
       if (tabIds.length === 0) continue;
 
       try {

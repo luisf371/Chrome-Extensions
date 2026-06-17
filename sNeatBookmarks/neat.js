@@ -331,7 +331,7 @@
         searchMode = true;
         chrome.bookmarks.search(value).then(function(results){
             const v = value.toLowerCase();
-            let vPattern = new RegExp('^' + Utils.escapeRegExp(value).replace(/\s+/g, '.*'), 'ig');
+            let vPattern = new RegExp('^' + Utils.escapeRegExp(value).replace(/\s+/g, '.*'), 'i');
             if (results.length > 1){
                 results.sort(function(a, b){
                     const aTitle = a.title;
@@ -363,13 +363,23 @@
             $results.innerHTML = html;
             $results.style.display = 'block';
 
-            const lis = $results.querySelectorAll('li');
-            Array.from(lis).forEach(function(li){
+            // Group result items by parent folder so each folder's name is
+            // fetched once instead of issuing one chrome.bookmarks.get per
+            // result (up to 100 redundant IPC calls when results share folders).
+            const lisByParent = new Map();
+            Array.from($results.querySelectorAll('li')).forEach(function(li){
                 const parentId = li.dataset.parentid;
+                if (!lisByParent.has(parentId)) lisByParent.set(parentId, []);
+                lisByParent.get(parentId).push(li);
+            });
+            lisByParent.forEach(function(groupLis, parentId){
                 chrome.bookmarks.get(parentId).then(function(node){
                     if (!node || !node.length) return;
-                    const a = li.querySelector('a');
-                    a.title = _m('parentFolder', node[0].title) + '\n' + a.title;
+                    const folderTitle = node[0].title;
+                    groupLis.forEach(function(li){
+                        const a = li.querySelector('a');
+                        a.title = _m('parentFolder', folderTitle) + '\n' + a.title;
+                    });
                 });
             });
 

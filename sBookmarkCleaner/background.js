@@ -150,29 +150,37 @@ async function startScan(mode) {
   // 1. Get Settings
   const settings = await chrome.storage.local.get(['scanTimeout', 'autoSort', 'sortScope']);
   const timeout = settings.scanTimeout || 5000;
-
-  // Auto Sort if requested
-  if (settings.autoSort) {
-    await startSort(settings.sortScope || 'parent');
-  }
-
-  // 2. Store the resolved timeout (persists across resumes).
+  // Store the resolved timeout (persists across resumes).
   scanState.timeout = timeout;
-  await chrome.storage.local.set({ scanState });
-
-  // Create Keep-Alive Alarm (fires every 30s)
-  chrome.alarms.create('scanKeepAlive', { periodInMinutes: 0.5 });
 
   try {
+    // 2. Build the queue BEFORE auto-sort so `total` is known up front.
+    // Auto-sort can take several seconds; without an early total the popup
+    // shows a frozen "0 / 0" at 0% the whole time. Sorting only reorders
+    // siblings, so the captured ids/urls/paths stay valid regardless of order.
     const tree = await chrome.bookmarks.getTree();
-    
-    // 3. Build Queue
     buildQueue(tree[0]);
-    
+
+    // For broken-link scans only http(s) URLs can be fetched. Drop the rest so
+    // `total` reflects what is actually checked — ftp:/file:/chrome:/javascript:
+    // bookmarks were previously queued and counted but silently never checked.
+    if (mode === 'broken') {
+      scanState.queue = scanState.queue.filter(item => /^https?:\/\//i.test(item.url));
+    }
+
     scanState.total = scanState.queue.length;
     await chrome.storage.local.set({ scanState });
 
-    // 4. Process Queue
+    // 3. Create the keep-alive alarm BEFORE the long-running auto-sort, so a
+    // service-worker termination mid-sort can still resume the scan.
+    chrome.alarms.create('scanKeepAlive', { periodInMinutes: 0.5 });
+
+    // 4. Auto Sort if requested
+    if (settings.autoSort) {
+      await startSort(settings.sortScope || 'parent');
+    }
+
+    // 5. Process Queue
     processQueue();
 
   } catch (error) {
@@ -208,15 +216,17 @@ async function processQueue() {
       const item = scanState.queue[scanState.currentIndex];
       
       if (scanState.mode === 'duplicates') {
-        // 1. Check Duplicates
-        if (scanState.duplicates[item.url]) {
-          scanState.duplicates[item.url].push({
+        // 1. Check Duplicates (key on a normalized URL so trivial differences
+        // such as a trailing slash or #fragment still group as duplicates).
+        const dupKey = normalizeUrl(item.url);
+        if (scanState.duplicates[dupKey]) {
+          scanState.duplicates[dupKey].push({
             id: item.id,
             title: item.title,
             path: item.path
           });
         } else {
-          scanState.duplicates[item.url] = [{
+          scanState.duplicates[dupKey] = [{
             id: item.id,
             title: item.title,
             path: item.path
@@ -365,6 +375,22 @@ function buildQueue(node, path = []) {
   }
 }
 
+// Normalize a URL for duplicate detection: lowercase scheme/host (URL does
+// this), drop the #fragment, and ignore a single trailing slash so that e.g.
+// "https://example.com", "https://example.com/" and "https://example.com/#x"
+// are treated as the same bookmark. Query strings are preserved.
+function normalizeUrl(url) {
+  try {
+    const u = new URL(url);
+    u.hash = '';
+    let path = u.pathname;
+    if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
+    return `${u.protocol}//${u.host}${path}${u.search}`;
+  } catch (e) {
+    return url;
+  }
+}
+
 async function checkUrl(url, timeout = 5000) {
   const commonHeaders = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -376,10 +402,12 @@ async function checkUrl(url, timeout = 5000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
-  const fetchOptions = { 
+  const fetchOptions = {
     method: 'HEAD',
     redirect: 'follow',
-    credentials: 'include',
+    // Don't attach the user's cookies to liveness probes: it leaks which sites
+    // are bookmarked, and an authenticated 200 can mask a publicly-broken link.
+    credentials: 'omit',
     headers: commonHeaders,
     signal: controller.signal
   };

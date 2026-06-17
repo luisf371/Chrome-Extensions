@@ -212,4 +212,10 @@ document.addEventListener('DOMContentLoaded', function() {
   restoreOptions();
   initAutoSave();
   initFooterInteractivity();
+
+  // Render the version badge from the manifest so it never drifts out of sync.
+  const versionBadge = document.querySelector('.version-badge');
+  if (versionBadge) {
+    versionBadge.textContent = 'v' + chrome.runtime.getManifest().version;
+  }
 });

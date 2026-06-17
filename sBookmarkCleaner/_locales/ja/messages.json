@@ -175,6 +175,10 @@
     "message": "並べ替え完了。",
     "description": "Sorting complete status"
   },
+  "statusSortingFailed": {
+    "message": "並べ替えに失敗しました。",
+    "description": "Sorting failed status"
+  },
   "reportTitle": {
     "message": "スキャンレポート",
     "description": "Report page title"
