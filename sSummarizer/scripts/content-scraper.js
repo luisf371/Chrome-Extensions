@@ -534,7 +534,14 @@ ${commentsText.join('\n\n')}
 
 // Cap replies extracted per comment level so deep/wide threads don't
 // produce unbounded output (matches the "top N replies" intent below).
-const MAX_REPLIES_PER_LEVEL = 3;
+// NOTE: `var` (not `const`) on purpose. This scraper is re-injected via
+// chrome.scripting.executeScript every time a page is summarized; summarizing the
+// same tab twice would re-run this file in a world where the identifier already
+// exists. `var` and function declarations are redeclaration-safe, so re-injection
+// is a harmless no-op; a top-level `const`/`let` here throws
+// "Identifier 'MAX_REPLIES_PER_LEVEL' has already been declared" and aborts the
+// whole re-injection.
+var MAX_REPLIES_PER_LEVEL = 3;
 
 // Helper for Shreddit recursive extraction
 function extractCommentTree(commentNode, currentDepth, maxDepth) {

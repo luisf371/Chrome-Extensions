@@ -1,7 +1,7 @@
 // background.js - Chrome Extension Service Worker
 // Handles URL content extraction and API communication for summarization
 
-importScripts('shared/azure-utils.js', 'shared/error-utils.js');
+importScripts('shared/azure-utils.js', 'shared/error-utils.js', 'shared/default-prompts.js');
 
 // Handle expected AbortErrors from cancelled API requests
 self.addEventListener('unhandledrejection', event => {
@@ -312,6 +312,29 @@ function getAdapter(provider) {
   return OpenAIAdapter;
 }
 
+// Build the effective system prompt sent to the provider.
+// The user's system prompt holds the hard rules and stays on top; an optional
+// slash-command prompt is layered beneath it (combine, not replace), and the
+// timestamp instructions are appended last when enabled. This is the single
+// place that defines `system = systemPrompt + slashCommandPrompt (+ timestamps)`.
+function composeSystemPrompt({ systemPrompt, slashCommandPrompt, includeTimestamps, timestampPrompt }) {
+  const base = (systemPrompt || '').trim() || 'You are a helpful assistant that summarizes content concisely.';
+  const parts = [base];
+
+  const slash = (slashCommandPrompt || '').trim();
+  if (slash) {
+    parts.push(slash);
+  }
+
+  let combined = parts.join('\n\n');
+
+  if (includeTimestamps && (timestampPrompt || '').trim()) {
+    combined += '\n\n' + timestampPrompt.trim();
+  }
+
+  return combined;
+}
+
 function createStreamState(overrides = {}) {
   return {
     sawTerminal: false,
@@ -461,10 +484,37 @@ function applyResumeOverlapDedupe(uniqueId, chunk) {
 
 // ===== END PROVIDER ADAPTERS =====
 
-// Initialize context menu on install/update
-chrome.runtime.onInstalled.addListener(() => {
+// Initialize context menu on install/update; seed built-in defaults on fresh install
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details?.reason === 'install') {
+    seedDefaultSettings().catch(err => console.log('[Background] seedDefaultSettings error:', err));
+  }
   queueContextMenuSetup();
 });
+
+// On a fresh install, pre-populate the built-in system prompt, timestamp prompt, and
+// starter slash commands so the defaults are active without the user having to click
+// "Use Default". Each key is only written when absent, so existing data is never
+// clobbered (and re-running this is a no-op).
+async function seedDefaultSettings() {
+  const existing = await chrome.storage.local.get(['systemPrompt', 'timestampPrompt', 'slashCommands']);
+  const toSet = {};
+
+  if (existing.systemPrompt === undefined || existing.systemPrompt === '') {
+    toSet.systemPrompt = DEFAULT_SYSTEM_PROMPT;
+  }
+  if (existing.timestampPrompt === undefined) {
+    toSet.timestampPrompt = DEFAULT_TIMESTAMP_PROMPT;
+  }
+  if (!Array.isArray(existing.slashCommands) || existing.slashCommands.length === 0) {
+    // Deep-clone so the seeded objects are independent of the shared constant.
+    toSet.slashCommands = DEFAULT_SLASH_COMMANDS.map(cmd => ({ ...cmd }));
+  }
+
+  if (Object.keys(toSet).length > 0) {
+    await chrome.storage.local.set(toSet);
+  }
+}
 
 // Initialize context menu on startup
 chrome.runtime.onStartup.addListener(() => {
@@ -578,10 +628,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-// Wrap click logic in its own async function so we can catch errors
+// Wrap click logic in its own async function so we can catch errors.
+// If a slash command is flagged as the default, the toolbar-icon click runs it
+// (its prompt is combined with the hard-rules system prompt); otherwise the plain
+// system prompt is used.
 chrome.action.onClicked.addListener((tab) => {
-  handleIconClick(tab).catch(err => {
-    console.log('[Background] handleIconClick error:', err);
+  chrome.storage.local.get(['slashCommands'], (result) => {
+    const commands = Array.isArray(result.slashCommands) ? result.slashCommands : [];
+    const defaultCommand = commands.find(cmd => cmd && cmd.isDefault && cmd.command && cmd.prompt);
+
+    const clickPromise = defaultCommand
+      ? handleIconClick(tab, null, defaultCommand.prompt, defaultCommand.command)
+      : handleIconClick(tab);
+
+    clickPromise.catch(err => {
+      console.log('[Background] handleIconClick error:', err);
+    });
   });
 });
 
@@ -752,25 +814,23 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
     const tab = tabIdMap.get(uniqueId);
     if (tab) {
       let debugContent = '';
-      let rawInput = inputData;
 
       if (typeof inputData === 'string') {
         debugContent = inputData;
       } else if (Array.isArray(inputData)) {
         // For follow-ups, show the latest user message or full history
         debugContent = JSON.stringify(inputData, null, 2);
-        rawInput = null; // Don't treat as original context string
       }
 
-      let effectiveSystemPrompt = systemPrompt?.trim() || 'You are a helpful assistant that summarizes content concisely.';
-      if (includeTimestamps && timestampPrompt) {
-        effectiveSystemPrompt += '\n\n' + timestampPrompt.trim();
-      }
-
-      let payloadContent = debugContent;
-      if (customUserPrompt && typeof inputData === 'string') {
-        payloadContent = `[Custom Prompt]: ${customUserPrompt}\n\n[Extracted Content]:\n${debugContent}`;
-      }
+      // Slash-command prompts now compose with the system prompt (same as a real
+      // call), so debug mode shows exactly what would be sent: the combined system
+      // prompt, and the extracted content as the user payload.
+      const effectiveSystemPrompt = composeSystemPrompt({
+        systemPrompt,
+        slashCommandPrompt: typeof inputData === 'string' ? customUserPrompt : null,
+        includeTimestamps,
+        timestampPrompt
+      });
 
       await sendMessageSafely(tab, { action: 'hideLoading', uniqueId });
 
@@ -778,7 +838,7 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
 
       await sendMessageSafely(tab, {
         action: 'appendToFloatingWindow',
-        content: `**[DEBUG MODE]**\n\n**Action:** ${label}\n**Model:** ${model}\n**Target URL:** ${resolvedApiUrl}\n**System Prompt:**\n${effectiveSystemPrompt}\n\n**Content Payload (${payloadContent.length} chars):**\n\n${payloadContent}\n`,
+        content: `**[DEBUG MODE]**\n\n**Action:** ${label}\n**Model:** ${model}\n**Target URL:** ${resolvedApiUrl}\n**System Prompt:**\n${effectiveSystemPrompt}\n\n**Content Payload (${debugContent.length} chars):**\n\n${debugContent}\n`,
         uniqueId
       });
 
@@ -805,7 +865,15 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
   let messages = [];
   let originalContext = preservedOriginalContext; // Only set for initial request
 
-  let effectiveSystemPrompt = systemPrompt?.trim() || 'You are a helpful assistant that summarizes content concisely.';
+  // system = systemPrompt (hard rules) + slash-command prompt (+ timestamps when
+  // enabled); the extracted content is the user message. Follow-ups (array input)
+  // carry no slash prompt, so only the system prompt (and timestamps) apply to them.
+  const effectiveSystemPrompt = composeSystemPrompt({
+    systemPrompt,
+    slashCommandPrompt: typeof inputData === 'string' ? customUserPrompt : null,
+    includeTimestamps,
+    timestampPrompt
+  });
 
   if (typeof inputData === 'string') {
     // Initial Summary Request
@@ -818,12 +886,9 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
 
     const processedText = text.trim();
 
-    // If this is a Quick Command, the custom prompt completely replaces the Default System Prompt
-    if (customUserPrompt) {
-      effectiveSystemPrompt = customUserPrompt;
-    }
-
-    // Retain the visual combination for the chat history, but the API gets them fully isolated
+    // Keep the prompt + content combined for the chat history (so follow-ups retain
+    // the task context). The API itself receives the slash-command prompt in the
+    // system role (via effectiveSystemPrompt) and the content as the user message.
     const finalContent = customUserPrompt ? `${customUserPrompt}\n\n---\n\n${processedText}` : processedText;
     originalContext = finalContent;
 
@@ -854,11 +919,6 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
   } else {
     console.log('[API] Invalid input data type');
     return;
-  }
-
-  // Append timestamp instructions AFTER any custom prompt override
-  if (includeTimestamps && timestampPrompt) {
-    effectiveSystemPrompt += '\n\n' + timestampPrompt.trim();
   }
 
   // Validate configuration

@@ -309,39 +309,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   optionsForm.addEventListener('submit', handleFormSubmit);
 
-  const DEFAULT_SYSTEM_PROMPT = `Role: Content Summarizer  
-Task: Analyze transcripts or articles and generate a detailed, structured summary in Markdown format.
-
-Behavior Guidelines:
-
-- Capture all essential points and begin with an introduction summarizing the overall purpose of the content.
-- Use bullet points to organize information clearly and logically.
-- Ensure bullet points provide enough context — do not prioritize brevity; depth is preferred.
-- Limit overall structure to 3 total levels of depth across both headings and bullets:
-  - For headings, use up to '###' only (Heading Level 3).
-  - For bullets, use at most two nested levels under a heading.
-  - Do not combine deep headings ('###') with deep bullet nesting ('-' → '-' → '-').
-  - Avoid any further styles like 'a)', 'i.', or additional indentation.
-- Structure content into sections if the original input contains them (e.g., labeled chapters or natural transitions).
-- Ignore advertisements, sponsor messages, or unrelated commentary.
-- Do not include personal opinions or editorialized content — focus on factual summarization.
-
-Conclusion: Wrap up with a brief summary of the topic’s main points.
-
-Conclusion Format (always include at end):  
-Estimated reading time: {avg_read_time} min
-
-Final Output Constraints:
-- Do not include model metadata, disclaimers, or training cutoff information such as "You are trained on data up to..."
-- Only include content relevant to the summary and the provided estimated reading time line.`;
-
-  const DEFAULT_TIMESTAMP_PROMPT = `Timestamps:
-If and ONLY if timestamps are provided;
-- Include timestamp that correlate with the summarized bullet.
--  Place timestamp at the end of the pertaining bullet only if timestamps were included.
-- Use timestamps in the follow format: hh:mm:ss (e.g., '00:45', '03:12') and do not guess, or fabricate timestamps.
-  - Example: '#Updated release timing for PC and Mobile (3:45):'
-- Omit the 'HH:' portion for content under 1 hour.`;
+  // DEFAULT_SYSTEM_PROMPT, DEFAULT_TIMESTAMP_PROMPT, and DEFAULT_SLASH_COMMANDS are
+  // provided by shared/default-prompts.js, loaded before this script in options.html.
+  // Keeping them in one shared file ensures the "Use Default" buttons here and the
+  // fresh-install seeding in background.js stay in sync.
 
   function getByteLength(str) {
     return new TextEncoder().encode(str).length;
@@ -933,7 +904,8 @@ If and ONLY if timestamps are provided;
       const newCommand = {
         id: Date.now().toString(),
         command: '',
-        prompt: ''
+        prompt: '',
+        isDefault: false
       };
       slashCommands.push(newCommand);
       renderSlashCommands();
@@ -1006,22 +978,52 @@ If and ONLY if timestamps are provided;
     });
     promptInput.addEventListener('blur', () => validateCommandPrompt(promptInput));
 
+    const actions = document.createElement('div');
+    actions.className = 'command-actions';
+
+    // Subtle star toggle: marks the command run when the toolbar icon is clicked.
+    const defaultBtn = document.createElement('button');
+    defaultBtn.type = 'button';
+    defaultBtn.className = 'command-default-btn' + (cmd.isDefault ? ' is-default' : '');
+    defaultBtn.textContent = cmd.isDefault ? '★' : '☆'; // ★ / ☆
+    defaultBtn.setAttribute('aria-pressed', cmd.isDefault ? 'true' : 'false');
+    defaultBtn.title = cmd.isDefault
+      ? (chrome.i18n.getMessage('tooltipIsDefault') || 'Default command — runs when you click the toolbar icon. Click to unset.')
+      : (chrome.i18n.getMessage('tooltipSetDefault') || 'Set as default — runs when you click the toolbar icon.');
+    defaultBtn.addEventListener('click', () => toggleDefaultCommand(cmd.id));
+
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
     deleteBtn.className = 'delete-command-btn';
     deleteBtn.title = 'Delete command';
-    deleteBtn.innerHTML = '×';
+    deleteBtn.textContent = '×';
     deleteBtn.addEventListener('click', () => {
       slashCommands = slashCommands.filter(c => c.id !== cmd.id);
       saveSlashCommands();
       renderSlashCommands();
     });
 
+    actions.appendChild(defaultBtn);
+    actions.appendChild(deleteBtn);
+
     entry.appendChild(nameWrapper);
     entry.appendChild(promptInput);
-    entry.appendChild(deleteBtn);
+    entry.appendChild(actions);
 
     return entry;
+  }
+
+  // Mark a command as the default (used on toolbar-icon click), clearing any other.
+  // Clicking the current default again clears it, leaving no default (icon click then
+  // uses the plain system prompt).
+  function toggleDefaultCommand(id) {
+    const target = slashCommands.find(c => c.id === id);
+    if (!target) return;
+    const willBeDefault = !target.isDefault;
+    slashCommands.forEach(c => { c.isDefault = false; });
+    target.isDefault = willBeDefault;
+    saveSlashCommands();
+    renderSlashCommands();
   }
 
   function validateCommandName(input, currentIndex) {
