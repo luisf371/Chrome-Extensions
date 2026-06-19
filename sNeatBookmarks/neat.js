@@ -398,7 +398,9 @@
                 const first = $results.querySelector('ul>li:first-child a');
                 if (first) first.focus();
             } else {
-                $tree.querySelector('ul>li:first-child').querySelector('span, a').focus();
+                const firstLi = $tree.querySelector('ul>li:first-child');
+                const firstFocusable = firstLi && firstLi.querySelector('span, a');
+                if (firstFocusable) firstFocusable.focus();
             }
         } else if (code === 'Enter' && searchInput.value.length){ // enter
             const item = $results.querySelector('ul>li:first-child a');
