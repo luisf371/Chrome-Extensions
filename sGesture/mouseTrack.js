@@ -163,6 +163,10 @@
 
   function initEventListeners() {
     document.addEventListener('mousedown', (event) => {
+      // Ignore script-synthesized events: a page could otherwise dispatch fake
+      // mouse events to forge a gesture and trigger destructive tab commands
+      // (closeall/closetab/reloadall) without any real user interaction.
+      if (!event.isTrusted) return;
       if (event.button === 0) { // Left-click
         state.lmousedown = true;
         if (state.rmousedown && state.rocker) {
@@ -204,6 +208,7 @@
     });
 
     document.addEventListener('mousemove', (event) => {
+      if (!event.isTrusted) return;
       if (state.rmousedown && !state.lmousedown && !state.skip) { // Right button down (not left), outside editable fields
         state.ny = event.clientY;
         state.nx = event.clientX;
@@ -234,6 +239,7 @@
     });
 
     document.addEventListener('mouseup', (event) => {
+      if (!event.isTrusted) return;
       const wasRocked = state.rocked;
       console.log(`sGesture: mouseup event.button: ${event.button}, wasRocked: ${wasRocked}, state.rocked: ${state.rocked}`);
 
