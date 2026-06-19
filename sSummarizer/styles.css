@@ -877,6 +877,44 @@ textarea:focus,
   color: var(--error);
 }
 
+/* Per-command action column (default-star on top, delete below). */
+.command-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Subtle "default" star: outlined when off, amber-filled when this command runs on icon click. */
+.command-default-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.command-default-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.command-default-btn.is-default {
+  border-color: var(--accent);
+  color: #facc15;
+  background: rgba(74, 158, 255, 0.1);
+}
+
 .add-command-btn {
   display: flex;
   align-items: center;

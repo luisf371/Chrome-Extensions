@@ -391,8 +391,16 @@
     "description": "Button to add a new slash command"
   },
   "helpSlash": {
-    "message": "Commands must be alphanumeric (no spaces). The '/' prefix is added automatically.",
+    "message": "Commands must be alphanumeric (no spaces). The '/' prefix is added automatically. Star a command to run it by default when you click the toolbar icon.",
     "description": "Help text for slash commands"
+  },
+  "tooltipSetDefault": {
+    "message": "Set as default - runs when you click the toolbar icon.",
+    "description": "Tooltip for the inactive default-command star button"
+  },
+  "tooltipIsDefault": {
+    "message": "Default command - runs when you click the toolbar icon. Click to unset.",
+    "description": "Tooltip for the active default-command star button"
   },
   "placeholderCommand": {
     "message": "command",
