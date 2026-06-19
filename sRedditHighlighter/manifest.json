@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Reddit New Comments Highlighter",
-  "version": "1.2",
+  "version": "1.3",
   "description": "Highlights new comments when you revisit a Reddit thread. Supports both old and new Reddit.",
   "permissions": [
     "storage"
