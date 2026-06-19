@@ -694,12 +694,12 @@
   function extractHandleFromCard(card) {
     const handleLink = card.querySelector('a[href*="/@"]');
     if (handleLink) {
-      const match = handleLink.getAttribute('href').match(/\/@([^/?]+)/);
+      const match = handleLink.getAttribute('href').match(/\/@([^/?#]+)/);
       if (match) return '@' + match[1];
     }
     const channelLink = card.querySelector('a[href*="/channel/"]');
     if (channelLink) {
-      const match = channelLink.getAttribute('href').match(/\/channel\/([^/?]+)/);
+      const match = channelLink.getAttribute('href').match(/\/channel\/([^/?#]+)/);
       if (match) return match[1];
     }
     return null;

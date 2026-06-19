@@ -251,6 +251,10 @@
     "message": "清除报告数据",
     "description": "Clear report button"
   },
+  "btnReport": {
+    "message": "查看报告",
+    "description": "View report button"
+  },
   "textNever": {
     "message": "从未",
     "description": "Never scanned text"

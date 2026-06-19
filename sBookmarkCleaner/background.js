@@ -347,7 +347,10 @@ async function sortTree(node, recursive = true) {
     const sortedChildren = [...folders, ...bookmarks];
     for (let i = 0; i < sortedChildren.length; i++) {
       const child = sortedChildren[i];
-      if (node.id !== '0' && child.index !== i) {
+      // Always move into the target position: after the first move, the live
+      // index of siblings shifts, so the snapshot's child.index is stale and
+      // can no longer be trusted to decide whether a move is needed.
+      if (node.id !== '0') {
          await chrome.bookmarks.move(child.id, { index: i, parentId: node.id });
       }
       

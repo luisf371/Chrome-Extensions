@@ -367,6 +367,11 @@ elements.recheckBtn.addEventListener('click', () => {
   elements.recheckBtn.textContent = 'Checking...';
   
   chrome.runtime.sendMessage({ action: 'recheckBookmarks', ids }, (results) => {
+    if (chrome.runtime.lastError || !results || !results.fixed) {
+      elements.recheckBtn.disabled = false;
+      elements.recheckBtn.textContent = chrome.i18n.getMessage('btnRecheckSelected') || 'Recheck Selected';
+      return;
+    }
     // Determine what happened
     const fixedCount = results.fixed.length;
     

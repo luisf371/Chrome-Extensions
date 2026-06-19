@@ -9,9 +9,11 @@
   };
 
   api.extractHandleFromUrl = function extractHandleFromUrl(url) {
-    const match = url.match(/\/@([^/?]+)/);
+    // Exclude '#' as well as '/' and '?' so URL fragments (e.g. /@Linus#about)
+    // don't leak into the handle and get rejected by normalizeStoredHandle.
+    const match = url.match(/\/@([^/?#]+)/);
     if (match) return '@' + match[1];
-    const channelMatch = url.match(/\/channel\/([^/?]+)/);
+    const channelMatch = url.match(/\/channel\/([^/?#]+)/);
     if (channelMatch) return channelMatch[1];
     return null;
   };

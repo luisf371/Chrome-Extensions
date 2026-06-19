@@ -463,20 +463,33 @@ function applyResumeOverlapDedupe(uniqueId, chunk) {
 
 // Initialize context menu on install/update
 chrome.runtime.onInstalled.addListener(() => {
-  setupContextMenu();
+  queueContextMenuSetup();
 });
 
 // Initialize context menu on startup
 chrome.runtime.onStartup.addListener(() => {
-  setupContextMenu();
+  queueContextMenuSetup();
 });
 
 // Update context menu when settings change
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && (changes.enableContextMenu || changes.slashCommands)) {
-    setupContextMenu();
+    queueContextMenuSetup();
   }
 });
+
+// Serialize setupContextMenu() runs. Two separate storage writes
+// (enableContextMenu and slashCommands are saved independently) can fire
+// onChanged close together; without serialization the concurrent runs
+// interleave around the awaited removeAll() and create() throws a
+// duplicate-id error for "quick-commands-parent".
+let contextMenuSetupChain = Promise.resolve();
+function queueContextMenuSetup() {
+  contextMenuSetupChain = contextMenuSetupChain
+    .then(() => setupContextMenu())
+    .catch(err => console.log('[Background] setupContextMenu error:', err));
+  return contextMenuSetupChain;
+}
 
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {

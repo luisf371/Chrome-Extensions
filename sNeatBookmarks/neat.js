@@ -395,12 +395,14 @@
         if (code === 'ArrowDown' && searchInput.value.length == searchInput.selectionEnd){ // down
             e.preventDefault();
             if (searchMode){
-                $results.querySelector('ul>li:first-child a').focus();
+                const first = $results.querySelector('ul>li:first-child a');
+                if (first) first.focus();
             } else {
                 $tree.querySelector('ul>li:first-child').querySelector('span, a').focus();
             }
         } else if (code === 'Enter' && searchInput.value.length){ // enter
             const item = $results.querySelector('ul>li:first-child a');
+            if (!item) return;
             item.focus();
             setTimeout(function(){
                 const event = new MouseEvent('click', {
@@ -673,9 +675,9 @@
                             }
                             if (searchMode){
                                 li = $('results-item-' + id);
-                                li.innerHTML = generateBookmarkHTML(title, url);
+                                if (li) li.innerHTML = generateBookmarkHTML(title, url);
                             }
-                            li.firstElementChild.focus();
+                            if (li) li.firstElementChild.focus();
                         });
                     }
                 });
@@ -701,6 +703,7 @@
 
         deleteBookmarks: function(id, bookmarkCount, folderCount){
             const li = $('neat-tree-item-' + id);
+            if (!li) return;
             const item = li.querySelector('span');
             if (bookmarkCount || folderCount){
                 let dialog = '';

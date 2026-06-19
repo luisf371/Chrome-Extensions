@@ -97,7 +97,11 @@
             console.warn("sGesture: Blocked attempt to open javascript: URL");
             return;
           }
-          window.open(state.link);
+          // Route through the background worker via chrome.tabs.create. This
+          // action runs inside an async storage callback, so a direct
+          // window.open() would be outside the user-activation window and
+          // blocked by the popup blocker.
+          sendChromeMessage("openurl", { url: state.link });
         }
       },
       closetab: () => sendChromeMessage("closetab"),
@@ -121,13 +125,13 @@
     }
   }
 
-  function sendChromeMessage(msg) {
+  function sendChromeMessage(msg, extra) {
     if (!chrome.runtime || !chrome.runtime.id) {
       console.error("sGesture: Extension context invalidated.");
       return;
     }
 
-    chrome.runtime.sendMessage({ msg: msg }, (response) => {
+    chrome.runtime.sendMessage(Object.assign({ msg: msg }, extra), (response) => {
       if (chrome.runtime.lastError) {
         console.error('sGesture: Error in sendChromeMessage:', chrome.runtime.lastError.message);
       }
