@@ -302,7 +302,14 @@ async function addClosedTabInternal(tabId, mode){
             }
             // Add new to index
             await updateSearchIndex(rId, createObj.title, createObj.url);
-		}
+		} else {
+            // URL is not restorable: still persist the TabListIndex change and
+            // drop the orphaned TabList- entry so it doesn't leak in storage.
+            if (storageUpdates.TabListIndex) {
+                await setStorage({ TabListIndex: storageUpdates.TabListIndex });
+            }
+            await removeStorage([key]);
+        }
 
 		await setBadge();
 	}

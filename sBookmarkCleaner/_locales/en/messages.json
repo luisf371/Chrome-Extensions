@@ -251,10 +251,12 @@
     "message": "Clear Report Data",
     "description": "Clear report button"
   },
+  "btnReport": {
+    "message": "View Report",
+    "description": "View report button"
+  },
   "textNever": {
     "message": "Never",
     "description": "Never scanned text"
   }
 }
-
-

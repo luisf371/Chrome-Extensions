@@ -347,8 +347,13 @@ export async function setBadge() {
 }
 
 export async function resetData() {
-	let data = await getStorage(["settings"]);
+	let data = await getStorage(["settings", "restoreCountAllTime", "installDate"]);
 	let settings = data.settings;
+	// Preserve lifetime stats: clearing closed-tab history must not wipe the
+	// all-time recovered count or the install date (this also runs on every
+	// startup when saveHistory is disabled).
+	const restoreCountAllTime = Number(data.restoreCountAllTime) || 0;
+	const installDate = data.installDate || Date.now();
 
 	await chrome.storage.local.clear();
 
@@ -357,7 +362,8 @@ export async function resetData() {
 		"TabListIndex": [],
 		"ClosedTabIndex": [],
         "SearchIndex": [],
-        "restoreCountAllTime": 0
+        "restoreCountAllTime": restoreCountAllTime,
+        "installDate": installDate
 	});
 
 	await regExistingTabs();
@@ -445,10 +451,11 @@ async function updateIconInternal() {
         });
     } else {
         let isDark = false;
-        
-        const themeData = await new Promise(resolve => chrome.storage.local.get(['theme'], resolve));
-        const theme = themeData.theme;
-        
+
+        // Theme is persisted inside the settings object (settings.theme),
+        // not as a top-level "theme" key.
+        const theme = settings.theme;
+
         if (theme === "dark") {
             isDark = true;
         } else if (theme === "light") {

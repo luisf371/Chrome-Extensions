@@ -340,6 +340,7 @@
   // the first thread's observer + keydown listener would leak.
 
   let lastUrl = window.location.href;
+  let navUrlPollTimer = null;
 
   function handleUrlChange() {
     if (window.location.href === lastUrl) return;
@@ -367,20 +368,14 @@
   }
 
   function installNavigationHooks() {
-    const origPushState = history.pushState;
-    const origReplaceState = history.replaceState;
-
-    history.pushState = function(...args) {
-      const ret = origPushState.apply(this, args);
-      handleUrlChange();
-      return ret;
-    };
-    history.replaceState = function(...args) {
-      const ret = origReplaceState.apply(this, args);
-      handleUrlChange();
-      return ret;
-    };
     window.addEventListener('popstate', handleUrlChange);
+    // Content scripts run in an isolated world, so overriding history.pushState
+    // here would only patch our own copy — New Reddit (Shreddit) calls its own
+    // reference and our hook would never fire. Poll for URL changes instead;
+    // handleUrlChange() is guarded by lastUrl, so this is cheap when idle.
+    if (navUrlPollTimer === null) {
+      navUrlPollTimer = setInterval(handleUrlChange, 500);
+    }
   }
 
   // --- Settings sync: push options changes into already-open tabs ------------

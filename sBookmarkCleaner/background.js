@@ -107,8 +107,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // --- Core Scanning Logic ---
 
-async function startSort(scope = 'parent') {
+async function startSort(scope = null) {
   try {
+    // When invoked without an explicit scope (e.g. the manual "Sort Bookmarks"
+    // button), honor the user's configured sortScope instead of silently
+    // defaulting to 'parent' and ignoring a 'recursive' preference.
+    if (scope === null) {
+      const settings = await chrome.storage.local.get(['sortScope']);
+      scope = settings.sortScope || 'parent';
+    }
     const tree = await chrome.bookmarks.getTree();
     // tree[0] is the root. Its children are "Bookmarks Bar", "Other Bookmarks", etc.
     // We usually want to sort the contents of those roots.
@@ -347,7 +354,10 @@ async function sortTree(node, recursive = true) {
     const sortedChildren = [...folders, ...bookmarks];
     for (let i = 0; i < sortedChildren.length; i++) {
       const child = sortedChildren[i];
-      if (node.id !== '0' && child.index !== i) {
+      // Always move into the target position: after the first move, the live
+      // index of siblings shifts, so the snapshot's child.index is stale and
+      // can no longer be trusted to decide whether a move is needed.
+      if (node.id !== '0') {
          await chrome.bookmarks.move(child.id, { index: i, parentId: node.id });
       }
       

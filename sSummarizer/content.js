@@ -832,7 +832,7 @@
             const prefix = itemMatch[1];
             const marker = itemMatch[2];
             let content = itemMatch[3];
-            const indent = (prefix ? prefix.length : 0) + (itemMatch[1].match(/^\s*/) ? itemMatch[1].match(/^\s*/)[0].length : 0);
+            const indent = prefix.match(/^\s*/)[0].length;
             const type = marker.match(/\d/) ? 'ol' : 'ul';
 
             // Look ahead for multi-line list items

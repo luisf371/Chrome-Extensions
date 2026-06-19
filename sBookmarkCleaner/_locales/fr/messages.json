@@ -251,6 +251,10 @@
     "message": "Effacer les données du rapport",
     "description": "Clear report button"
   },
+  "btnReport": {
+    "message": "Voir le rapport",
+    "description": "View report button"
+  },
   "textNever": {
     "message": "Jamais",
     "description": "Never scanned text"

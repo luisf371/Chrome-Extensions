@@ -111,7 +111,7 @@
             favicon = 'document-code.png';
         }
         tooltipURL = Utils.htmlspecialchars(tooltipURL);
-        const name = Utils.htmlspecialchars(title) || (httpsPattern.test(url) ? url.replace(httpsPattern, '') : _m('noTitle'));
+        const name = Utils.htmlspecialchars(title) || (httpsPattern.test(url) ? Utils.htmlspecialchars(url.replace(httpsPattern, '')) : _m('noTitle'));
         const href = (/^javascript:/i.test(url)) ? '#' : u;
         return '<a href="' + href + '"' + ' title="' + tooltipURL + '" tabindex="0" ' + extras + '>' + 
             '<img src="' + favicon + '" width="16" height="16" alt=""><i>' + name + '</i></a>';
@@ -395,12 +395,16 @@
         if (code === 'ArrowDown' && searchInput.value.length == searchInput.selectionEnd){ // down
             e.preventDefault();
             if (searchMode){
-                $results.querySelector('ul>li:first-child a').focus();
+                const first = $results.querySelector('ul>li:first-child a');
+                if (first) first.focus();
             } else {
-                $tree.querySelector('ul>li:first-child').querySelector('span, a').focus();
+                const firstLi = $tree.querySelector('ul>li:first-child');
+                const firstFocusable = firstLi && firstLi.querySelector('span, a');
+                if (firstFocusable) firstFocusable.focus();
             }
         } else if (code === 'Enter' && searchInput.value.length){ // enter
             const item = $results.querySelector('ul>li:first-child a');
+            if (!item) return;
             item.focus();
             setTimeout(function(){
                 const event = new MouseEvent('click', {
@@ -673,9 +677,9 @@
                             }
                             if (searchMode){
                                 li = $('results-item-' + id);
-                                li.innerHTML = generateBookmarkHTML(title, url);
+                                if (li) li.innerHTML = generateBookmarkHTML(title, url);
                             }
-                            li.firstElementChild.focus();
+                            if (li) li.firstElementChild.focus();
                         });
                     }
                 });
@@ -701,6 +705,7 @@
 
         deleteBookmarks: function(id, bookmarkCount, folderCount){
             const li = $('neat-tree-item-' + id);
+            if (!li) return;
             const item = li.querySelector('span');
             if (bookmarkCount || folderCount){
                 let dialog = '';

@@ -251,6 +251,10 @@
     "message": "レポートデータを消去",
     "description": "Clear report button"
   },
+  "btnReport": {
+    "message": "レポートを表示",
+    "description": "View report button"
+  },
   "textNever": {
     "message": "未スキャン",
     "description": "Never scanned text"

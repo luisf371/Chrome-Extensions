@@ -38,6 +38,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Listen for external data changes
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
+  // Don't rebuild the list mid-edit: render() recreates the edit input from
+  // stored values, discarding the user's typed text and stealing focus.
+  if (editingPlaylistId !== null) return;
   const keys = ['playlists', 'channels', 'channelPlaylists', 'settings'];
   if (keys.some(k => k in changes)) {
     loadData().then(() => render()).catch((error) => {

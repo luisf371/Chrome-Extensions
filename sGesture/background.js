@@ -3,6 +3,15 @@ const commands = {
     await chrome.tabs.create({});
     return "tab open";
   },
+  openurl: async (request) => {
+    const url = request && request.url;
+    // Only allow http(s) links; block javascript:/data:/chrome: schemes.
+    if (typeof url !== "string" || !/^https?:\/\//i.test(url.trim())) {
+      return "blocked invalid url";
+    }
+    await chrome.tabs.create({ url: url });
+    return "tab opened";
+  },
   closetab: async () => {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tabs.length > 0) {
@@ -121,7 +130,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   
   const handler = commands[request.msg];
   if (handler) {
-    handler()
+    handler(request)
       .then(resp => sendResponse({ resp }))
       .catch(error => {
         console.error('Error in command handler:', error);
@@ -132,4 +141,36 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   return true; // Keep channel open for async response
+});
+
+// Seed default settings on install. restoreOptions() in the options page only
+// assigns defaults to the DOM and never persists them, and saveOptions() runs
+// solely on the 'change' event, so without this gestures would do nothing on a
+// fresh install until the user manually changed an option.
+chrome.runtime.onInstalled.addListener(() => {
+  const defaults = {
+    U: "newtab",
+    R: "forward",
+    L: "back",
+    D: "closetab",
+    rockerRL: "back",
+    rockerLR: "forward",
+    colorCode: "FF3300",
+    width: "3",
+    rocker: false,
+    trail: false
+  };
+  chrome.storage.local.get(Object.keys(defaults), (current) => {
+    if (chrome.runtime.lastError) {
+      console.error("sGesture: Error seeding defaults:", chrome.runtime.lastError.message);
+      return;
+    }
+    const toSet = {};
+    for (const key in defaults) {
+      if (current[key] === undefined) toSet[key] = defaults[key];
+    }
+    if (Object.keys(toSet).length > 0) {
+      chrome.storage.local.set(toSet);
+    }
+  });
 });

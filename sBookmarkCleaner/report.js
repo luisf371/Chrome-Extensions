@@ -46,7 +46,7 @@ function initI18n() {
 // Theme Logic
 // 1. Load saved theme
 chrome.storage.local.get(['theme'], (result) => {
-  const savedTheme = result.theme || 'light';
+  const savedTheme = result.theme || 'dark';
   document.body.setAttribute('data-theme', savedTheme);
 });
 
@@ -367,6 +367,11 @@ elements.recheckBtn.addEventListener('click', () => {
   elements.recheckBtn.textContent = 'Checking...';
   
   chrome.runtime.sendMessage({ action: 'recheckBookmarks', ids }, (results) => {
+    if (chrome.runtime.lastError || !results || !results.fixed) {
+      elements.recheckBtn.disabled = false;
+      elements.recheckBtn.textContent = chrome.i18n.getMessage('btnRecheckSelected') || 'Recheck Selected';
+      return;
+    }
     // Determine what happened
     const fixedCount = results.fixed.length;
     

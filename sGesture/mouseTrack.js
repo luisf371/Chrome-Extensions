@@ -97,7 +97,11 @@
             console.warn("sGesture: Blocked attempt to open javascript: URL");
             return;
           }
-          window.open(state.link);
+          // Route through the background worker via chrome.tabs.create. This
+          // action runs inside an async storage callback, so a direct
+          // window.open() would be outside the user-activation window and
+          // blocked by the popup blocker.
+          sendChromeMessage("openurl", { url: state.link });
         }
       },
       closetab: () => sendChromeMessage("closetab"),
@@ -121,13 +125,13 @@
     }
   }
 
-  function sendChromeMessage(msg) {
+  function sendChromeMessage(msg, extra) {
     if (!chrome.runtime || !chrome.runtime.id) {
       console.error("sGesture: Extension context invalidated.");
       return;
     }
 
-    chrome.runtime.sendMessage({ msg: msg }, (response) => {
+    chrome.runtime.sendMessage(Object.assign({ msg: msg }, extra), (response) => {
       if (chrome.runtime.lastError) {
         console.error('sGesture: Error in sendChromeMessage:', chrome.runtime.lastError.message);
       }
@@ -159,6 +163,10 @@
 
   function initEventListeners() {
     document.addEventListener('mousedown', (event) => {
+      // Ignore script-synthesized events: a page could otherwise dispatch fake
+      // mouse events to forge a gesture and trigger destructive tab commands
+      // (closeall/closetab/reloadall) without any real user interaction.
+      if (!event.isTrusted) return;
       if (event.button === 0) { // Left-click
         state.lmousedown = true;
         if (state.rmousedown && state.rocker) {
@@ -200,6 +208,7 @@
     });
 
     document.addEventListener('mousemove', (event) => {
+      if (!event.isTrusted) return;
       if (state.rmousedown && !state.lmousedown && !state.skip) { // Right button down (not left), outside editable fields
         state.ny = event.clientY;
         state.nx = event.clientX;
@@ -230,6 +239,7 @@
     });
 
     document.addEventListener('mouseup', (event) => {
+      if (!event.isTrusted) return;
       const wasRocked = state.rocked;
       console.log(`sGesture: mouseup event.button: ${event.button}, wasRocked: ${wasRocked}, state.rocked: ${state.rocked}`);
 
