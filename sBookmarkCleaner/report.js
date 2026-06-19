@@ -46,7 +46,7 @@ function initI18n() {
 // Theme Logic
 // 1. Load saved theme
 chrome.storage.local.get(['theme'], (result) => {
-  const savedTheme = result.theme || 'light';
+  const savedTheme = result.theme || 'dark';
   document.body.setAttribute('data-theme', savedTheme);
 });
 

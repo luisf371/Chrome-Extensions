@@ -107,8 +107,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // --- Core Scanning Logic ---
 
-async function startSort(scope = 'parent') {
+async function startSort(scope = null) {
   try {
+    // When invoked without an explicit scope (e.g. the manual "Sort Bookmarks"
+    // button), honor the user's configured sortScope instead of silently
+    // defaulting to 'parent' and ignoring a 'recursive' preference.
+    if (scope === null) {
+      const settings = await chrome.storage.local.get(['sortScope']);
+      scope = settings.sortScope || 'parent';
+    }
     const tree = await chrome.bookmarks.getTree();
     // tree[0] is the root. Its children are "Bookmarks Bar", "Other Bookmarks", etc.
     // We usually want to sort the contents of those roots.

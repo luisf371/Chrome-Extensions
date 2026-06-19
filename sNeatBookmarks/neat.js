@@ -111,7 +111,7 @@
             favicon = 'document-code.png';
         }
         tooltipURL = Utils.htmlspecialchars(tooltipURL);
-        const name = Utils.htmlspecialchars(title) || (httpsPattern.test(url) ? url.replace(httpsPattern, '') : _m('noTitle'));
+        const name = Utils.htmlspecialchars(title) || (httpsPattern.test(url) ? Utils.htmlspecialchars(url.replace(httpsPattern, '')) : _m('noTitle'));
         const href = (/^javascript:/i.test(url)) ? '#' : u;
         return '<a href="' + href + '"' + ' title="' + tooltipURL + '" tabindex="0" ' + extras + '>' + 
             '<img src="' + favicon + '" width="16" height="16" alt=""><i>' + name + '</i></a>';
