@@ -1358,25 +1358,27 @@
             draggedBookmarkParent.classList.remove('open');
             draggedBookmarkParent.setAttribute('aria-expanded', false);
         }
-        clientX /= zoomLevel;
-        clientY /= zoomLevel;
+        // clientX/clientY are kept in viewport (zoomed) coordinates, the same space
+        // getBoundingClientRect() reports in. #bookmark-clone and #drop-overlay are
+        // themselves scaled by the `zoom` CSS, so their style offsets must be divided
+        // by zoomLevel to land at the intended viewport position.
         if (el.tagName == 'A'){
             canDrop = true;
-            bookmarkClone.style.top = clientY + 'px';
-            bookmarkClone.style.left = (rtl ? (clientX - bookmarkClone.offsetWidth) : clientX) + 'px';
+            bookmarkClone.style.top = (clientY / zoomLevel) + 'px';
+            bookmarkClone.style.left = (rtl ? (clientX / zoomLevel - bookmarkClone.offsetWidth) : clientX / zoomLevel) + 'px';
             const elRect = el.getBoundingClientRect();
             const elRectTop = elRect.top + (document.documentElement.scrollTop || document.body.scrollTop);
             const elRectBottom = elRect.bottom + (document.documentElement.scrollTop || document.body.scrollTop);
             const top = (clientY >= elRectTop + elRect.height / 2) ? elRectBottom : elRectTop;
             dropOverlay.className = 'bookmark';
-            dropOverlay.style.top = top + 'px';
+            dropOverlay.style.top = (top / zoomLevel) + 'px';
             dropOverlay.style.left = rtl ? '0px' : (Utils.toInt(el.style.paddingInlineStart || el.style.webkitPaddingStart) + 16) + 'px';
             dropOverlay.style.width = (Utils.toInt(window.getComputedStyle(el).width) - 12) + 'px';
             dropOverlay.style.height = null;
         } else if (el.tagName == 'SPAN'){
             canDrop = true;
-            bookmarkClone.style.top = clientY + 'px';
-            bookmarkClone.style.left = clientX + 'px';
+            bookmarkClone.style.top = (clientY / zoomLevel) + 'px';
+            bookmarkClone.style.left = (clientX / zoomLevel) + 'px';
             const elRect = el.getBoundingClientRect();
             let top = null;
             const elRectTop = elRect.top + (document.documentElement.scrollTop || document.body.scrollTop);
@@ -1392,13 +1394,13 @@
             }
             if (top == null){
                 dropOverlay.className = 'folder';
-                dropOverlay.style.top = elRectTop + 'px';
+                dropOverlay.style.top = (elRectTop / zoomLevel) + 'px';
                 dropOverlay.style.left = '0px';
-                dropOverlay.style.width = elRect.width + 'px';
-                dropOverlay.style.height = elRect.height + 'px';
+                dropOverlay.style.width = (elRect.width / zoomLevel) + 'px';
+                dropOverlay.style.height = (elRect.height / zoomLevel) + 'px';
             } else {
                 dropOverlay.className = 'bookmark';
-                dropOverlay.style.top = top + 'px';
+                dropOverlay.style.top = (top / zoomLevel) + 'px';
                 dropOverlay.style.left = (Utils.toInt(el.style.paddingInlineStart || el.style.webkitPaddingStart) + 16) + 'px';
                 dropOverlay.style.width = (Utils.toInt(window.getComputedStyle(el).width) - 12) + 'px';
                 dropOverlay.style.height = null;
@@ -1430,7 +1432,8 @@
         }
         const draggedBookmarkParent = draggedBookmark.parentNode;
         const draggedID = draggedBookmarkParent.id.replace('neat-tree-item-', '');
-        const clientY = (e.clientY + (document.documentElement.scrollTop || document.body.scrollTop)) / zoomLevel;
+        // Viewport (zoomed) coordinate, matching getBoundingClientRect() below.
+        const clientY = e.clientY + (document.documentElement.scrollTop || document.body.scrollTop);
         if (el.tagName == 'A'){
             const elRect = el.getBoundingClientRect();
             const elRectTop = elRect.top + (document.documentElement.scrollTop || document.body.scrollTop);
