@@ -51,6 +51,13 @@
   function mountChannelQuickAdd(actionsContainer, handle, channelName) {
     if (!actionsContainer) return false;
 
+    // Match the vertical height of YouTube's own action buttons (measured
+    // live: the flexible-actions row is a stretch flex container whose
+    // buttons are taller than our default trigger, which misaligns us).
+    const siblingButton = actionsContainer.querySelector('.ytFlexibleActionsViewModelAction button, button-view-model button');
+    const siblingHeight = Math.round(siblingButton?.getBoundingClientRect().height || 0);
+    state.quickAddTriggerHeightPx = siblingHeight > 0 ? siblingHeight : null;
+
     const existingHost = actionsContainer.querySelector(':scope > .syp-channel-qa-host');
     if (existingHost?.shadowRoot) {
       state.quickAddHandle = handle;
@@ -63,7 +70,7 @@
     state.quickAddHandle = handle;
     state.quickAddHost = document.createElement('div');
     state.quickAddHost.className = 'syp-host syp-channel-qa-host ytFlexibleActionsViewModelAction';
-    state.quickAddHost.style.cssText = 'all: initial; display: inline-flex; vertical-align: middle; position: relative; z-index: 2000;';
+    state.quickAddHost.style.cssText = 'all: initial; display: inline-flex; align-self: center; vertical-align: middle; position: relative; z-index: 2000;';
     actionsContainer.appendChild(state.quickAddHost);
 
     state.quickAddShadow = state.quickAddHost.attachShadow({ mode: 'open' });
@@ -85,7 +92,6 @@
         const actionsContainer = getVisibleChannelActionsContainer(handle);
         if (!actionsContainer) return;
         if (state.quickAddHost?.isConnected && actionsContainer.contains(state.quickAddHost)) return;
-
         const channelName = getChannelPageName(actionsContainer, handle);
         if (!mountChannelQuickAdd(actionsContainer, handle, channelName)) return;
         state.initSucceeded = true;
@@ -109,13 +115,17 @@
     const actionsContainer = await api.waitForElement(() => getVisibleChannelActionsContainer(handle));
     if (!actionsContainer || gen !== state.initGeneration) return;
 
-    const channelName = getChannelPageName(actionsContainer, handle);
+    // Hydration can replace the captured header: resolve the live container
+    // and name immediately before mounting.
+    const activeContainer = getVisibleChannelActionsContainer(handle);
+    if (!activeContainer || gen !== state.initGeneration) return;
+    const channelName = getChannelPageName(activeContainer, handle);
 
     void api.sendMsg({ type: 'REGISTER_CHANNEL', handle, name: channelName }).catch((error) => {
       console.warn('SYO failed to register channel page channel', error);
     });
 
-    if (!mountChannelQuickAdd(actionsContainer, handle, channelName)) return;
+    if (!mountChannelQuickAdd(activeContainer, handle, channelName)) return;
     observeChannelQuickAdd(handle, gen);
     state.initSucceeded = true;
   }

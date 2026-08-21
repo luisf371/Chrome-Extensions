@@ -22,7 +22,7 @@
       .syp-dropdown {
         position: absolute;
         top: calc(100% + 8px);
-        right: 0;
+        left: 0;
         width: 272px;
         background: ${bg};
         backdrop-filter: blur(16px) saturate(140%);
@@ -36,7 +36,7 @@
         overflow: hidden;
         z-index: 9999;
         animation: syp-dd-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        transform-origin: top right;
+        transform-origin: top left;
       }
       .syp-dd-header {
         display: flex;
@@ -94,6 +94,7 @@
         transition: background 0.12s ease;
         position: relative;
       }
+      .syp-dd-item[hidden] { display: none; }
       .syp-dd-item:hover {
         background: ${hoverBg};
       }
@@ -114,6 +115,10 @@
         justify-content: center;
         flex-shrink: 0;
         transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .syp-dd-item input:focus-visible + .syp-dd-check {
+        outline: 2px solid #4a9eff;
+        outline-offset: 2px;
       }
       .syp-dd-check svg {
         width: 10px;
@@ -149,6 +154,84 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+      .syp-dd-group-row {
+        display: flex;
+        align-items: center;
+        margin: 2px 0;
+      }
+      .syp-dd-group-row > .syp-dd-item {
+        flex: 0 1 auto;
+        min-width: 0;
+        margin: 0;
+      }
+      .syp-dd-group-toggle {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 7px 8px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        cursor: pointer;
+        color: ${txtSub};
+        font: inherit;
+        transition: background 0.12s ease, color 0.12s ease;
+      }
+      .syp-dd-group-toggle:hover,
+      .syp-dd-group-toggle:focus-visible {
+        background: ${hoverBg};
+        color: ${txt};
+        outline: none;
+      }
+      .syp-dd-group-caret {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        transition: transform 0.15s ease;
+      }
+      .syp-dd-group-caret svg {
+        width: 10px;
+        height: 10px;
+      }
+      .syp-dd-group-caret.open {
+        transform: rotate(90deg);
+      }
+      .syp-dd-group-count {
+        font-size: 10px;
+        opacity: 0.7;
+      }
+      .syp-dd-item--sub {
+        margin-left: 14px;
+      }
+      .syp-dd-item--confirm {
+        cursor: default;
+        justify-content: flex-end;
+      }
+      .syp-dd-confirm-btn {
+        border: none;
+        border-radius: 6px;
+        background: #cc0000;
+        color: #fff;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 5px 10px;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .syp-dd-confirm-btn:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+      .syp-dd-confirm-cancel {
+        border: none;
+        background: transparent;
+        color: ${txtSub};
+        cursor: pointer;
+        font-size: 13px;
+        padding: 5px 6px;
+        flex-shrink: 0;
       }
       .syp-dd-inline-input {
         flex: 1;
@@ -206,34 +289,183 @@
 
   api.renderDropdownHTML = function renderDropdownHTML(handle) {
     if (!state.data) return '';
-    const playlists = Object.values(state.data.playlists || {}).sort((a, b) => a.order - b.order);
+    const playlistsByOrder = Object.values(state.data.playlists || {}).sort((a, b) => a.order - b.order);
     const assignments = (state.data.channelPlaylists || {})[handle] || [];
 
     const checkSvg = '<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5L4.2 7.5L8 3"/></svg>';
     const arrowSvg = '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l5 4-5 4"/></svg>';
 
-    let html = '<div class="syp-dropdown">';
-    html += '<div class="syp-dd-header"><span>Playlists</span><button class="syp-dd-add-btn" data-action="add-inline" title="New playlist">+</button></div>';
-
-    html += '<div class="syp-dd-list">';
-    if (playlists.length === 0) {
-      html += '<div class="syp-dd-empty">No playlists yet.<br>Hit + to create one.</div>';
-    }
-    for (const pl of playlists) {
+    // Checkboxes always represent direct assignments. The caret beside a
+    // parent only expands its subgroup rows.
+    const renderItem = (pl, isSub = false, groupId = '', hidden = false) => {
       const isChecked = assignments.includes(pl.id);
-      html += `<label class="syp-dd-item${isChecked ? ' checked' : ''}">
+      return `<label class="syp-dd-item${isChecked ? ' checked' : ''}${isSub ? ' syp-dd-item--sub' : ''}"${groupId ? ` data-group-child="${groupId}"` : ''}${hidden ? ' hidden' : ''}>
         <input type="checkbox" data-playlist="${pl.id}" ${isChecked ? 'checked' : ''}>
         <span class="syp-dd-check" style="${isChecked ? `background:${pl.color}; border-color:transparent;` : ''}">${checkSvg}</span>
         <span class="syp-dd-color" style="background:${pl.color}"></span>
         <span class="syp-dd-name">${api.escapeHtml(pl.name)}</span>
       </label>`;
+    };
+
+    let listHtml = '';
+    if (playlistsByOrder.length === 0) {
+      listHtml += '<div class="syp-dd-empty">No playlists yet.<br>Hit + to create one.</div>';
     }
+    for (const pl of playlistsByOrder) {
+      if (pl.parentId) continue;
+      const children = playlistsByOrder.filter((candidate) => candidate.parentId === pl.id);
+      if (children.length === 0) {
+        listHtml += renderItem(pl);
+        continue;
+      }
+      // Groups collapse by default, but the parent assignment remains visible.
+      const isOpen = state.quickAddExpandedGroups.has(pl.id);
+      listHtml += `<div class="syp-dd-group-row">
+        ${renderItem(pl)}
+        <button type="button" class="syp-dd-group-toggle" data-group-toggle="${pl.id}" aria-expanded="${isOpen}" aria-label="${isOpen ? 'Hide' : 'Show'} subgroups for ${api.escapeHtml(pl.name)}">
+          <span class="syp-dd-group-caret${isOpen ? ' open' : ''}">${arrowSvg}</span>
+          <span class="syp-dd-group-count">${children.length}</span>
+        </button>
+      </div>`;
+      for (const child of children) {
+        listHtml += renderItem(child, true, pl.id, !isOpen);
+      }
+    }
+
+    let html = '<div class="syp-dropdown">';
+    html += '<div class="syp-dd-header"><span>Playlists</span><button class="syp-dd-add-btn" data-action="add-inline" title="New playlist">+</button></div>';
+    html += '<div class="syp-dd-list">';
+    html += listHtml;
     html += '</div>';
 
     html += '<div class="syp-dd-sep"></div>';
     html += `<div class="syp-dd-footer" data-action="manage">Manage playlists ${arrowSvg}</div>`;
     html += '</div>';
     return html;
+  };
+
+  // --- Subscription-aware assignment ---
+  //
+  // Assigning a playlist on a channel the user is not subscribed to must be
+  // an explicit "Subscribe & add" action, never a silent side effect: click
+  // YouTube's native control, wait for it to confirm the subscription, and
+  // only then save the assignment.
+
+  api.getQuickAddSubscriptionScope = function getQuickAddSubscriptionScope() {
+    if (state.currentPage === 'channel') {
+      const actionsContainer = app.pages.channel?.getVisibleChannelActionsContainer?.(state.quickAddHandle);
+      return actionsContainer ? app.pages.channel.getChannelHeaderScope(actionsContainer) : null;
+    }
+    if (state.currentPage === 'video') {
+      return app.pages.video?.getVisibleVideoSubscribeButton?.() || null;
+    }
+    return null;
+  };
+
+  // Swaps a dropdown row for an explicit confirmation row. The replacement
+  // is a div (not a label) so clicking its buttons cannot toggle the hidden
+  // checkbox and re-enter the change handler.
+  api.showSubscribeConfirmRow = function showSubscribeConfirmRow(item, { onConfirm, onCancel }) {
+    if (!item || !item.isConnected) {
+      onCancel();
+      return;
+    }
+
+    const confirmRow = document.createElement('div');
+    confirmRow.className = 'syp-dd-item syp-dd-item--confirm';
+    confirmRow.innerHTML = `
+      <button type="button" class="syp-dd-confirm-btn">Subscribe &amp; Add</button>
+      <button type="button" class="syp-dd-confirm-cancel" title="Cancel">&#10005;</button>
+    `;
+    item.replaceWith(confirmRow);
+
+    confirmRow.querySelector('.syp-dd-confirm-btn').addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onConfirm(confirmRow.querySelector('.syp-dd-confirm-btn'));
+    });
+    confirmRow.querySelector('.syp-dd-confirm-cancel').addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onCancel();
+    });
+  };
+
+  // Runs the subscribe-then-assign sequence. Resolves true only when the
+  // subscription was confirmed AND the assignment was saved. `isStale` must
+  // guard every step: the initiating handle is retained across awaits, so a
+  // navigation away from the page must abort polling and rerendering rather
+  // than read the new page's subscription control.
+  api.runSubscribeAndAssign = async function runSubscribeAndAssign({
+    getScope, handle, channelName, playlistId, playlistName, confirmButton, isStale
+  }) {
+    const stale = () => (typeof isStale === 'function' ? isStale() : false);
+    if (stale()) return false;
+
+    if (confirmButton) {
+      confirmButton.disabled = true;
+      confirmButton.textContent = 'Subscribing...';
+    }
+
+    if (!api.triggerSubscribeControl(getScope())) {
+      if (!stale()) {
+        api.showPageToast('Could not find the YouTube subscribe button. Nothing was changed.', 'error');
+      }
+      return false;
+    }
+
+    const confirmed = await api.awaitSubscriptionState(getScope, 'subscribed', { isStale: stale });
+    if (!confirmed) {
+      if (!stale()) {
+        api.showPageToast(`YouTube did not confirm the subscription. "${playlistName}" was not changed.`, 'error');
+      }
+      return false;
+    }
+
+    try {
+      await api.sendMsg({
+        type: 'ASSIGN_CHANNEL_PLAYLIST',
+        handle,
+        name: channelName,
+        playlistId,
+        assign: true
+      });
+      if (!stale()) {
+        api.showPageToast(`Subscribed and added to ${playlistName}`, 'success');
+      }
+      return true;
+    } catch (error) {
+      // The subscription itself succeeded; only the local save failed.
+      api.handleActionError(error, 'Subscribed, but saving the playlist assignment failed.');
+      return false;
+    }
+  };
+
+  // Collapsible group headers in the dropdown. `rerender` is the owning
+  // surface's full re-render (the dropdown is rebuilt from state).
+  api.attachDropdownGroupToggles = function attachDropdownGroupToggles(shadowRoot) {
+    if (!shadowRoot) return;
+    shadowRoot.querySelectorAll('[data-group-toggle]').forEach((el) => {
+      const activate = () => {
+        const id = el.dataset.groupToggle;
+        const expanded = state.quickAddExpandedGroups;
+        const isOpen = !expanded.has(id);
+        if (isOpen) expanded.add(id);
+        else expanded.delete(id);
+        el.setAttribute('aria-expanded', String(isOpen));
+        const label = el.getAttribute('aria-label');
+        if (label) el.setAttribute('aria-label', label.replace(/^(Show|Hide)/, isOpen ? 'Hide' : 'Show'));
+        el.querySelector('.syp-dd-group-caret')?.classList.toggle('open', isOpen);
+        shadowRoot.querySelectorAll('[data-group-child]').forEach((row) => {
+          if (row.dataset.groupChild === id) row.hidden = !isOpen;
+        });
+      };
+      el.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        activate();
+      });
+    });
   };
 
   api.setPlaylistItemCheckedState = function setPlaylistItemCheckedState(item, playlistId, isChecked) {
@@ -252,13 +484,24 @@
     check.style.borderColor = isChecked ? 'transparent' : '';
   };
 
+  api.getTopLevelAssignmentCount = function getTopLevelAssignmentCount(handle) {
+    const playlists = state.data?.playlists || {};
+    const familyIds = new Set();
+    for (const playlistId of (state.data?.channelPlaylists || {})[handle] || []) {
+      const playlist = playlists[playlistId];
+      if (!playlist) continue;
+      familyIds.add(playlist.parentId && playlists[playlist.parentId] ? playlist.parentId : playlistId);
+    }
+    return familyIds.size;
+  };
+
   api.updatePlaylistTriggerBadge = function updatePlaylistTriggerBadge(shadowRoot, handle) {
     const trigger = shadowRoot?.getElementById?.('syp-trigger');
     if (!trigger) return;
 
     trigger.textContent = '+ Playlist';
 
-    const assignedCount = ((state.data?.channelPlaylists || {})[handle] || []).length;
+    const assignedCount = api.getTopLevelAssignmentCount(handle);
     if (assignedCount <= 0) return;
 
     trigger.append(document.createTextNode(' '));
@@ -364,6 +607,76 @@
         const item = cb.closest('.syp-dd-item');
         if (!playlistId || !item) return;
 
+        if (cb.checked) {
+          const subscriptionState = api.getSubscriptionState(api.getQuickAddSubscriptionScope());
+          if (subscriptionState === 'unknown') {
+            api.setPlaylistItemCheckedState(item, playlistId, false);
+            cb.checked = false;
+            api.showPageToast('Could not determine the subscription state. Reload the page and try again.', 'error');
+            return;
+          }
+          if (subscriptionState === 'unsubscribed') {
+            // Revert the optimistic check: the assignment is only saved
+            // after the explicit Subscribe & add confirmation succeeds.
+            api.setPlaylistItemCheckedState(item, playlistId, false);
+            const playlistName = state.data?.playlists?.[playlistId]?.name || 'playlist';
+            // Everything below survives awaits, so pin the initiating
+            // navigation context: a SPA navigation mid-flow must abort
+            // polling and rerendering instead of acting on the new page.
+            // The URL and handle checks matter because the router's cleanup
+            // (which bumps initGeneration) is debounced by 80ms with a
+            // 500ms poll fallback — the live scope lookup could otherwise
+            // resolve the NEXT page's subscribe control inside that window.
+            // Host identity only guards rendering: YouTube legitimately
+            // replaces the channel header after a successful subscription.
+            const startGen = state.initGeneration;
+            const startShadow = state.quickAddShadow;
+            const startHandle = handle;
+            const startHost = state.quickAddHost;
+            const startUrl = window.location.href;
+            const isActionStale = () => (
+              startGen !== state.initGeneration ||
+              state.quickAddHandle !== startHandle ||
+              window.location.href !== startUrl
+            );
+            const isUiStale = () => (
+              isActionStale() ||
+              state.quickAddShadow !== startShadow ||
+              !startHost?.isConnected
+            );
+            const scopedGetScope = () => (
+              isActionStale() ? null : api.getQuickAddSubscriptionScope()
+            );
+            api.showSubscribeConfirmRow(item, {
+              onConfirm: async (confirmButton) => {
+                await api.runSubscribeAndAssign({
+                  getScope: scopedGetScope,
+                  handle: startHandle,
+                  channelName,
+                  playlistId,
+                  playlistName,
+                  confirmButton,
+                  isStale: isActionStale
+                });
+                try {
+                  state.data = await api.sendMsg({ type: 'GET_ALL_DATA' });
+                  api.buildLookupMaps();
+                } catch (error) {
+                  api.handleActionError(error);
+                }
+                // Never render the old channel's UI into a replaced Shadow
+                // DOM; the new page owns it now.
+                if (isUiStale()) return;
+                api.renderQuickAddButton(handle, channelName);
+              },
+              onCancel: () => {
+                if (!isUiStale()) api.renderQuickAddButton(handle, channelName);
+              }
+            });
+            return;
+          }
+        }
+
         api.setPlaylistItemCheckedState(item, playlistId, cb.checked);
 
         try {
@@ -390,6 +703,8 @@
       });
     });
 
+    api.attachDropdownGroupToggles(state.quickAddShadow);
+
     api.attachInlineCreateListener(state.quickAddShadow, () => {
       api.renderQuickAddButton(handle, channelName);
     });
@@ -399,6 +714,11 @@
     if (!state.quickAddShadow) return;
     if (state.quickAddHost) state.quickAddHost.style.zIndex = state.quickAddOpen ? '9999' : '2000';
     const isDark = document.documentElement.hasAttribute('dark');
+    // When the page measured a native sibling button, match its height so
+    // the trigger aligns with YouTube's own controls.
+    const triggerHeight = Number.isFinite(state.quickAddTriggerHeightPx)
+      ? `height: ${state.quickAddTriggerHeightPx}px;`
+      : '';
 
     state.quickAddShadow.innerHTML = `
       <style>
@@ -408,6 +728,7 @@
           align-items: center;
           gap: 4px;
           padding: 8px 16px;
+          ${triggerHeight}
           border-radius: 18px;
           border: none;
           background: ${isDark ? '#272727' : '#f2f2f2'};
@@ -432,7 +753,7 @@
       </style>
       <div style="position: relative; display: inline-block;">
         <button class="syp-qa-trigger" id="syp-trigger">+ Playlist${(() => {
-          const count = ((state.data?.channelPlaylists || {})[handle] || []).length;
+          const count = api.getTopLevelAssignmentCount(handle);
           return count > 0 ? ` <span class="syp-badge">${count}</span>` : '';
         })()}</button>
         ${state.quickAddOpen ? api.renderDropdownHTML(handle) : ''}

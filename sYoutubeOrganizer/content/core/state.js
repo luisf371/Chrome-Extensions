@@ -56,11 +56,17 @@
     channelListCloseState: { handler: null, timer: null },
     filterMenuCloseState: { handler: null, timer: null },
     playlistChannels: new Map(),
+    playlistChannelsRollup: new Map(),
     allAssignedHandles: new Set(),
     subscriptionsFilterMode: 'all',
-    subscriptionsIncludePlaylistId: null,
+    // Map<topLevelPlaylistId, null | Set<checkedSubgroupId>> — null means
+    // the whole group roll-up; a non-empty Set means only those subgroups.
+    subscriptionsIncludeGroups: new Map(),
+    subscriptionsFilterRestored: false,
     subduedPlaylistIds: new Set(),
     filterMenuOpen: false,
+    filterPopupPlaylistId: null,
+    filterPopupCloseState: { handler: null, timer: null },
     filterHost: null,
     filterShadow: null,
     activeChannelListDropdown: null,
@@ -68,6 +74,8 @@
     quickAddShadow: null,
     quickAddOpen: false,
     quickAddHandle: null,
+    quickAddTriggerHeightPx: null,
+    quickAddExpandedGroups: new Set(),
     manualHomeNavigationUntil: 0
   };
 

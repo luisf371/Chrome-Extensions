@@ -67,42 +67,206 @@
 
   function resetSubscriptionsFilterState() {
     state.subscriptionsFilterMode = constants.FILTER_MODE_ALL;
-    state.subscriptionsIncludePlaylistId = null;
+    state.subscriptionsIncludeGroups = new Map();
     state.subduedPlaylistIds = new Set();
+    state.filterPopupPlaylistId = null;
   }
 
   function setAllSubscriptionsFilter() {
     resetSubscriptionsFilterState();
   }
 
+  function subgroupIdsOf(playlistId) {
+    return Object.values(state.data?.playlists || {})
+      .filter((pl) => pl.parentId === playlistId)
+      .map((pl) => pl.id);
+  }
+
+  // Read-only resolver for the checked-subgroup set a group's popup shows.
+  // The popup mirrors the parent: parent OFF -> every subgroup unchecked;
+  // parent ON (full) -> all checked; explicit subset -> exactly that set.
+  function checkedSubgroupIdsOf(playlistId) {
+    const children = subgroupIdsOf(playlistId);
+    if (state.subscriptionsFilterMode === constants.FILTER_MODE_ALL) {
+      return new Set(children);
+    }
+    if (state.subscriptionsFilterMode === constants.FILTER_MODE_EXCLUDE) {
+      if (state.subduedPlaylistIds.has(playlistId)) return new Set();
+      return new Set(children.filter((childId) => !state.subduedPlaylistIds.has(childId)));
+    }
+    if (!state.subscriptionsIncludeGroups.has(playlistId)) {
+      return new Set();
+    }
+    const selected = state.subscriptionsIncludeGroups.get(playlistId);
+    return selected === null ? new Set(children) : selected;
+  }
+
+  // Ctrl/Command+click: this group becomes the SOLE active one, reset to
+  // its whole roll-up.
   function setIncludeSubscriptionsFilter(playlistId) {
     state.subscriptionsFilterMode = constants.FILTER_MODE_INCLUDE;
-    state.subscriptionsIncludePlaylistId = playlistId;
+    state.subscriptionsIncludeGroups = new Map([[playlistId, null]]);
     state.subduedPlaylistIds = new Set();
+  }
+
+  // Plain click toggles what the bar currently shows: from All/exclude mode
+  // it turns this group off/on; from an include selection it appends/removes.
+  function toggleSubscriptionsGroup(playlistId) {
+    if (state.subscriptionsFilterMode === constants.FILTER_MODE_ALL ||
+        state.subscriptionsFilterMode === constants.FILTER_MODE_EXCLUDE) {
+      const next = new Set(state.subduedPlaylistIds);
+      const children = subgroupIdsOf(playlistId);
+      if (next.has(playlistId)) next.delete(playlistId);
+      else next.add(playlistId);
+      children.forEach((childId) => next.delete(childId));
+      setExcludedSubscriptionsFilter(next);
+      return;
+    }
+    if (state.subscriptionsIncludeGroups.has(playlistId)) {
+      state.subscriptionsIncludeGroups.delete(playlistId);
+      return;
+    }
+    if (state.subscriptionsFilterMode !== constants.FILTER_MODE_INCLUDE) {
+      state.subscriptionsFilterMode = constants.FILTER_MODE_INCLUDE;
+      state.subduedPlaylistIds = new Set();
+      state.subscriptionsIncludeGroups = new Map();
+    }
+    state.subscriptionsIncludeGroups.set(playlistId, null);
+  }
+
+  // Popup "All <group>": make this group full while preserving every other
+  // active group.
+  function setWholeGroupInclude(playlistId) {
+    if (state.subscriptionsFilterMode === constants.FILTER_MODE_ALL) return;
+    if (state.subscriptionsFilterMode === constants.FILTER_MODE_EXCLUDE) {
+      const next = new Set(state.subduedPlaylistIds);
+      next.delete(playlistId);
+      subgroupIdsOf(playlistId).forEach((childId) => next.delete(childId));
+      setExcludedSubscriptionsFilter(next);
+      return;
+    }
+    if (state.subscriptionsFilterMode !== constants.FILTER_MODE_INCLUDE) {
+      state.subscriptionsFilterMode = constants.FILTER_MODE_INCLUDE;
+      state.subduedPlaylistIds = new Set();
+      state.subscriptionsIncludeGroups = new Map();
+    }
+    state.subscriptionsIncludeGroups.set(playlistId, null);
+  }
+
+  // Popup subgroup toggle — symmetric with what the popup shows: the
+  // checkbox reflects current inclusion, so clicking flips it. Checking a
+  // subgroup of an OFF parent activates that parent with exactly the
+  // checked subgroups; unchecking under an ON parent narrows it. Even every
+  // checked child stays an explicit subset so parent-direct items stay off.
+  function toggleIncludedSubgroup(parentId, childId) {
+    const children = subgroupIdsOf(parentId);
+    if (state.subscriptionsFilterMode === constants.FILTER_MODE_ALL) {
+      toggleExcludedSubscriptionsFilter(childId);
+      return;
+    }
+    if (state.subscriptionsFilterMode === constants.FILTER_MODE_EXCLUDE) {
+      const next = new Set(state.subduedPlaylistIds);
+      if (next.has(parentId)) {
+        next.delete(parentId);
+        children.forEach((id) => {
+          if (id === childId) next.delete(id);
+          else next.add(id);
+        });
+      } else if (next.has(childId)) {
+        next.delete(childId);
+      } else {
+        next.add(childId);
+      }
+      setExcludedSubscriptionsFilter(next);
+      return;
+    }
+    if (state.subscriptionsFilterMode !== constants.FILTER_MODE_INCLUDE) {
+      state.subscriptionsFilterMode = constants.FILTER_MODE_INCLUDE;
+      state.subduedPlaylistIds = new Set();
+      state.subscriptionsIncludeGroups = new Map();
+    }
+    const current = state.subscriptionsIncludeGroups.get(parentId);
+    const selected = current === null ? new Set(children) : new Set(current || []);
+    if (selected.has(childId)) selected.delete(childId);
+    else selected.add(childId);
+    if (selected.size === 0) state.subscriptionsIncludeGroups.delete(parentId);
+    else state.subscriptionsIncludeGroups.set(parentId, selected);
+  }
+
+  function closeFilterPopup({ render = true } = {}) {
+    if (!state.filterPopupPlaylistId) {
+      api.clearDocumentCloseListener(state.filterPopupCloseState);
+      return;
+    }
+    state.filterPopupPlaylistId = null;
+    api.clearDocumentCloseListener(state.filterPopupCloseState);
+    if (render) renderFilterBar();
+  }
+
+  function armFilterPopupClose() {
+    const closeHandler = (event) => {
+      const path = event.composedPath();
+      if (state.filterHost && path.includes(state.filterHost)) return;
+      closeFilterPopup();
+    };
+    api.armDocumentCloseListener(state.filterPopupCloseState, closeHandler);
+    armFilterPopupScrollClose();
+  }
+
+  // Page or chip-strip scrolling closes the popup; scrolling INSIDE the
+  // popup (long subgroup lists) must not. Resize re-anchors nothing, so it
+  // closes too.
+  let filterPopupScrollCloseArmed = false;
+  function armFilterPopupScrollClose() {
+    if (filterPopupScrollCloseArmed) return;
+    filterPopupScrollCloseArmed = true;
+    window.addEventListener('scroll', (event) => {
+      if (!state.filterPopupPlaylistId) return;
+      const pop = state.filterShadow?.querySelector('.syp-pop');
+      if (pop && event.target && pop.contains(event.target)) return;
+      closeFilterPopup();
+    }, true);
+    window.addEventListener('resize', () => {
+      if (state.filterPopupPlaylistId) closeFilterPopup();
+    });
+  }
+
+  // The popup lives at the .syp-bar level (position:sticky, so a valid
+  // containing block that nothing clips); only its horizontal offset is
+  // computed, from the expand button, on every render.
+  function placeFilterPopup() {
+    const pop = state.filterShadow?.querySelector('.syp-pop');
+    if (!pop) return;
+    const btn = state.filterShadow.querySelector(`[data-expand="${state.filterPopupPlaylistId}"]`);
+    const bar = state.filterShadow.querySelector('.syp-bar');
+    if (!btn || !bar) return;
+    const left = btn.getBoundingClientRect().left - bar.getBoundingClientRect().left;
+    const maxLeft = Math.max(0, bar.clientWidth - pop.offsetWidth - 8);
+    pop.style.left = `${Math.round(Math.max(0, Math.min(left, maxLeft)))}px`;
   }
 
   function setUncategorizedSubscriptionsFilter() {
     state.subscriptionsFilterMode = constants.FILTER_MODE_UNCATEGORIZED;
-    state.subscriptionsIncludePlaylistId = null;
+    state.subscriptionsIncludeGroups = new Map();
     state.subduedPlaylistIds = new Set();
   }
 
-  function toggleExcludedSubscriptionsFilter(playlistId) {
-    const next = new Set(state.subduedPlaylistIds);
-    if (next.has(playlistId)) {
-      next.delete(playlistId);
-    } else {
-      next.add(playlistId);
-    }
-
+  function setExcludedSubscriptionsFilter(next) {
     if (next.size === 0) {
       setAllSubscriptionsFilter();
       return;
     }
 
     state.subscriptionsFilterMode = constants.FILTER_MODE_EXCLUDE;
-    state.subscriptionsIncludePlaylistId = null;
+    state.subscriptionsIncludeGroups = new Map();
     state.subduedPlaylistIds = next;
+  }
+
+  function toggleExcludedSubscriptionsFilter(playlistId) {
+    const next = new Set(state.subduedPlaylistIds);
+    if (next.has(playlistId)) next.delete(playlistId);
+    else next.add(playlistId);
+    setExcludedSubscriptionsFilter(next);
   }
 
   function hasActiveSubscriptionsFilter() {
@@ -117,10 +281,24 @@
 
   function getCurrentSubscriptionsPreference() {
     if (state.subscriptionsFilterMode === constants.FILTER_MODE_INCLUDE) {
-      if (!state.subscriptionsIncludePlaylistId || !state.data?.playlists?.[state.subscriptionsIncludePlaylistId]) return null;
+      const playlists = state.data?.playlists || {};
+      const entries = [];
+      for (const [parentId, selected] of state.subscriptionsIncludeGroups) {
+        if (!playlists[parentId]) continue;
+        if (selected === null) {
+          entries.push({ activePlaylistId: parentId });
+          continue;
+        }
+        const children = subgroupIdsOf(parentId);
+        const included = Array.from(selected)
+          .filter((playlistId) => children.includes(playlistId))
+          .sort();
+        entries.push({ activePlaylistId: parentId, includedPlaylistIds: included });
+      }
+      entries.sort((a, b) => (playlists[a.activePlaylistId].order || 0) - (playlists[b.activePlaylistId].order || 0));
       return {
         mode: constants.FILTER_MODE_INCLUDE,
-        activePlaylistId: state.subscriptionsIncludePlaylistId,
+        includeGroups: entries,
         excludedPlaylistIds: []
       };
     }
@@ -128,7 +306,7 @@
     if (state.subscriptionsFilterMode === constants.FILTER_MODE_UNCATEGORIZED) {
       return {
         mode: constants.FILTER_MODE_UNCATEGORIZED,
-        activePlaylistId: null,
+        includeGroups: [],
         excludedPlaylistIds: []
       };
     }
@@ -139,7 +317,7 @@
       if (excludedPlaylistIds.length === 0) return null;
       return {
         mode: constants.FILTER_MODE_EXCLUDE,
-        activePlaylistId: null,
+        includeGroups: [],
         excludedPlaylistIds
       };
     }
@@ -150,16 +328,64 @@
   function normalizeSubscriptionsFilterPreference(preference) {
     if (!preference || typeof preference !== 'object') return null;
 
-    const validPlaylistIds = new Set(Object.keys(state.data?.playlists || {}));
+    const playlists = state.data?.playlists || {};
+    const validPlaylistIds = new Set(Object.keys(playlists));
 
-    if (preference.mode === constants.FILTER_MODE_INCLUDE) {
-      const activePlaylistId = typeof preference.activePlaylistId === 'string'
-        ? preference.activePlaylistId
-        : null;
-      if (!activePlaylistId || !validPlaylistIds.has(activePlaylistId)) return null;
+    if (preference.mode === constants.FILTER_MODE_INCLUDE ||
+        (!preference.mode && typeof preference.activePlaylistId === 'string')) {
+      // Accept the canonical multi-group shape and every legacy single-group
+      // shape ({activePlaylistId, includedPlaylistIds?}, subgroup-as-active,
+      // pre-popup bare saves). Absent includedPlaylistIds = whole group; an
+      // empty list means no subgroup selection.
+      const rawGroups = Array.isArray(preference.includeGroups)
+        ? preference.includeGroups
+        : [preference];
+
+      const merged = new Map();
+      for (const group of rawGroups) {
+        if (!group || typeof group.activePlaylistId !== 'string') continue;
+        let parentId = group.activePlaylistId;
+        if (!validPlaylistIds.has(parentId)) continue;
+
+        let included = null;
+        if (playlists[parentId]?.parentId) {
+          // Legacy: a subgroup saved as the active playlist becomes its
+          // parent with only that subgroup checked.
+          included = new Set([parentId]);
+          parentId = playlists[parentId].parentId;
+        } else if (Array.isArray(group.includedPlaylistIds)) {
+          included = new Set(group.includedPlaylistIds.filter((playlistId) => (
+            typeof playlistId === 'string' &&
+            playlists[playlistId]?.parentId === parentId
+          )));
+        }
+
+        const existing = merged.get(parentId);
+        if (existing === undefined) {
+          merged.set(parentId, included);
+        } else if (existing !== null && included !== null) {
+          included.forEach((id) => existing.add(id));
+        } else {
+          // A whole-group entry dominates an explicit subset.
+          merged.set(parentId, null);
+        }
+      }
+
+      // An explicitly empty canonical list means "show no groups". Invalid
+      // non-empty/legacy shapes still fall back to All instead of hiding the
+      // feed unexpectedly.
+      if (merged.size === 0 && rawGroups.length > 0) return null;
+      const includeGroups = Array.from(merged.entries())
+        .filter(([, selected]) => selected === null || selected.size > 0)
+        .map(([activePlaylistId, selected]) => (
+          selected === null
+            ? { activePlaylistId }
+            : { activePlaylistId, includedPlaylistIds: Array.from(selected).sort() }
+        ))
+        .sort((a, b) => (playlists[a.activePlaylistId].order || 0) - (playlists[b.activePlaylistId].order || 0));
       return {
         mode: constants.FILTER_MODE_INCLUDE,
-        activePlaylistId,
+        includeGroups,
         excludedPlaylistIds: []
       };
     }
@@ -167,7 +393,7 @@
     if (preference.mode === constants.FILTER_MODE_UNCATEGORIZED) {
       return {
         mode: constants.FILTER_MODE_UNCATEGORIZED,
-        activePlaylistId: null,
+        includeGroups: [],
         excludedPlaylistIds: []
       };
     }
@@ -181,7 +407,7 @@
       if (excludedPlaylistIds.length === 0) return null;
       return {
         mode: constants.FILTER_MODE_EXCLUDE,
-        activePlaylistId: null,
+        includeGroups: [],
         excludedPlaylistIds
       };
     }
@@ -196,7 +422,20 @@
     }
 
     if (preference.mode === constants.FILTER_MODE_INCLUDE) {
-      setIncludeSubscriptionsFilter(preference.activePlaylistId);
+      const map = new Map();
+      for (const group of preference.includeGroups) {
+        const parentId = group.activePlaylistId;
+        if (!Array.isArray(group.includedPlaylistIds)) {
+          map.set(parentId, null);
+          continue;
+        }
+        const children = subgroupIdsOf(parentId);
+        const set = new Set(children.filter((id) => group.includedPlaylistIds.includes(id)));
+        if (set.size > 0) map.set(parentId, set);
+      }
+      state.subscriptionsFilterMode = constants.FILTER_MODE_INCLUDE;
+      state.subscriptionsIncludeGroups = map;
+      state.subduedPlaylistIds = new Set();
       return;
     }
 
@@ -207,7 +446,7 @@
 
     if (preference.mode === constants.FILTER_MODE_EXCLUDE) {
       state.subscriptionsFilterMode = constants.FILTER_MODE_EXCLUDE;
-      state.subscriptionsIncludePlaylistId = null;
+      state.subscriptionsIncludeGroups = new Map();
       state.subduedPlaylistIds = new Set(preference.excludedPlaylistIds);
       return;
     }
@@ -220,12 +459,49 @@
   }
 
   function syncSubscriptionsFilterState() {
-    const validPlaylistIds = new Set(Object.keys(state.data?.playlists || {}));
+    const playlists = state.data?.playlists || {};
+    const validPlaylistIds = new Set(Object.keys(playlists));
 
     if (state.subscriptionsFilterMode === constants.FILTER_MODE_INCLUDE) {
-      if (!state.subscriptionsIncludePlaylistId || !validPlaylistIds.has(state.subscriptionsIncludePlaylistId)) {
-        setAllSubscriptionsFilter();
+      // Prune deleted groups and stale subgroup ids. A null (whole-group)
+      // entry stays null so subgroups created later are included
+      // automatically. A group moved under another parent converts to a
+      // checked child of its new parent; deleting a parent simply drops it
+      // (promoted children are not auto-activated).
+      //
+      // Two passes, in order: moved playlists must MERGE into the
+      // destination's own surviving entry — processing moves inline let a
+      // later destination entry overwrite an earlier merge, silently
+      // dropping the moved playlist depending on map insertion order.
+      const next = new Map();
+      const movedChildIds = [];
+      for (const [parentId, selected] of state.subscriptionsIncludeGroups) {
+        const playlist = playlists[parentId];
+        if (!playlist) continue;
+        if (playlist.parentId) {
+          movedChildIds.push(parentId);
+          continue;
+        }
+        if (selected === null) {
+          next.set(parentId, null);
+          continue;
+        }
+        const children = subgroupIdsOf(parentId);
+        const pruned = new Set(Array.from(selected).filter((id) => children.includes(id)));
+        if (pruned.size > 0) next.set(parentId, pruned);
       }
+      for (const childId of movedChildIds) {
+        const destination = playlists[childId].parentId;
+        const existing = next.get(destination);
+        if (existing === undefined) {
+          next.set(destination, new Set([childId]));
+        } else if (existing !== null) {
+          existing.add(childId);
+        }
+        // A null (whole-group) destination dominates: the moved child is
+        // already included.
+      }
+      state.subscriptionsIncludeGroups = next;
       return;
     }
 
@@ -240,7 +516,7 @@
     }
 
     if (state.subscriptionsFilterMode === constants.FILTER_MODE_UNCATEGORIZED) {
-      state.subscriptionsIncludePlaylistId = null;
+      state.subscriptionsIncludeGroups = new Map();
       state.subduedPlaylistIds = new Set();
       return;
     }
@@ -287,7 +563,17 @@
     };
     const mountParent = await api.waitForElement(mountReady);
     if (!mountParent || gen !== state.initGeneration) return;
-    restoreSavedSubscriptionsPreference();
+    // Hydrate from the saved preference only ONCE per tab session — later
+    // re-inits (SPA churn) must continue from the live state, not replay
+    // the save over the user's in-session toggles. Sync ALWAYS runs after:
+    // playlist data may have changed while this tab sat on another page
+    // (DATA_CHANGED only routes here when subscriptions is current), and a
+    // stale deleted group in the map would empty the feed.
+    if (!state.subscriptionsFilterRestored) {
+      state.subscriptionsFilterRestored = true;
+      restoreSavedSubscriptionsPreference();
+    }
+    syncSubscriptionsFilterState();
     if (!injectFilterBar()) return;
     applySectionVisibility();
     const filterResult = applyFilter();
@@ -369,9 +655,50 @@
     if (!state.filterShadow || !state.data) return;
 
     const isDark = document.documentElement.hasAttribute('dark');
-    const playlists = Object.values(state.data.playlists || {}).sort((a, b) => a.order - b.order);
+    // The bar shows top-level groups only. A group with subgroups gets an
+    // expand segment that opens a popup for toggling individual subgroups;
+    // clicking the main listing itself filters on the whole group (union).
+    const playlistsByOrder = Object.values(state.data.playlists || {}).sort((a, b) => a.order - b.order);
+    const topPlaylists = playlistsByOrder.filter((pl) => !pl.parentId || !state.data.playlists[pl.parentId]);
+    const childrenOf = (playlistId) => playlistsByOrder.filter((pl) => pl.parentId === playlistId);
+    const caretSvg = '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l5 4-5 4"/></svg>';
     const savedPreference = getSavedSubscriptionsPreference();
 
+    const checkSvg = '<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5L4.2 7.5L8 3"/></svg>';
+    const mixedSvg = '<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 5h6"/></svg>';
+    const checkHTML = (checked, color) => `<span class="syp-pop-check"${checked ? ` style="background:${color};border-color:transparent;"` : ''}>${checked === 'mixed' ? mixedSvg : checkSvg}</span>`;
+
+    const popupHTML = (pl, children) => {
+      const subset = checkedSubgroupIdsOf(pl.id);
+      const includeSelection = state.subscriptionsIncludeGroups.get(pl.id);
+      const isAllOn = state.subscriptionsFilterMode === constants.FILTER_MODE_ALL ||
+        (state.subscriptionsFilterMode === constants.FILTER_MODE_EXCLUDE &&
+          !state.subduedPlaylistIds.has(pl.id) &&
+          children.every((child) => !state.subduedPlaylistIds.has(child.id))) ||
+        (state.subscriptionsFilterMode === constants.FILTER_MODE_INCLUDE && includeSelection === null);
+      const parentChecked = isAllOn ? true : subset.size > 0 ? 'mixed' : false;
+      const isExcluded = (playlistId) => (
+        state.subscriptionsFilterMode === constants.FILTER_MODE_EXCLUDE &&
+        state.subduedPlaylistIds.has(playlistId)
+      );
+      const rows = children.map((child) => {
+        const on = subset.has(child.id);
+        const childCount = state.playlistChannels.get(child.id)?.size || 0;
+        const excluded = isExcluded(child.id);
+        return `<button type="button" role="menuitemcheckbox" aria-checked="${on}" class="syp-pop-item ${on ? 'on' : ''}${excluded ? ' syp-pop-item--excluded' : ''}" data-pop-playlist="${child.id}" data-pop-parent="${pl.id}" title="Click to toggle this subgroup. Ctrl/Command+Click to hide it.">
+          ${checkHTML(on, child.color)}<span class="syp-pop-name">${api.escapeHtml(child.name)}</span><span class="syp-count">${childCount}</span>
+        </button>`;
+      }).join('');
+      const groupCount = state.playlistChannelsRollup.get(pl.id)?.size || 0;
+      return `<div class="syp-pop" role="menu">
+        <button type="button" role="menuitemcheckbox" aria-checked="${parentChecked}" class="syp-pop-item ${isAllOn ? 'on' : parentChecked === 'mixed' ? 'partial' : ''}" data-pop-all="${pl.id}" title="Show the whole group including all subgroups">
+          ${checkHTML(parentChecked, pl.color)}<span class="syp-pop-name">All ${api.escapeHtml(pl.name)}</span><span class="syp-count">${groupCount}</span>
+        </button>
+        ${rows}
+      </div>`;
+    };
+
+    let openPopupHTML = '';
     state.filterShadow.innerHTML = `
       <style>
         :host { display: block; }
@@ -420,9 +747,27 @@
         .syp-btn:hover {
           background: ${isDark ? '#3a3a3a' : '#e0e0e0'};
         }
-        .syp-btn.active {
-          background: ${isDark ? '#f1f1f1' : '#0f0f0f'};
-          color: ${isDark ? '#0f0f0f' : '#f1f1f1'};
+        /* Toggled-ON groups render as the normal chip (no special active
+        style); groups that are OFF while a selection exists get the
+        subdued dim. A PARTIAL group (on, but with some subgroups
+        unchecked) gets a third, accent-tinted state. Excluded
+        (ctrl-hidden) keeps the 50% subdued look. */
+        .syp-btn.off,
+        .syp-btn-group .syp-btn-main.off + .syp-btn-expand {
+          background: ${isDark ? '#1d1d1d' : '#ebebeb'};
+          color: ${isDark ? '#b9b9b9' : '#5b5b5b'};
+        }
+        .syp-btn.partial,
+        .syp-btn-group .syp-btn-main.partial + .syp-btn-expand {
+          background: ${isDark ? '#2d3a49' : '#d7e5f4'};
+          color: ${isDark ? '#8ab4f8' : '#065fd4'};
+        }
+        /* The mode switches (All / Uncategorized) keep a selected state in
+        the same accent language; group toggles deliberately stay plain. */
+        .syp-btn[data-action="all"].active,
+        .syp-btn[data-action="uncategorized"].active {
+          background: ${isDark ? '#2d3a49' : '#d7e5f4'};
+          color: ${isDark ? '#8ab4f8' : '#065fd4'};
         }
         .syp-btn.subdued {
           opacity: 0.5;
@@ -441,6 +786,120 @@
         .syp-btn .syp-count {
           font-size: 12px;
           opacity: 0.7;
+        }
+        .syp-btn-group {
+          display: inline-flex;
+          align-items: stretch;
+          position: relative;
+        }
+        .syp-btn-group .syp-btn-main {
+          border-radius: 8px 0 0 8px;
+        }
+        .syp-btn-group .syp-btn-main:hover {
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+        }
+        .syp-btn-group .syp-btn-expand {
+          border-radius: 0 8px 8px 0;
+          padding: 6px 10px;
+          position: relative;
+          border-left: 1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'};
+        }
+        .syp-btn-group .syp-btn-expand.open {
+          background: ${isDark ? '#3a3a3a' : '#e0e0e0'};
+        }
+        .syp-btn-group .syp-btn-expand svg {
+          width: 13px;
+          height: 13px;
+          display: block;
+          transition: transform 0.15s ease;
+        }
+        .syp-btn-group .syp-btn-expand.open svg {
+          transform: rotate(90deg);
+        }
+        .syp-btn-group .syp-btn-expand.subset::after {
+          content: '';
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: ${isDark ? '#8ab4f8' : '#065fd4'};
+        }
+        /* Anchored to the sticky bar (not the scrolling chip strip): the
+           strip's overflow-x would clip it vertically. Left is set by JS. */
+        .syp-pop {
+          position: absolute;
+          top: calc(100% + 6px);
+          left: 0;
+          z-index: 20;
+          min-width: 220px;
+          max-width: 280px;
+          max-height: min(420px, 60vh);
+          overflow-y: auto;
+          padding: 6px;
+          border-radius: 12px;
+          border: 1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'};
+          background: ${isDark ? '#1f1f1f' : '#ffffff'};
+          box-shadow: ${isDark
+        ? '0 18px 40px rgba(0,0,0,0.45)'
+        : '0 18px 40px rgba(0,0,0,0.14)'};
+        }
+        .syp-pop-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          width: 100%;
+          text-align: left;
+          padding: 8px 10px;
+          border: none;
+          border-radius: 8px;
+          background: transparent;
+          color: ${isDark ? '#f1f1f1' : '#0f0f0f'};
+          font-family: inherit;
+          font-size: 13px;
+          white-space: nowrap;
+          cursor: pointer;
+        }
+        .syp-pop-item:hover {
+          background: ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'};
+        }
+        .syp-pop-item.on,
+        .syp-pop-item.partial {
+          background: ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'};
+        }
+        .syp-pop-check {
+          width: 16px;
+          height: 16px;
+          border-radius: 5px;
+          border: 1.5px solid ${isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'};
+          display: grid;
+          place-items: center;
+          flex-shrink: 0;
+        }
+        .syp-pop-check svg {
+          width: 9px;
+          height: 9px;
+          opacity: 0;
+        }
+        .syp-pop-item.on .syp-pop-check svg,
+        .syp-pop-item.partial .syp-pop-check svg {
+          opacity: 1;
+        }
+        .syp-pop-name {
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .syp-pop-item .syp-count {
+          margin-left: auto;
+          font-size: 11px;
+          opacity: 0.7;
+        }
+        .syp-pop-item--excluded {
+          opacity: 0.5;
+          color: ${isDark ? '#b9b9b9' : '#5b5b5b'};
         }
         .syp-menu-wrap {
           margin-left: auto;
@@ -508,21 +967,65 @@
               class="syp-btn ${state.subscriptionsFilterMode === constants.FILTER_MODE_ALL ? 'active' : ''}"
               data-action="all"
             >All</button>
-            ${playlists.map((pl) => {
-          const count = state.playlistChannels.get(pl.id)?.size || 0;
-          const isActive = state.subscriptionsFilterMode === constants.FILTER_MODE_INCLUDE && state.subscriptionsIncludePlaylistId === pl.id;
-          const isSubdued = state.subscriptionsFilterMode === constants.FILTER_MODE_EXCLUDE && state.subduedPlaylistIds.has(pl.id);
-          return `<button
-                type="button"
-                class="syp-btn ${isActive ? 'active' : ''} ${isSubdued ? 'subdued' : ''}"
-                data-playlist="${pl.id}"
-                title="Click to show only this playlist. Ctrl/Command+Click to hide it."
-              >
-                <span class="syp-dot" style="background:${pl.color}"></span>
-                ${api.escapeHtml(pl.name)}
-                <span class="syp-count">${count}</span>
-              </button>`;
-        }).join('')}
+            ${(() => {
+          let openPopup = '';
+          const html = topPlaylists.map((pl) => {
+            const children = childrenOf(pl.id);
+            const count = state.playlistChannelsRollup.get(pl.id)?.size || 0;
+            const isParentExcluded = state.subscriptionsFilterMode === constants.FILTER_MODE_EXCLUDE &&
+              state.subduedPlaylistIds.has(pl.id);
+            const isActive = state.subscriptionsFilterMode === constants.FILTER_MODE_ALL ||
+              (state.subscriptionsFilterMode === constants.FILTER_MODE_EXCLUDE && !isParentExcluded) ||
+              (state.subscriptionsFilterMode === constants.FILTER_MODE_INCLUDE && state.subscriptionsIncludeGroups.has(pl.id));
+            const includeSelection = state.subscriptionsIncludeGroups.get(pl.id);
+            const isPartial = isActive && children.length > 0 && (
+              (state.subscriptionsFilterMode === constants.FILTER_MODE_INCLUDE && includeSelection !== null) ||
+              (state.subscriptionsFilterMode === constants.FILTER_MODE_EXCLUDE &&
+                children.some((child) => state.subduedPlaylistIds.has(child.id)))
+            );
+            const mainClasses = ['syp-btn'];
+            if (isActive) mainClasses.push('active');
+            if (isParentExcluded) mainClasses.push('subdued');
+            if (children.length > 0) mainClasses.push('syp-btn-main');
+            // While an include selection exists, unselected groups dim —
+            // the subdued look marks OFF, not ON. A partial group (on with
+            // unchecked subgroups) shows the accent-tinted third state.
+            if (isPartial) mainClasses.push('partial');
+            else if (state.subscriptionsFilterMode === constants.FILTER_MODE_INCLUDE && !isActive) mainClasses.push('off');
+            const mainBtn = `<button
+                  type="button"
+                  class="${mainClasses.join(' ')}"
+                  data-playlist="${pl.id}"
+                  aria-pressed="${isPartial ? 'mixed' : isActive}"
+                  title="Click to toggle this playlist. Ctrl/Command+Click to show only this one."
+                >
+                  <span class="syp-dot" style="background:${pl.color}"></span>
+                  ${api.escapeHtml(pl.name)}
+                  <span class="syp-count">${count}</span>
+                </button>`;
+            if (children.length === 0) return mainBtn;
+
+            const popupOpen = state.filterPopupPlaylistId === pl.id;
+            const hasSubset = isPartial;
+            if (popupOpen) openPopup = popupHTML(pl, children);
+            return `<div class="syp-btn-group">
+                ${mainBtn}
+                <button
+                  type="button"
+                  class="syp-btn syp-btn-expand${popupOpen ? ' open' : ''}${hasSubset ? ' subset' : ''}"
+                  data-expand="${pl.id}"
+                  aria-haspopup="menu"
+                  aria-expanded="${popupOpen}"
+                  title="Toggle subgroups"
+                >${caretSvg}</button>
+              </div>`;
+          }).join('');
+          // The popup is rendered at the .syp-bar level, NOT inside the
+          // horizontally-scrolling chip strip — the strip's overflow-x clips
+          // absolutely positioned children vertically.
+          openPopupHTML = openPopup;
+          return html;
+        })()}
             <button
               type="button"
               class="syp-btn ${state.subscriptionsFilterMode === constants.FILTER_MODE_UNCATEGORIZED ? 'active' : ''}"
@@ -552,6 +1055,7 @@
             ` : ''}
           </div>
         </div>
+        ${openPopupHTML}
       </div>
     `;
 
@@ -559,6 +1063,7 @@
       btn.addEventListener('click', () => {
         setAllSubscriptionsFilter();
         state.filterMenuOpen = false;
+        closeFilterPopup({ render: false });
         renderFilterBar();
         applyFilter();
       });
@@ -568,21 +1073,85 @@
       btn.addEventListener('click', (event) => {
         const playlistId = btn.dataset.playlist;
         if (!playlistId) return;
+        // Plain click toggles the group's current on/off state;
+        // Ctrl/Command+click makes it the only active one.
         if (event.ctrlKey || event.metaKey) {
-          toggleExcludedSubscriptionsFilter(playlistId);
-        } else {
           setIncludeSubscriptionsFilter(playlistId);
+        } else {
+          toggleSubscriptionsGroup(playlistId);
         }
         state.filterMenuOpen = false;
+        closeFilterPopup({ render: false });
         renderFilterBar();
         applyFilter();
       });
     });
 
+    // Expand segment: opens the subgroup popup for that group.
+    state.filterShadow.querySelectorAll('[data-expand]').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const playlistId = btn.dataset.expand;
+        // Opening a popup is a pure UI operation: it mirrors the group's
+        // current state (OFF parent -> all subgroups unchecked) without
+        // touching the include map.
+        const opening = state.filterPopupPlaylistId !== playlistId;
+        state.filterPopupPlaylistId = opening ? playlistId : null;
+        renderFilterBar();
+        if (opening) armFilterPopupClose();
+        else api.clearDocumentCloseListener(state.filterPopupCloseState);
+      });
+    });
+
+    // "All <group>": re-checks every subgroup of that group while keeping
+    // any other active groups intact.
+    state.filterShadow.querySelectorAll('[data-pop-all]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        setWholeGroupInclude(btn.dataset.popAll);
+        renderFilterBar();
+        applyFilter();
+      });
+    });
+
+    // Subgroup toggles: plain click narrows the include filter (multiple
+    // toggles union); Ctrl/Command+Click hides that subgroup instead.
+    state.filterShadow.querySelectorAll('[data-pop-playlist]').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        const childId = btn.dataset.popPlaylist;
+        const parentId = btn.dataset.popParent;
+        if (event.ctrlKey || event.metaKey) {
+          toggleExcludedSubscriptionsFilter(childId);
+          state.filterPopupPlaylistId = null;
+          api.clearDocumentCloseListener(state.filterPopupCloseState);
+          renderFilterBar();
+          applyFilter();
+          return;
+        }
+        toggleIncludedSubgroup(parentId, childId);
+        renderFilterBar();
+        applyFilter();
+      });
+    });
+
+    const popup = state.filterShadow.querySelector('.syp-pop');
+    if (popup) {
+      popup.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        closeFilterPopup();
+      });
+      popup.querySelector('.syp-pop-item')?.focus();
+      armFilterPopupClose();
+      placeFilterPopup();
+    } else {
+      api.clearDocumentCloseListener(state.filterPopupCloseState);
+    }
+
     state.filterShadow.querySelectorAll('[data-action="uncategorized"]').forEach((btn) => {
       btn.addEventListener('click', () => {
         setUncategorizedSubscriptionsFilter();
         state.filterMenuOpen = false;
+        closeFilterPopup({ render: false });
         renderFilterBar();
         applyFilter();
       });
@@ -592,6 +1161,7 @@
       btn.addEventListener('click', (event) => {
         event.stopPropagation();
         state.filterMenuOpen = !state.filterMenuOpen;
+        if (state.filterMenuOpen) closeFilterPopup({ render: false });
         renderFilterBar();
       });
     });
@@ -665,11 +1235,22 @@
     let allowedHandles = null;
     let excludedHandles = null;
     if (state.subscriptionsFilterMode === constants.FILTER_MODE_INCLUDE) {
-      allowedHandles = state.playlistChannels.get(state.subscriptionsIncludePlaylistId) || new Set();
+      // Whole parents use their roll-up; explicit subsets use only the
+      // checked subgroup channel sets.
+      allowedHandles = new Set();
+      for (const [parentId, selected] of state.subscriptionsIncludeGroups) {
+        if (selected === null) {
+          (state.playlistChannelsRollup.get(parentId) || []).forEach((handle) => allowedHandles.add(handle));
+          continue;
+        }
+        selected.forEach((childId) => {
+          (state.playlistChannels.get(childId) || []).forEach((handle) => allowedHandles.add(handle));
+        });
+      }
     } else if (state.subscriptionsFilterMode === constants.FILTER_MODE_EXCLUDE) {
       excludedHandles = new Set();
       state.subduedPlaylistIds.forEach((playlistId) => {
-        const handles = state.playlistChannels.get(playlistId);
+        const handles = state.playlistChannelsRollup.get(playlistId);
         if (!handles) return;
         handles.forEach((handle) => excludedHandles.add(handle));
       });
@@ -757,6 +1338,5 @@
       const filterResult = applyFilter();
       scheduleSubscriptionsFilterRetry(state.initGeneration, filterResult.unresolvedCount);
     },
-    resetState: resetSubscriptionsFilterState
   };
 })();

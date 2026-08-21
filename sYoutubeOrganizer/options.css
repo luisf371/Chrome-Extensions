@@ -45,17 +45,24 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   padding: 14px;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
 }
 
-/* Container - Wide tier */
+/* Container - Wide tier, locked to the viewport: the page itself never
+   scrolls; the left and right panels scroll internally instead. */
 .container {
   width: 95%;
   max-width: 990px;
+  height: 90vh;
   margin: 0 auto;
   background: var(--bg-secondary);
   border-radius: 6px;
   border: 1px solid var(--border);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header */
@@ -78,14 +85,35 @@ header h1 {
 /* Main */
 main {
   padding: 14px 17px;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Split Layout */
 .split-layout {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 300px 1fr;
   gap: 14px;
-  min-height: 500px;
+  min-height: 300px;
+  flex: 1 1 auto;
+}
+
+@media (min-width: 769px) {
+  .split-layout > .panel {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .split-layout > .panel::-webkit-scrollbar { width: 8px; }
+  .split-layout > .panel::-webkit-scrollbar-track { background: transparent; }
+  .split-layout > .panel::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
+  .split-layout > .panel::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 }
 
 /* Panels */
@@ -157,11 +185,16 @@ main {
 }
 
 .btn-add {
-  font-size: 18px;
-  padding: 4px 12px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 16px;
   line-height: 1;
   color: var(--accent);
-  font-weight: 700;
+  font-weight: 600;
+  border-radius: 5px;
 }
 
 .btn-sm {
@@ -224,8 +257,6 @@ input:focus {
 
 .list-item.active {
   background: var(--bg-input);
-  border-left: 3px solid var(--accent);
-  padding-left: 7px;
 }
 
 .list-item .item-dot {
@@ -268,6 +299,7 @@ input:focus {
 
 /* Channel items */
 .channel-list .list-item {
+  position: relative;
   cursor: default;
 }
 
@@ -325,22 +357,666 @@ input:focus {
   min-height: 80px;
 }
 
-/* Drag handle */
-.drag-handle {
-  cursor: grab;
+/* --- Left sidebar: playlist tree ---
+   The hierarchy is drawn as an outline: subgroups hang off a guide rail
+   with a tick into each row, and each playlist's color appears as a small
+   spine mark. Affordances (drag handle, actions) stay hidden until the row
+   is hovered or focused. */
+:root { --tree-guide: rgba(255, 255, 255, 0.10); }
+[data-theme="light"] { --tree-guide: rgba(0, 0, 0, 0.14); }
+
+.playlist-list .list-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 6px;
+  transition: background 0.12s ease;
+}
+
+.playlist-list .list-item:hover {
+  background: var(--bg-input);
+}
+
+.playlist-list .list-item.active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.playlist-list .uncategorized-item {
+  order: 1;
+  margin-top: 6px;
+}
+
+.playlist-list .uncategorized-item::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: var(--border);
+}
+
+.playlist-list .uncategorized-item .item-name {
+  flex: 0 1 auto;
+}
+
+.playlist-list .uncategorized-item .item-count {
+  margin-left: auto;
+}
+
+.uncategorized-spine {
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--text-muted) 0 3px,
+    transparent 3px 5px
+  );
+}
+
+.built-in-pill {
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
   color: var(--text-muted);
-  font-size: 14px;
-  user-select: none;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
-.drag-handle:active {
-  cursor: grabbing;
+.playlist-list .list-item .item-name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-.list-item.dragging {
+.playlist-list .list-item .item-count {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  min-width: 2ch;
+  text-align: right;
+}
+
+.playlist-list .sub-item {
+  height: 28px;
+  padding-left: 41px;
+}
+
+/* The guide rail drops from under the parent's spine; the tick leads
+   straight into the subgroup's own spine and text — no dead gap between
+   the line and the content. */
+.playlist-list .sub-item::before {
+  content: '';
+  position: absolute;
+  left: 33px;
+  /* Extend up over the 2px list gap so the rail reads as one continuous
+     line dropping from the parent row. */
+  top: -2px;
+  bottom: 0;
+  width: 1px;
+  background: var(--tree-guide);
+}
+
+.playlist-list .sub-item::after {
+  content: '';
+  position: absolute;
+  left: 33px;
+  top: 50%;
+  width: 8px;
+  height: 1px;
+  background: var(--tree-guide);
+}
+
+.playlist-list .sub-item .item-name {
+  font-size: 12.5px;
+  font-weight: 450;
+  color: var(--text-secondary);
+}
+
+.playlist-list .sub-item:hover .item-name,
+.playlist-list .sub-item.active .item-name {
+  color: var(--text-primary);
+}
+
+.playlist-list .list-item[draggable="true"] {
+  cursor: grab;
+}
+
+.playlist-list .list-item.dragging {
   opacity: 0.55;
   background: var(--bg-input);
   cursor: grabbing;
+}
+
+.spine {
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.playlist-list .sub-item .spine {
+  width: 3px;
+  height: 12px;
+  opacity: 0.9;
+}
+
+.chevron {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+
+.chevron svg {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.15s ease;
+}
+
+.chevron.expanded svg {
+  transform: rotate(90deg);
+}
+
+.chevron:hover,
+.chevron:focus-visible {
+  color: var(--text-primary);
+  background: var(--bg-card);
+}
+
+.chevron:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.chevron-spacer {
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.playlist-list .item-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.playlist-list .list-item:hover .item-actions,
+.playlist-list .list-item:focus-within .item-actions {
+  opacity: 1;
+}
+
+.row-icon-btn {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+
+.row-icon-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.row-icon-btn:hover,
+.row-icon-btn:focus-visible {
+  color: var(--text-primary);
+  background: var(--bg-card);
+}
+
+.row-icon-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.row-icon-btn--danger:hover,
+.row-icon-btn--danger:focus-visible {
+  color: var(--error);
+}
+
+.edit-inline.sub-edit {
+  margin-left: 41px;
+}
+
+/* Anchored row popups ("..." kebab, move list, subgroups) */
+.row-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 30;
+  min-width: 210px;
+  max-width: 260px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="light"] .row-popup {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+.row-popup-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 4px 8px 6px;
+}
+
+.row-popup-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  margin: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.row-popup-item:hover,
+.row-popup-item:focus-visible {
+  background: var(--bg-input);
+  outline: none;
+}
+
+.row-popup-item .spine {
+  width: 3px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.row-popup-ic {
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.row-popup-ic svg {
+  width: 13px;
+  height: 13px;
+}
+
+.row-popup-item--danger {
+  color: var(--error);
+}
+
+.row-popup-item--danger .row-popup-ic {
+  color: var(--error);
+}
+
+.row-popup-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.row-popup-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 4px;
+}
+
+.row-popup-add {
+  display: flex;
+  gap: 6px;
+  padding: 2px;
+}
+
+.row-popup-add input {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  padding: 5px 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playlist-list .list-item,
+  .playlist-list .item-actions,
+  .chevron,
+  .chevron svg,
+  .row-icon-btn {
+    transition: none;
+  }
+}
+
+/* Detail context line above the channel search */
+.detail-context {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+/* Subgroup assignment chips, anchored next to the channel name in the
+   union view */
+.sub-chips {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.sub-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.sub-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Per-channel subgroup assignment popup (union view), anchored to the
+   channel row like the sidebar popups */
+.sub-assign-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 8px;
+  z-index: 30;
+  min-width: 210px;
+  max-width: 260px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+}
+
+[data-theme="light"] .sub-assign-menu {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+.sub-assign-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 5px 8px;
+  margin: 0;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.sub-assign-option:hover,
+.sub-assign-option:focus-visible {
+  background: var(--bg-card);
+  outline: none;
+}
+
+.sub-assign-check {
+  width: 12px;
+  display: inline-block;
+  color: var(--accent);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* Match the playlist picker used on YouTube profile pages. */
+@keyframes syp-dd-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.sub-assign-menu.syp-dropdown {
+  width: 272px;
+  min-width: 272px;
+  max-width: 272px;
+  max-height: none;
+  padding: 0;
+  overflow: hidden;
+  display: block;
+  border-radius: 14px;
+  animation: syp-dd-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top right;
+}
+
+.syp-dd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 8px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.syp-dd-add-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.syp-dd-add-btn:hover,
+.syp-dd-add-btn:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.syp-dd-list {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 0 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.syp-dd-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.syp-dd-item[hidden] { display: none; }
+.syp-dd-item:hover { background: var(--bg-input); }
+
+.syp-dd-item input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.syp-dd-check {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1.5px solid var(--border-dark);
+  border-radius: 6px;
+}
+
+.syp-dd-check svg {
+  width: 10px;
+  height: 10px;
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.syp-dd-item input:focus-visible + .syp-dd-check {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.syp-dd-item.checked .syp-dd-check {
+  border-color: transparent;
+  background: var(--playlist-color);
+}
+
+.syp-dd-item.checked .syp-dd-check svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.syp-dd-color {
+  width: 3px;
+  height: 18px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.syp-dd-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 450;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.syp-dd-group-row {
+  display: flex;
+  align-items: center;
+  margin: 2px 0;
+}
+
+.syp-dd-group-row > .syp-dd-item {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.syp-dd-group-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.syp-dd-group-toggle:hover,
+.syp-dd-group-toggle:focus-visible {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.syp-dd-group-caret {
+  width: 10px;
+  height: 10px;
+  display: grid;
+  place-items: center;
+  transition: transform 0.15s ease;
+}
+
+.syp-dd-group-caret svg { width: 10px; height: 10px; }
+.syp-dd-group-caret.open { transform: rotate(90deg); }
+.syp-dd-group-count { font-size: 10px; opacity: 0.7; }
+.syp-dd-item--sub { margin-left: 14px; }
+
+.syp-dd-empty {
+  padding: 20px 16px;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.syp-dd-sep {
+  height: 1px;
+  margin: 6px 16px;
+  background: var(--border);
+}
+
+.syp-dd-footer {
+  width: 100%;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.syp-dd-footer:hover,
+.syp-dd-footer:focus-visible {
+  color: var(--text-primary);
+  outline: none;
+}
+
+.syp-dd-footer svg { width: 14px; height: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sub-assign-menu.syp-dropdown { animation: none; }
 }
 
 /* Theme Toggle */

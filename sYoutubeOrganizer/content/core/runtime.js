@@ -55,6 +55,7 @@
   api.buildLookupMaps = function buildLookupMaps() {
     if (!state.data) return;
     state.playlistChannels = new Map();
+    state.playlistChannelsRollup = new Map();
     state.allAssignedHandles = new Set();
 
     for (const [handle, plIds] of Object.entries(state.data.channelPlaylists || {})) {
@@ -63,6 +64,19 @@
         if (!state.playlistChannels.has(plId)) state.playlistChannels.set(plId, new Set());
         state.playlistChannels.get(plId).add(handle);
       }
+    }
+
+    // Selecting a parent group filters on the union of its direct channels
+    // and each immediate child's channels (one subgroup level only).
+    for (const playlistId of Object.keys(state.data.playlists || {})) {
+      const handles = new Set(state.playlistChannels.get(playlistId) || []);
+      for (const playlist of Object.values(state.data.playlists || {})) {
+        if (playlist.parentId !== playlistId) continue;
+        for (const handle of state.playlistChannels.get(playlist.id) || []) {
+          handles.add(handle);
+        }
+      }
+      state.playlistChannelsRollup.set(playlistId, handles);
     }
   };
 

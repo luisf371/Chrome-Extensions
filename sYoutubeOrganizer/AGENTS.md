@@ -150,7 +150,7 @@ Persistent storage is centered on:
 ```js
 {
   playlists: {
-    [id]: { id, name, color, order, createdAt }
+    [id]: { id, name, parentId, color, order, createdAt }
   },
   channels: {
     [handle]: { channelId, name, lastRegistered }
@@ -169,10 +169,13 @@ Persistent storage is centered on:
 
 Key assumptions:
 
-- the model is intentionally flat
+- playlists form a one-level hierarchy via `parentId` (top-level groups have `parentId: null`; a subgroup's parent must be a top-level playlist; subgroups cannot nest or cycle)
+- channel assignments stay flat: `channelPlaylists` lists direct assignments only — filtering by a parent group unions the parent's set with each immediate child's set
+- deleting a parent promotes its subgroups to top level instead of removing them
 - channel identity is normalized before storage
 - playlist/channel relationship ownership lives in `channelPlaylists`
 - subscriptions filter preference is stored under `settings`, not export/import payloads
+- the injected playlist button only mounts when the nearby YouTube subscribe control's state is determinable (`content/core/helpers.js`); assigning on an unsubscribed channel is an explicit Subscribe & add action, never a silent subscription
 
 Transient tab state lives in `content/core/state.js` and tracks:
 

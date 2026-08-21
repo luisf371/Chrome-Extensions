@@ -106,6 +106,57 @@
       : '#4a9eff';
   }
 
+  // Subgroups are exactly one level deep: a playlist's parent must exist,
+  // must not be the playlist itself, and must itself be top-level. These
+  // checks also make cycles impossible (a cycle needs two levels).
+  // Existence is own-property only: inherited names like "constructor" must
+  // never count as playlists.
+  function validatePlaylistParent(playlists, parentId, selfId) {
+    const parent = Object.hasOwn(playlists, parentId) ? playlists[parentId] : undefined;
+    if (!parent) {
+      throw new Error('Parent playlist not found');
+    }
+    if (selfId && parent.id === selfId) {
+      throw new Error('A playlist cannot be its own parent');
+    }
+    if (parent.parentId) {
+      throw new Error('Subgroups can only live under top-level playlists');
+    }
+    return parentId;
+  }
+
+  function playlistHasChildren(playlists, playlistId) {
+    return Object.values(playlists).some((playlist) => playlist.parentId === playlistId);
+  }
+
+  // Repairs stored/imported parent links instead of rejecting the payload:
+  // missing or self-referencing parents become null, and any playlist whose
+  // parent is itself a subgroup is promoted to top level. Own-property
+  // lookups keep reserved names ("constructor", "__proto__") from being
+  // mistaken for playlists.
+  function sanitizePlaylistParents(playlists) {
+    for (const playlist of Object.values(playlists)) {
+      const parentId = playlist.parentId;
+      if (!parentId || parentId === playlist.id || !Object.hasOwn(playlists, parentId)) {
+        playlist.parentId = null;
+      }
+    }
+
+    // Snapshot the "is my parent a subgroup" flags first so cycles between
+    // two playlists resolve in a single pass.
+    const nested = Object.values(playlists)
+      .map((playlist) => {
+        const parent = playlist.parentId && Object.hasOwn(playlists, playlist.parentId)
+          ? playlists[playlist.parentId]
+          : undefined;
+        return { playlist, wasNested: Boolean(parent?.parentId) };
+      });
+    for (const { playlist, wasNested } of nested) {
+      if (wasNested) playlist.parentId = null;
+    }
+    return playlists;
+  }
+
   function normalizeImportedData(input, deps) {
     const { playlists, channels, channelPlaylists } = input || {};
 
@@ -120,7 +171,10 @@
     }
 
     const now = getNow(deps);
-    const normalizedPlaylists = {};
+    // Null-prototype maps: an imported "__proto__" key must become an own
+    // property, not silently replace the map's prototype, and inherited
+    // names like "constructor" must never satisfy existence checks.
+    const normalizedPlaylists = Object.create(null);
     const playlistEntries = Object.entries(playlists)
       .filter(([id, playlist]) => (
         normalizeImportedPlaylistId(id) &&
@@ -138,45 +192,67 @@
       throw new Error('Invalid import: no valid playlists found');
     }
 
-    playlistEntries.forEach(([id, playlist], index) => {
+    let nextOrder = 0;
+    playlistEntries.forEach(([id, playlist]) => {
       const playlistId = normalizeImportedPlaylistId(id);
+      // Distinct raw keys can normalize to the same id ("a" vs " a "):
+      // keep the first entry (lowest order) and drop later collisions so
+      // orders stay contiguous.
+      if (!playlistId || Object.hasOwn(normalizedPlaylists, playlistId)) return;
+      const parentCandidate = normalizeImportedPlaylistId(playlist.parentId || '');
       normalizedPlaylists[playlistId] = {
         id: playlistId,
         name: playlist.name.trim().slice(0, 50),
         color: normalizePlaylistColor(playlist.color),
-        order: index,
+        // Parent links are format-validated only here; repair against the
+        // full playlist set happens in applyImportDataMutation, after merge
+        // mode has combined imported and existing playlists.
+        parentId: parentCandidate && parentCandidate !== playlistId ? parentCandidate : null,
+        order: nextOrder++,
         createdAt: Number.isFinite(playlist.createdAt) ? playlist.createdAt : now,
         updatedAt: now
       };
     });
 
-    const normalizedChannels = {};
+    const normalizedChannels = Object.create(null);
     for (const [rawHandle, channel] of Object.entries(channels || {})) {
       const handle = normalizeStoredHandle(rawHandle);
       if (!handle) continue;
+      // A missing/invalid name stays null (unknown) instead of falling back
+      // to the handle: merge must be able to tell "imported name" apart
+      // from "no name in the file" to avoid clobbering a good stored name.
+      // Channel keys that normalize to the same handle keep each other's
+      // channelId/name rather than the later raw key winning outright.
+      const previous = Object.hasOwn(normalizedChannels, handle) ? normalizedChannels[handle] : null;
       normalizedChannels[handle] = {
         handle,
-        channelId: normalizeChannelId(channel?.channelId),
-        name: typeof channel?.name === 'string' && channel.name.trim() ? channel.name.trim() : handle,
+        channelId: normalizeChannelId(channel?.channelId) || previous?.channelId || '',
+        name: typeof channel?.name === 'string' && channel.name.trim()
+          ? channel.name.trim().slice(0, 100)
+          : (previous?.name ?? null),
         updatedAt: now
       };
     }
 
-    const normalizedChannelPlaylists = {};
+    const normalizedChannelPlaylists = Object.create(null);
     for (const [rawHandle, playlistIds] of Object.entries(channelPlaylists || {})) {
       const handle = normalizeStoredHandle(rawHandle);
       if (!handle || !Array.isArray(playlistIds)) continue;
 
-      const validPlaylistIds = [...new Set(
-        playlistIds
+      const earlier = Object.hasOwn(normalizedChannelPlaylists, handle)
+        ? normalizedChannelPlaylists[handle]
+        : [];
+      const validPlaylistIds = [...new Set([
+        ...earlier,
+        ...playlistIds
           .map(id => typeof id === 'string' ? id.trim() : '')
-          .filter(id => id && normalizedPlaylists[id])
-      )];
+          .filter(id => id && Object.hasOwn(normalizedPlaylists, id))
+      ])];
 
       if (validPlaylistIds.length === 0) continue;
 
       normalizedChannelPlaylists[handle] = validPlaylistIds;
-      if (!normalizedChannels[handle]) {
+      if (!Object.hasOwn(normalizedChannels, handle)) {
         normalizedChannels[handle] = {
           handle,
           channelId: '',
@@ -199,9 +275,19 @@
       throw new Error('Playlist name is required');
     }
 
+    const playlists = state.playlists || {};
+    let parentId = null;
+    if (input?.parentId !== undefined && input?.parentId !== null) {
+      parentId = normalizePlaylistId(input.parentId);
+      if (!parentId) {
+        throw new Error('Invalid parent playlist');
+      }
+      validatePlaylistParent(playlists, parentId);
+    }
+
     const normalizedColor = normalizePlaylistColor(input?.color);
     const id = 'pl_' + getRandomUUID(deps).slice(0, 8);
-    const order = Object.values(state.playlists || {}).reduce(
+    const order = Object.values(playlists).reduce(
       (max, playlist) => Math.max(max, Number.isFinite(playlist.order) ? playlist.order : -1),
       -1
     ) + 1;
@@ -210,12 +296,96 @@
       id,
       name: normalizedName,
       color: normalizedColor,
+      parentId,
       order,
       createdAt: now,
       updatedAt: now
     };
     state.playlists[id] = playlist;
     return playlist;
+  }
+
+  function applyUpdatePlaylistMutation(state, input, deps) {
+    const normalizedId = normalizePlaylistId(input?.id);
+    if (!normalizedId) {
+      throw new Error('Playlist ID is required');
+    }
+    const playlists = state.playlists || {};
+    const playlist = Object.hasOwn(playlists, normalizedId) ? playlists[normalizedId] : undefined;
+    if (!playlist) {
+      return null;
+    }
+
+    let nextName;
+    if (input?.name !== undefined) {
+      nextName = normalizePlaylistName(input.name);
+      if (!nextName) {
+        throw new Error('Playlist name cannot be empty');
+      }
+    }
+
+    let nextParentId;
+    // `undefined` counts as absent so callers may pass destructured message
+    // payloads that carry an own `parentId: undefined` property.
+    if (input && 'parentId' in input && input.parentId !== undefined) {
+      if (input.parentId === null || input.parentId === '') {
+        nextParentId = null;
+      } else {
+        nextParentId = normalizePlaylistId(input.parentId);
+        if (!nextParentId) {
+          throw new Error('Invalid parent playlist');
+        }
+        validatePlaylistParent(playlists, nextParentId, normalizedId);
+        if (playlistHasChildren(playlists, normalizedId)) {
+          throw new Error('A playlist with subgroups cannot become a subgroup');
+        }
+      }
+    }
+
+    if (nextName !== undefined) playlist.name = nextName;
+    if (input?.color !== undefined) playlist.color = normalizePlaylistColor(input.color);
+    if (input?.order !== undefined && Number.isFinite(input.order)) playlist.order = input.order;
+    if (nextParentId !== undefined) playlist.parentId = nextParentId;
+    playlist.updatedAt = getNow(deps);
+    return playlist;
+  }
+
+  function applyDeletePlaylistMutation(state, input, deps) {
+    const normalizedId = normalizePlaylistId(input?.id);
+    if (!normalizedId) {
+      throw new Error('Playlist ID is required');
+    }
+
+    const playlists = state.playlists || {};
+    if (!Object.hasOwn(playlists, normalizedId)) {
+      return { success: true, promotedIds: [] };
+    }
+
+    delete playlists[normalizedId];
+
+    // Subgroups survive their parent: they are promoted to top level so the
+    // delete never wipes an entire subtree.
+    const promotedIds = [];
+    const now = getNow(deps);
+    for (const playlist of Object.values(playlists)) {
+      if (playlist.parentId === normalizedId) {
+        playlist.parentId = null;
+        playlist.updatedAt = now;
+        promotedIds.push(playlist.id);
+      }
+    }
+
+    const channelPlaylists = state.channelPlaylists || {};
+    for (const handle of Object.keys(channelPlaylists)) {
+      channelPlaylists[handle] = (channelPlaylists[handle] || []).filter(
+        (playlistId) => playlistId !== normalizedId
+      );
+      if (channelPlaylists[handle].length === 0) {
+        delete channelPlaylists[handle];
+      }
+    }
+
+    return { success: true, promotedIds };
   }
 
   function applyAssignChannelPlaylistMutation(state, input, deps) {
@@ -230,7 +400,7 @@
     if (typeof input?.assign !== 'boolean') {
       throw new Error('Assign flag must be boolean');
     }
-    if (!state.playlists[normalizedPlaylistId]) {
+    if (!Object.hasOwn(state.playlists, normalizedPlaylistId)) {
       throw new Error('Playlist not found');
     }
 
@@ -245,6 +415,10 @@
 
     const current = [...(state.channelPlaylists[normalizedHandle] || [])];
     if (input.assign) {
+      const parentId = state.playlists[normalizedPlaylistId].parentId;
+      if (parentId && Object.hasOwn(state.playlists, parentId) && !current.includes(parentId)) {
+        current.push(parentId);
+      }
       if (!current.includes(normalizedPlaylistId)) current.push(normalizedPlaylistId);
     } else {
       const idx = current.indexOf(normalizedPlaylistId);
@@ -278,6 +452,10 @@
     }
 
     if (mode === 'replace') {
+      sanitizePlaylistParents(imported.playlists);
+      for (const channel of Object.values(imported.channels)) {
+        if (!channel.name) channel.name = channel.handle;
+      }
       state.playlists = imported.playlists;
       state.channels = imported.channels;
       state.channelPlaylists = imported.channelPlaylists;
@@ -285,20 +463,22 @@
     }
 
     const now = getNow(deps);
-    const mergedPlaylists = { ...state.playlists };
-    const mergedChannels = { ...state.channels };
-    const mergedChannelPlaylists = { ...state.channelPlaylists };
+    // Null-prototype merges so reserved-name ids can only ever be own keys.
+    const mergedPlaylists = Object.assign(Object.create(null), state.playlists);
+    const mergedChannels = Object.assign(Object.create(null), state.channels);
+    const mergedChannelPlaylists = Object.assign(Object.create(null), state.channelPlaylists);
     let nextOrder = Object.values(mergedPlaylists).reduce(
       (max, playlist) => Math.max(max, Number.isFinite(playlist.order) ? playlist.order : -1),
       -1
     );
 
     for (const [playlistId, playlist] of Object.entries(imported.playlists)) {
-      if (mergedPlaylists[playlistId]) {
+      if (Object.hasOwn(mergedPlaylists, playlistId)) {
         mergedPlaylists[playlistId] = {
           ...mergedPlaylists[playlistId],
           name: playlist.name,
           color: playlist.color,
+          parentId: playlist.parentId,
           updatedAt: now
         };
         continue;
@@ -311,16 +491,18 @@
         updatedAt: now
       };
     }
+    sanitizePlaylistParents(mergedPlaylists);
 
     for (const [handle, channel] of Object.entries(imported.channels)) {
-      mergedChannels[handle] = mergedChannels[handle]
+      const existing = Object.hasOwn(mergedChannels, handle) ? mergedChannels[handle] : null;
+      mergedChannels[handle] = existing
         ? {
-            ...mergedChannels[handle],
-            channelId: channel.channelId || mergedChannels[handle].channelId || '',
-            name: channel.name || mergedChannels[handle].name || handle,
+            ...existing,
+            channelId: channel.channelId || existing.channelId || '',
+            name: channel.name || existing.name || handle,
             updatedAt: now
           }
-        : { ...channel };
+        : { ...channel, name: channel.name || handle };
     }
 
     for (const [handle, playlistIds] of Object.entries(imported.channelPlaylists)) {
@@ -399,8 +581,11 @@
     normalizeSettingsInput,
     normalizeStoredHandle,
     normalizePlaylistColor,
+    sanitizePlaylistParents,
     normalizeImportedData,
     applyCreatePlaylistMutation,
+    applyUpdatePlaylistMutation,
+    applyDeletePlaylistMutation,
     applyAssignChannelPlaylistMutation,
     applyUpdateSettingsMutation,
     applyImportDataMutation,

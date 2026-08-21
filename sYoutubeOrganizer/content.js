@@ -135,17 +135,22 @@
     api.clearDocumentCloseListener(state.quickAddCloseState);
     api.clearDocumentCloseListener(state.channelListCloseState);
     api.clearDocumentCloseListener(state.filterMenuCloseState);
+    api.clearDocumentCloseListener(state.filterPopupCloseState);
 
     state.activeChannelListDropdown = null;
     document.querySelectorAll('.syp-host').forEach((el) => el.remove());
     state.filterHost = null;
     state.filterShadow = null;
     state.filterMenuOpen = false;
-    pages.subscriptions?.resetState?.();
+    // The live filter selection deliberately SURVIVES SPA cleanup — wiping
+    // it here made every re-init replay the saved preference, rolling back
+    // the user's in-session toggles. Only the open popup state is cleared.
+    state.filterPopupPlaylistId = null;
     state.quickAddOpen = false;
     state.quickAddHost = null;
     state.quickAddShadow = null;
     state.quickAddHandle = null;
+    state.quickAddExpandedGroups = new Set();
     if (state.quickAddRefreshTimer) {
       clearTimeout(state.quickAddRefreshTimer);
       state.quickAddRefreshTimer = null;

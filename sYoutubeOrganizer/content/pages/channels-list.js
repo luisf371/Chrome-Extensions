@@ -42,6 +42,12 @@
 
       const subscribeBtn = renderer.querySelector('#subscribe-button');
       if (!subscribeBtn) return;
+      // Fail closed: skip rows whose subscription state is undeterminable
+      // and drop stale hosts if a re-render left one behind.
+      if (api.getSubscriptionState(renderer) === 'unknown') {
+        renderer.querySelectorAll('.syp-host').forEach((el) => el.remove());
+        return;
+      }
 
       const host = document.createElement('div');
       host.className = 'syp-host';
@@ -56,8 +62,7 @@
   function renderChannelListButton(shadow, host, handle, channelName, isOpen) {
     host.style.zIndex = isOpen ? '9999' : '2000';
     const isDark = document.documentElement.hasAttribute('dark');
-    const assignments = (state.data?.channelPlaylists || {})[handle] || [];
-    const assignedCount = assignments.length;
+    const assignedCount = api.getTopLevelAssignmentCount(handle);
 
     shadow.innerHTML = `
       <style>
@@ -119,6 +124,69 @@
           const item = cb.closest('.syp-dd-item');
           if (!playlistId || !item) return;
 
+          const getScope = () => host.closest('ytd-channel-renderer');
+
+          if (cb.checked) {
+            const subscriptionState = api.getSubscriptionState(getScope());
+            if (subscriptionState === 'unknown') {
+              api.setPlaylistItemCheckedState(item, playlistId, false);
+              cb.checked = false;
+              api.showPageToast('Could not determine the subscription state. Reload the page and try again.', 'error');
+              return;
+            }
+            if (subscriptionState === 'unsubscribed') {
+              // Revert the optimistic check: the assignment is only saved
+              // after the explicit Subscribe & add confirmation succeeds.
+              api.setPlaylistItemCheckedState(item, playlistId, false);
+              const playlistName = state.data?.playlists?.[playlistId]?.name || 'playlist';
+              // The flow survives awaits: abort if SPA cleanup removed this
+              // row's host OR YouTube recycled the still-connected renderer
+              // for a different channel — otherwise the subscribe click and
+              // the saved assignment would hit two different channels.
+              const startHandle = handle;
+              const isStale = () => {
+                if (!host.isConnected) return true;
+                const renderer = host.closest('ytd-channel-renderer');
+                if (!renderer) return true;
+                const link = renderer.querySelector('a.channel-link[href*="/@"]')
+                  || renderer.querySelector('a.channel-link[href*="/channel/"]');
+                const currentHandle = link
+                  ? api.extractHandleFromUrl(link.getAttribute('href') || '')
+                  : null;
+                return currentHandle !== startHandle;
+              };
+              const scopedGetScope = () => (isStale() ? null : getScope());
+              api.showSubscribeConfirmRow(item, {
+                onConfirm: async (confirmButton) => {
+                  await api.runSubscribeAndAssign({
+                    getScope: scopedGetScope,
+                    handle,
+                    channelName,
+                    playlistId,
+                    playlistName,
+                    confirmButton,
+                    isStale
+                  });
+                  try {
+                    state.data = await api.sendMsg({ type: 'GET_ALL_DATA' });
+                    api.buildLookupMaps();
+                  } catch (error) {
+                    api.handleActionError(error);
+                  }
+                  if (isStale()) return;
+                  state.activeChannelListDropdown = { shadow, host, handle, channelName };
+                  renderChannelListButton(shadow, host, handle, channelName, true);
+                },
+                onCancel: () => {
+                  if (isStale()) return;
+                  state.activeChannelListDropdown = { shadow, host, handle, channelName };
+                  renderChannelListButton(shadow, host, handle, channelName, true);
+                }
+              });
+              return;
+            }
+          }
+
           api.setPlaylistItemCheckedState(item, playlistId, cb.checked);
 
           try {
@@ -145,6 +213,8 @@
           void api.sendMsg({ type: 'OPEN_OPTIONS' }).catch((error) => api.handleActionError(error));
         });
       });
+
+      api.attachDropdownGroupToggles(shadow);
 
       api.attachInlineCreateListener(shadow, () => {
         state.activeChannelListDropdown = { shadow, host, handle, channelName };

@@ -76,10 +76,6 @@ function enqueueMutation(label, handler) {
   });
 }
 
-function normalizePlaylistName(name) {
-  return sharedCore.normalizePlaylistName(name);
-}
-
 function normalizePlaylistId(id) {
   return sharedCore.normalizePlaylistId(id);
 }
@@ -96,9 +92,9 @@ function normalizeSettingsInput(newSettings) {
   return sharedCore.normalizeSettingsInput(newSettings);
 }
 
-async function createPlaylist({ name, color }) {
+async function createPlaylist({ name, color, parentId }) {
   return enqueueMutation('createPlaylist', async (state) => {
-    const playlist = sharedCore.applyCreatePlaylistMutation(state, { name, color }, {
+    const playlist = sharedCore.applyCreatePlaylistMutation(state, { name, color, parentId }, {
       now: () => Date.now(),
       randomUUID: () => crypto.randomUUID()
     });
@@ -110,30 +106,24 @@ async function createPlaylist({ name, color }) {
   });
 }
 
-async function updatePlaylist({ id, name, color, order }) {
-  const normalizedId = normalizePlaylistId(id);
-  if (!normalizedId) {
-    throw new Error('Playlist ID is required');
-  }
-
-  const nextName = name !== undefined ? normalizePlaylistName(name) : undefined;
-  if (name !== undefined && !nextName) {
-    throw new Error('Playlist name cannot be empty');
-  }
-  const nextColor = color !== undefined ? normalizePlaylistColor(color) : undefined;
-  const nextOrder = order !== undefined && Number.isFinite(order) ? order : undefined;
-
+async function updatePlaylist({ id, name, color, order, parentId }) {
   return enqueueMutation('updatePlaylist', async (state) => {
-    const playlist = state.playlists[normalizedId];
+    // Omit absent keys entirely: an own `parentId: undefined` property would
+    // be interpreted by the mutation as a reparent request.
+    const payload = { id };
+    if (name !== undefined) payload.name = name;
+    if (color !== undefined) payload.color = color;
+    if (order !== undefined) payload.order = order;
+    if (parentId !== undefined) payload.parentId = parentId;
+
+    const playlist = sharedCore.applyUpdatePlaylistMutation(
+      state,
+      payload,
+      { now: () => Date.now() }
+    );
     if (!playlist) {
       return { changed: false, response: null };
     }
-
-    if (nextName !== undefined) playlist.name = nextName;
-    if (nextColor !== undefined) playlist.color = nextColor;
-    if (nextOrder !== undefined) playlist.order = nextOrder;
-    playlist.updatedAt = Date.now();
-
     return {
       changed: true,
       broadcastKey: 'all',
@@ -149,28 +139,20 @@ async function deletePlaylist({ id }) {
   }
 
   return enqueueMutation('deletePlaylist', async (state) => {
-    if (!state.playlists[normalizedId]) {
+    if (!Object.hasOwn(state.playlists, normalizedId)) {
       return {
         changed: false,
-        response: { success: true }
+        response: { success: true, promotedIds: [] }
       };
     }
 
-    delete state.playlists[normalizedId];
-
-    for (const handle of Object.keys(state.channelPlaylists)) {
-      state.channelPlaylists[handle] = (state.channelPlaylists[handle] || []).filter(
-        playlistId => playlistId !== normalizedId
-      );
-      if (state.channelPlaylists[handle].length === 0) {
-        delete state.channelPlaylists[handle];
-      }
-    }
-
+    const result = sharedCore.applyDeletePlaylistMutation(state, { id }, {
+      now: () => Date.now()
+    });
     return {
       changed: true,
       broadcastKey: 'all',
-      response: { success: true }
+      response: result
     };
   });
 }
@@ -269,7 +251,7 @@ async function reorderPlaylists({ orderedIds }) {
     const remainingIds = currentIds
       .filter(id => !normalizedOrderedIds.includes(id))
       .sort((a, b) => (state.playlists[a].order || 0) - (state.playlists[b].order || 0));
-    const finalOrder = [...normalizedOrderedIds.filter(id => state.playlists[id]), ...remainingIds];
+    const finalOrder = [...normalizedOrderedIds.filter(id => Object.hasOwn(state.playlists, id)), ...remainingIds];
 
     finalOrder.forEach((playlistId, index) => {
       state.playlists[playlistId].order = index;
@@ -290,10 +272,6 @@ function isPlainObject(value) {
 
 function normalizeStoredHandle(handle) {
   return sharedCore.normalizeStoredHandle(handle);
-}
-
-function normalizePlaylistColor(color) {
-  return sharedCore.normalizePlaylistColor(color);
 }
 
 function normalizeImportedData({ playlists, channels, channelPlaylists }) {

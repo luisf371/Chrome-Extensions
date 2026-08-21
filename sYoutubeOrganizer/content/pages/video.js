@@ -35,6 +35,11 @@
     const subscribeBtn = await api.waitForElement(getVisibleVideoSubscribeButton);
     if (!subscribeBtn || gen !== state.initGeneration) return;
 
+    // The subscribe control hydrates lazily on watch pages; wait until its
+    // state is determinable and fail closed (no mount) if it never is.
+    const subscriptionState = await api.waitForSubscriptionState(getVisibleVideoSubscribeButton, { gen });
+    if (subscriptionState === 'unknown' || gen !== state.initGeneration) return;
+
     const ownerEl = getVisibleVideoTopRow()?.querySelector('#owner');
     const handleLink = ownerEl?.querySelector('a[href*="/@"]')
       || ownerEl?.querySelector('a[href*="/channel/"]');
@@ -49,6 +54,12 @@
     void api.sendMsg({ type: 'REGISTER_CHANNEL', handle, name: channelName }).catch((error) => {
       console.warn('SYO failed to register video channel', error);
     });
+
+    // Match the native subscribe button's height so the trigger aligns with
+    // the owner row's controls.
+    const siblingButton = subscribeBtn.querySelector('button');
+    const siblingHeight = Math.round(siblingButton?.getBoundingClientRect().height || 0);
+    state.quickAddTriggerHeightPx = siblingHeight > 0 ? siblingHeight : null;
 
     state.quickAddHandle = handle;
     state.quickAddHost = document.createElement('div');

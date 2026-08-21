@@ -42,7 +42,7 @@
             <input type="text" id="newPlaylistName" class="add-row-input" placeholder="New playlist name..." maxlength="50">
             <input type="color" id="newPlaylistColor" class="add-row-input" value="#4a9eff" title="Color">
           </div>
-          <div id="playlistList" class="item-list"></div>
+          <div id="playlistList" class="item-list playlist-list"></div>
         </div>
       </div>
 
@@ -62,6 +62,7 @@
             <div class="add-row" id="addChannelRow" style="display:none;">
               <input type="text" id="addChannelHandle" class="add-row-input" placeholder="@handle or channel name..." maxlength="100">
             </div>
+            <div id="detailContext" class="detail-context"></div>
             <input type="text" id="channelSearch" placeholder="Search channels..." class="search-input">
             <div id="channelList" class="item-list channel-list"></div>
             <div id="noChannels" class="empty-state small" style="display: none;">
