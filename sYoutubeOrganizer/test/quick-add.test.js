@@ -114,7 +114,7 @@ test('modern channel profile subscribed controls are not treated as unsubscribed
     click: () => { clicks += 1; }
   };
   let clicks = 0;
-  const scopeWith = (subscribedSelector, unsubscribedSelector = '#subscribe-button') => ({
+  const scopeWith = (subscribedSelector, unsubscribedSelector = 'yt-subscribe-button-view-model') => ({
     isConnected: true,
     matches: () => false,
     querySelectorAll: (selector) => {
@@ -138,6 +138,39 @@ test('modern channel profile subscribed controls are not treated as unsubscribed
   assert.equal(api.triggerSubscribeControl(unsubscribedProfile), true);
   assert.equal(api.triggerSubscribeControl(subscribedProfile), false);
   assert.equal(api.getSubscriptionState(scopeWith(null, 'yt-subscribe-button-view-model')), 'unknown');
+  assert.equal(clicks, 1);
+});
+
+test('watch page ignores a stale notification control after unsubscribe', () => {
+  const api = loadSubscriptionHelpers();
+  let clicks = 0;
+  const visibleSubscribeButton = {
+    isConnected: true,
+    hasAttribute: () => false,
+    getClientRects: () => [{}],
+    click: () => { clicks += 1; }
+  };
+  const staleNotification = {
+    isConnected: true,
+    hasAttribute: () => false,
+    getClientRects: () => [{}]
+  };
+  const scope = {
+    isConnected: true,
+    matches: () => false,
+    querySelectorAll: (selector) => {
+      if (selector.includes('ytd-subscription-notification-toggle-button-renderer-next')) {
+        return [staleNotification];
+      }
+      if (selector.includes('ytd-subscribe-button-renderer:not([subscribed]) #subscribe-button-shape button')) {
+        return [visibleSubscribeButton];
+      }
+      return [];
+    }
+  };
+
+  assert.equal(api.getSubscriptionState(scope), 'unsubscribed');
+  assert.equal(api.triggerSubscribeControl(scope), true);
   assert.equal(clicks, 1);
 });
 

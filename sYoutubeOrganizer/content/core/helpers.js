@@ -83,9 +83,9 @@
   // --- Subscription state ---
   //
   // Detection relies on language-independent DOM signals only: YouTube sets a
-  // `subscribed` attribute on the subscribe control, and the notifications
-  // ("bell") control only renders for subscribed channels. Button label text
-  // is deliberately not matched because it is localized.
+  // `subscribed` attribute on the subscribe control. Notification renderers
+  // can remain mounted after unsubscribe, so they are not state signals.
+  // Button label text is deliberately not matched because it is localized.
   //
   // Live-DOM reality (verified 2026-08, signed out): watch pages still use
   // `#subscribe-button > ytd-subscribe-button-renderer` with a `subscribed`
@@ -100,14 +100,12 @@
     'yt-notification-request-button-renderer',
     'yt-notification-request-button-view-model',
     'yt-subscription-notification-toggle-button-view-model',
-    'ytd-subscription-notification-toggle-button-renderer',
-    'ytd-subscription-notification-toggle-button-renderer-next',
     'yt-flexible-actions-view-model button[class*="IconLeadingTrailing"]',
     'yt-flexible-actions-view-model button[class*="icon-leading-trailing"]'
   ].join(', ');
   const UNSUBSCRIBED_BUTTON_SELECTOR = [
-    'ytd-subscribe-button-renderer:not([subscribed]) button',
-    'ytd-subscribe-button-renderer[subscribed="false"] button',
+    'ytd-subscribe-button-renderer:not([subscribed]) #subscribe-button-shape button',
+    'ytd-subscribe-button-renderer[subscribed="false"] #subscribe-button-shape button',
     'yt-flexible-actions-view-model button[class*="Filled"]',
     'yt-flexible-actions-view-model button[class*="filled"]'
   ].join(', ');
