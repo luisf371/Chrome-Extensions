@@ -51,7 +51,12 @@
 
     const channelName = getCurrentChannelName() || handle;
 
-    void api.sendMsg({ type: 'REGISTER_CHANNEL', handle, name: channelName }).catch((error) => {
+    void api.sendMsg({
+      type: 'REGISTER_CHANNEL',
+      handle,
+      name: channelName,
+      subscribed: subscriptionState === 'subscribed'
+    }).catch((error) => {
       console.warn('SYO failed to register video channel', error);
     });
 

@@ -157,7 +157,7 @@ async function deletePlaylist({ id }) {
   });
 }
 
-async function registerChannel({ handle, channelId, name }) {
+async function registerChannel({ handle, channelId, name, subscribed }) {
   const normalizedHandle = normalizeStoredHandle(handle);
   if (!normalizedHandle) {
     throw new Error('Invalid channel handle');
@@ -167,16 +167,19 @@ async function registerChannel({ handle, channelId, name }) {
   return enqueueMutation('registerChannel', async (state) => {
     const existing = state.channels[normalizedHandle];
     const normalizedName = normalizeChannelName(name, existing?.name || normalizedHandle);
+    const normalizedSubscribed = typeof subscribed === 'boolean' ? subscribed : existing?.subscribed;
     const nextChannel = {
       handle: normalizedHandle,
       channelId: normalizedChannelId || existing?.channelId || '',
       name: normalizedName,
+      ...(typeof normalizedSubscribed === 'boolean' ? { subscribed: normalizedSubscribed } : {}),
       updatedAt: Date.now()
     };
 
     const changed = !existing
       || existing.channelId !== nextChannel.channelId
-      || existing.name !== nextChannel.name;
+      || existing.name !== nextChannel.name
+      || existing.subscribed !== nextChannel.subscribed;
 
     if (!changed) {
       return {

@@ -8,6 +8,24 @@
     return container?.closest('#page-header, ytd-c4-tabbed-header-renderer, yt-page-header-view-model') || null;
   }
 
+  function getChannelHandle(container) {
+    const scope = getChannelHeaderScope(container);
+    if (!scope) return null;
+
+    return Array.from(scope.querySelectorAll('[role="text"]'))
+      .map((el) => el.textContent?.trim())
+      .find((text) => /^@[A-Za-z0-9._-]+$/.test(text || '')) || null;
+  }
+
+  function registerObservedChannel(handle, channelName, observedState) {
+    return api.sendMsg({
+      type: 'REGISTER_CHANNEL',
+      handle,
+      name: channelName,
+      ...(observedState === 'unknown' ? {} : { subscribed: observedState === 'subscribed' })
+    });
+  }
+
   function isUsableChannelActionsContainer(container) {
     if (!container || !container.isConnected || container.hasAttribute('hidden')) return false;
 
@@ -23,6 +41,11 @@
   function getVisibleChannelActionsContainer(handle) {
     const containers = Array.from(document.querySelectorAll('yt-flexible-actions-view-model'))
       .filter(isUsableChannelActionsContainer);
+
+    if (!handle) {
+      const identified = containers.find((container) => getChannelHandle(container));
+      if (identified) return identified;
+    }
 
     const exactMatch = containers.find((container) => {
       const scope = getChannelHeaderScope(container) || document;
@@ -78,12 +101,13 @@
     return true;
   }
 
-  function observeChannelQuickAdd(handle, gen) {
+  function observeChannelQuickAdd(handle, gen, initialSubscriptionState) {
     if (state.quickAddObserver) {
       state.quickAddObserver.disconnect();
       state.quickAddObserver = null;
     }
 
+    let lastSubscriptionState = initialSubscriptionState;
     state.quickAddObserver = new MutationObserver(() => {
       clearTimeout(state.quickAddObserverDebounceTimer);
       state.quickAddObserverDebounceTimer = setTimeout(() => {
@@ -91,8 +115,15 @@
 
         const actionsContainer = getVisibleChannelActionsContainer(handle);
         if (!actionsContainer) return;
-        if (state.quickAddHost?.isConnected && actionsContainer.contains(state.quickAddHost)) return;
         const channelName = getChannelPageName(actionsContainer, handle);
+        const subscriptionState = api.getSubscriptionState(getChannelHeaderScope(actionsContainer));
+        if (subscriptionState !== 'unknown' && subscriptionState !== lastSubscriptionState) {
+          lastSubscriptionState = subscriptionState;
+          void registerObservedChannel(handle, channelName, subscriptionState).catch((error) => {
+            console.warn('SYO failed to refresh channel subscription state', error);
+          });
+        }
+        if (state.quickAddHost?.isConnected && actionsContainer.contains(state.quickAddHost)) return;
         if (!mountChannelQuickAdd(actionsContainer, handle, channelName)) return;
         state.initSucceeded = true;
       }, 150);
@@ -109,24 +140,38 @@
       return;
     }
     if (!state.data || gen !== state.initGeneration) return;
-    const handle = api.extractHandleFromUrl(url);
-    if (!handle) return;
+    const urlHandle = api.extractHandleFromUrl(url);
 
-    const actionsContainer = await api.waitForElement(() => getVisibleChannelActionsContainer(handle));
+    const actionsContainer = await api.waitForElement(() => getVisibleChannelActionsContainer(urlHandle));
     if (!actionsContainer || gen !== state.initGeneration) return;
 
     // Hydration can replace the captured header: resolve the live container
     // and name immediately before mounting.
-    const activeContainer = getVisibleChannelActionsContainer(handle);
+    const activeContainer = getVisibleChannelActionsContainer(urlHandle);
     if (!activeContainer || gen !== state.initGeneration) return;
+    const handle = urlHandle || getChannelHandle(activeContainer);
+    if (!handle) return;
     const channelName = getChannelPageName(activeContainer, handle);
+    const subscriptionState = api.getSubscriptionState(getChannelHeaderScope(activeContainer));
 
-    void api.sendMsg({ type: 'REGISTER_CHANNEL', handle, name: channelName }).catch((error) => {
+    void registerObservedChannel(handle, channelName, subscriptionState).catch((error) => {
       console.warn('SYO failed to register channel page channel', error);
     });
+    if (subscriptionState === 'unknown') {
+      void api.waitForSubscriptionState(
+        () => getChannelHeaderScope(getVisibleChannelActionsContainer(handle)),
+        { gen }
+      ).then((observedState) => {
+        if (observedState !== 'unknown' && gen === state.initGeneration) {
+          return registerObservedChannel(handle, channelName, observedState);
+        }
+      }).catch((error) => {
+        console.warn('SYO failed to refresh channel subscription state', error);
+      });
+    }
 
     if (!mountChannelQuickAdd(activeContainer, handle, channelName)) return;
-    observeChannelQuickAdd(handle, gen);
+    observeChannelQuickAdd(handle, gen, subscriptionState);
     state.initSucceeded = true;
   }
 

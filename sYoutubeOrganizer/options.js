@@ -181,7 +181,10 @@ function getChannelsForPlaylist(playlistId) {
 
   if (playlistId === UNCATEGORIZED_ID) {
     return Object.entries(data.channels || {})
-      .filter(([handle]) => ((data.channelPlaylists || {})[handle] || []).length === 0)
+      .filter(([handle, channel]) => (
+        channel?.subscribed === true &&
+        ((data.channelPlaylists || {})[handle] || []).length === 0
+      ))
       .map(([handle, channel]) => ({ handle, ...channel }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }

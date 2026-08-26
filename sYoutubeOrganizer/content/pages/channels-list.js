@@ -22,8 +22,6 @@
   function injectChannelListButtons() {
     const renderers = document.querySelectorAll('ytd-channel-renderer');
     renderers.forEach((renderer) => {
-      if (renderer.querySelector('.syp-host')) return;
-
       const buttonsDiv = renderer.querySelector('#buttons');
       if (!buttonsDiv) return;
 
@@ -36,18 +34,26 @@
       const nameEl = renderer.querySelector('ytd-channel-name yt-formatted-string');
       const channelName = nameEl?.textContent?.trim() || handle;
 
-      void api.sendMsg({ type: 'REGISTER_CHANNEL', handle, name: channelName }).catch((error) => {
-        console.warn('SYO failed to register channel list channel', error);
-      });
-
       const subscribeBtn = renderer.querySelector('#subscribe-button');
       if (!subscribeBtn) return;
       // Fail closed: skip rows whose subscription state is undeterminable
       // and drop stale hosts if a re-render left one behind.
-      if (api.getSubscriptionState(renderer) === 'unknown') {
+      const subscriptionState = api.getSubscriptionState(renderer);
+      if (subscriptionState === 'unknown') {
         renderer.querySelectorAll('.syp-host').forEach((el) => el.remove());
         return;
       }
+
+      void api.sendMsg({
+        type: 'REGISTER_CHANNEL',
+        handle,
+        name: channelName,
+        subscribed: subscriptionState === 'subscribed'
+      }).catch((error) => {
+        console.warn('SYO failed to register channel list channel', error);
+      });
+
+      if (renderer.querySelector('.syp-host')) return;
 
       const host = document.createElement('div');
       host.className = 'syp-host';

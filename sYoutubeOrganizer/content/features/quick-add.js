@@ -423,6 +423,11 @@
     }
 
     try {
+      try {
+        await api.sendMsg({ type: 'REGISTER_CHANNEL', handle, name: channelName, subscribed: true });
+      } catch (error) {
+        console.warn('SYO failed to record confirmed subscription state', error);
+      }
       await api.sendMsg({
         type: 'ASSIGN_CHANNEL_PLAYLIST',
         handle,

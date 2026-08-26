@@ -60,9 +60,11 @@ test('Uncategorized is derived, selectable, actionless, and always last', () => 
       child: { id: 'child', name: 'Child', color: '#654321', order: 1, parentId: 'parent' }
     },
     channels: {
-      '@assigned': { handle: '@assigned', name: 'Assigned' },
-      '@empty': { handle: '@empty', name: 'Alpha' },
-      '@missing': { handle: '@missing', name: 'Zulu' }
+      '@assigned': { handle: '@assigned', name: 'Assigned', subscribed: false },
+      '@empty': { handle: '@empty', name: 'Alpha', subscribed: true },
+      '@missing': { handle: '@missing', name: 'Zulu', subscribed: true },
+      '@unsubscribed': { handle: '@unsubscribed', name: 'Not subscribed', subscribed: false },
+      '@unknown': { handle: '@unknown', name: 'Unknown status' }
     },
     channelPlaylists: {
       '@assigned': ['parent'],

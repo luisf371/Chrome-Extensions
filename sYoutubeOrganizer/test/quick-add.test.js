@@ -28,7 +28,7 @@ function loadQuickAdd(pageWindow = { location: { href: 'https://www.youtube.com/
 
 function loadSubscriptionHelpers() {
   const app = { state: {}, api: {} };
-  const context = { __SYP_CONTENT__: app };
+  const context = { __SYP_CONTENT__: app, URL };
   context.globalThis = context;
 
   const filename = path.join(__dirname, '..', 'content', 'core', 'helpers.js');
@@ -174,11 +174,27 @@ test('watch page ignores a stale notification control after unsubscribe', () => 
   assert.equal(clicks, 1);
 });
 
-test('channel playlist button mounts while subscription state is unknown', async () => {
+test('legacy vanity channel routes use YouTube canonical channel evidence', () => {
+  const api = loadSubscriptionHelpers();
+
+  assert.equal(api.isChannelPageUrl(
+    'https://www.youtube.com/NoiceGuy',
+    'https://www.youtube.com/channel/UCuwm7UWVWa9UZcpa9CmKp2Q'
+  ), true);
+  assert.equal(api.isChannelPageUrl('https://www.youtube.com/@NoiceGuy/videos'), true);
+  assert.equal(api.isChannelPageUrl(
+    'https://www.youtube.com/results?search_query=NoiceGuy',
+    'https://www.youtube.com/channel/UCuwm7UWVWa9UZcpa9CmKp2Q'
+  ), false);
+});
+
+test('legacy vanity channel page mounts while subscription state is unknown', async () => {
   const rendered = [];
   const children = [];
   const header = {
-    querySelectorAll: () => [{ getAttribute: () => '/@deephack' }],
+    querySelectorAll: (selector) => selector === '[role="text"]'
+      ? [{ textContent: '@deephack' }]
+      : [{ getAttribute: () => '/@deephack' }],
     querySelector: () => ({ textContent: 'deephack' })
   };
   const actions = {
@@ -220,11 +236,12 @@ test('channel playlist button mounts while subscription state is unknown', async
   const app = {
     state,
     api: {
-      extractHandleFromUrl: () => '@deephack',
+      extractHandleFromUrl: (url) => url.includes('/@deephack') ? '@deephack' : null,
+      getSubscriptionState: () => 'unknown',
       isVisibleElement: () => true,
       loadData: async () => {},
       waitForElement: async (getElement) => getElement(),
-      waitForSubscriptionState: async () => { throw new Error('mount must not wait for subscription state'); },
+      waitForSubscriptionState: () => new Promise(() => {}),
       sendMsg: async () => ({}),
       renderQuickAddButton: (...args) => rendered.push(args)
     },
@@ -235,9 +252,10 @@ test('channel playlist button mounts while subscription state is unknown', async
   const filename = path.join(__dirname, '..', 'content', 'pages', 'channel.js');
   vm.runInNewContext(fs.readFileSync(filename, 'utf8'), context, { filename });
 
-  await app.pages.channel.init({ url: 'https://www.youtube.com/@deephack', gen: 1 });
+  await app.pages.channel.init({ url: 'https://www.youtube.com/deephack', gen: 1 });
 
   assert.match(state.quickAddHost.className, /syp-channel-qa-host/);
+  assert.equal(state.quickAddHandle, '@deephack');
   assert.deepEqual(rendered[0], ['@deephack', 'deephack']);
 });
 
@@ -310,8 +328,16 @@ test('subscribe survives a same-profile header replacement and assigns the initi
   });
 
   await flow.run();
+  const registrations = flow.messages.filter(({ type }) => type === 'REGISTER_CHANNEL');
   const assignments = flow.messages.filter(({ type }) => type === 'ASSIGN_CHANNEL_PLAYLIST');
   assert.equal(flow.nativeClicks, 1);
+  assert.deepEqual({ ...registrations[0] }, {
+    type: 'REGISTER_CHANNEL',
+    handle: '@creator',
+    name: 'Creator',
+    subscribed: true
+  });
+  assert.ok(flow.messages.indexOf(registrations[0]) < flow.messages.indexOf(assignments[0]));
   assert.deepEqual({ ...assignments[0] }, {
     type: 'ASSIGN_CHANNEL_PLAYLIST',
     handle: '@creator',

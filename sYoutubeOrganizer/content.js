@@ -104,7 +104,8 @@
   function getCurrentPage(url) {
     if (url.includes('/feed/subscriptions')) return 'subscriptions';
     if (url.includes('/feed/channels')) return 'channelsList';
-    if (url.match(/\/@[^/]+/) || url.includes('/channel/')) return 'channel';
+    const canonicalUrl = document.querySelector('link[rel="canonical"]')?.href || '';
+    if (api.isChannelPageUrl(url, canonicalUrl)) return 'channel';
     if (url.includes('/watch')) return 'video';
     return null;
   }

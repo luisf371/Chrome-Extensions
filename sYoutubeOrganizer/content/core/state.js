@@ -59,11 +59,12 @@
     playlistChannelsRollup: new Map(),
     allAssignedHandles: new Set(),
     subscriptionsFilterMode: 'all',
-    // Map<topLevelPlaylistId, null | Set<checkedSubgroupId>> — null means
-    // the whole group roll-up; a non-empty Set means only those subgroups.
+    // Map<topLevelPlaylistId, null | Set<checkedPlaylistId>> — null means
+    // the whole group roll-up; the parent ID in a Set means direct members.
     subscriptionsIncludeGroups: new Map(),
     subscriptionsFilterRestored: false,
     subduedPlaylistIds: new Set(),
+    subduedDirectPlaylistIds: new Set(),
     filterMenuOpen: false,
     filterPopupPlaylistId: null,
     filterPopupCloseState: { handler: null, timer: null },

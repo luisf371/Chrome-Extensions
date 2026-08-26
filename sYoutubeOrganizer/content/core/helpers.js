@@ -3,6 +3,13 @@
 
   const app = globalThis.__SYP_CONTENT__;
   const api = app.api;
+  const YOUTUBE_PRODUCT_PATHS = new Set([
+    'about', 'account', 'ads', 'c', 'channel', 'creators', 'feed', 'gaming',
+    'howyoutubeworks', 'jobs', 'kids', 'live', 'logout', 'movies', 'music',
+    'new', 'oembed', 'paid_memberships', 'playlist', 'podcasts', 'premium',
+    'redirect', 'reporthistory', 'results', 'shorts', 'signin',
+    'supported_browsers', 't', 'upload', 'user', 'watch', 'youtubei'
+  ]);
 
   api.sleep = function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -16,6 +23,28 @@
     const channelMatch = url.match(/\/channel\/([^/?#]+)/);
     if (channelMatch) return channelMatch[1];
     return null;
+  };
+
+  api.isChannelPageUrl = function isChannelPageUrl(url, canonicalUrl = '') {
+    let pathname;
+    try {
+      pathname = new URL(url).pathname;
+    } catch {
+      return false;
+    }
+
+    if (/^\/(?:@[^/]+|channel\/[^/]+|c\/[^/]+|user\/[^/]+)(?:\/|$)/i.test(pathname)) {
+      return true;
+    }
+
+    // Legacy vanity routes such as /NoiceGuy have no handle in the URL.
+    // YouTube's canonical channel link distinguishes them from product routes.
+    const vanityMatch = pathname.match(/^\/([^/]+)\/?$/);
+    return Boolean(
+      vanityMatch &&
+      !YOUTUBE_PRODUCT_PATHS.has(vanityMatch[1].toLowerCase()) &&
+      /\/(?:@[^/]+|channel\/[^/]+)/i.test(canonicalUrl)
+    );
   };
 
   api.waitForElement = function waitForElement(selectorOrGetter, timeout = 10000) {
