@@ -79,6 +79,7 @@ function harness({ storage, sendError, sendResponse = { success: true } } = {}) 
     setTimeout: () => 1, clearTimeout() {}, setInterval: () => 1, clearInterval() {},
     requestAnimationFrame: callback => callback()
   });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../shared/reasoning-utils.js'), 'utf8'), context);
   // Observe the real closure without adding test exports to production.
   vm.runInContext(source.replace(/\}\)\(\);\s*$/, `globalThis.state = {
     chatHistories, contentBuffers, activeStreams, floatingWindows
@@ -266,4 +267,44 @@ test('trusted follow-ups work on HTTP pages without crypto.randomUUID', async ()
   h.node('chat-input').fire('keydown', { key: 'Enter' });
   assert.equal(h.sent.length, 2);
   assert.notEqual(h.sent[1].operationId, h.sent[0].operationId);
+});
+
+test('reasoning deltas retain signed attempt boundaries on disconnect and authoritative completion', async () => {
+  for (const ending of ['disconnect', 'streamEnd', 'chatUnlock']) {
+    const h = harness();
+    await h.mount();
+    h.start();
+    const common = { type: 'reasoning.text', id: null, index: 0 };
+    const send = (reasoningDetailsStart, reasoning, ...details) => h.message({
+      action: 'appendToFloatingWindow', content: '', isDelta: true, reasoningDetailsStart,
+      reasoningDelta: { reasoning, reasoning_details: details }
+    });
+    send(0, 'First ', { ...common, text: 'First ' });
+    send(0, 'thought.', { ...common, text: 'thought.' });
+    send(0, '', { ...common, signature: 'first-', format: 'claude' });
+    send(0, '', { ...common, signature: 'signature' });
+    send(1, 'Second ', { ...common, text: 'Second ', format: 'claude' });
+    send(1, 'thought.', { ...common, text: 'thought.' });
+    send(1, '', { ...common, signature: 'second-' }, { ...common, signature: 'signature' });
+    const encrypted = [
+      { type: 'reasoning.encrypted', data: 'opaque-a', index: 0 },
+      { type: 'reasoning.encrypted', data: 'opaque-b', index: 0 }
+    ];
+    send(1, '', ...encrypted);
+    h.message({ action: 'appendToFloatingWindow', content: 'Partial answer', isDelta: true });
+    const expected = {
+      role: 'assistant', content: 'Partial answer', reasoning: 'First thought.Second thought.',
+      reasoning_details: [
+        { ...common, format: 'claude', text: 'First thought.', signature: 'first-signature' },
+        { ...common, format: 'claude', text: 'Second thought.', signature: 'second-signature' }, ...encrypted
+      ]
+    };
+    assert.deepEqual(plain(h.context.state.chatHistories.get('window')[1]), expected, 'metadata is complete before terminal');
+    if (ending === 'disconnect') h.ports.at(-1).disconnect();
+    else h.message({ action: ending, assistantMessage: expected });
+    h.node('chat-input').value = 'Continue';
+    h.node('chat-send').fire('click');
+    assert.deepEqual(h.sent[0].messages[1], expected, `${ending} keeps exact reasoning without duplication`);
+    assert.equal(h.sent[0].messages.filter(message => message.role === 'assistant').length, 1);
+  }
 });

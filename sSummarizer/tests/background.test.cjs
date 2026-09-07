@@ -20,7 +20,7 @@ function worker(overrides = {}) {
   const chrome = {
     runtime: { id: 'test-extension', onConnect: event(), onInstalled: event(), onStartup: event(), onMessage: event(), lastError: null },
     storage: { local: { ...area(settings), get: overrides.getSettings || (async () => settings) }, session: area(sessionData), onChanged: event() },
-    tabs: { onRemoved: event(), onUpdated: event(), sendMessage(tab, message, options, callback) { messages.push({ tab, ...message }); (callback || options)(overrides.uiReply?.(message) || { success: true }); } },
+    tabs: { onRemoved: event(), onUpdated: event(), sendMessage(tab, message, options, callback) { messages.push(JSON.parse(JSON.stringify({ tab, ...message }))); (callback || options)(overrides.uiReply?.(message) || { success: true }); } },
     scripting: { executeScript: overrides.executeScript || (async () => [{ result: 'source text', documentId: 'doc-7' }]) },
     contextMenus: { onClicked: event(), removeAll: async () => {}, create() {} },
     action: { onClicked: event() }, i18n: { getMessage: () => '' }
@@ -357,7 +357,59 @@ test('reasoning signature fragments merge without crossing ids or formats', asyn
   await w.call();
   const reasoning = w.messages.find(m => m.action === 'streamEnd')?.assistantMessage?.reasoning_details;
   assert.deepEqual(JSON.parse(JSON.stringify(reasoning)), [{ ...details[0], signature: 'sig-tail' }, details[3], details[4]]);
-  assert.ok(w.messages.some(m => m.isDelta && m.content === '' && m.assistantMessage?.reasoning_details), 'metadata must reach UI before terminal');
+  assert.ok(w.messages.some(m => m.isDelta && m.content === '' && m.reasoningDelta?.reasoning_details), 'metadata must reach UI before terminal');
+});
+
+test('retries preserve signed reasoning block boundaries in subsequent follow-ups', async () => {
+  for (const id of [null, 'reused-id']) {
+    const common = { type: 'reasoning.text', id, format: 'claude', index: 0 };
+    const first = [
+      { ...common, text: 'First ' }, { ...common, text: 'thought.' },
+      { ...common, signature: 'first-' }, { ...common, signature: 'signature' }
+    ];
+    const second = [
+      { ...common, text: 'Second ' }, { ...common, text: 'thought.' },
+      { ...common, signature: 'second-' }, { ...common, signature: 'signature' },
+      { type: 'reasoning.encrypted', data: 'opaque-a', index: 0 },
+      { type: 'reasoning.encrypted', data: 'opaque-b', index: 0 }
+    ];
+    const encode = details => details.map(detail => sse({ choices: [{ delta: { reasoning_details: [detail] } }] })).join('');
+    const w = worker({ settings: { apiProvider: 'openrouter' }, fetch: async (url, init, count) => new Response(count === 1
+      ? encode(first) + sse(delta('Partial answer.')) + sse({ error: { code: 503, message: 'busy', metadata: { error_type: 'provider_overloaded' } } })
+      : count === 2 ? encode(second) + ended(' More answer.') : ended('Follow-up answer.')) });
+    const pending = w.call();
+    await tick();
+    w.fire(1500);
+    await settles(pending);
+    const assistant = w.messages.find(m => m.action === 'streamEnd').assistantMessage;
+    const expected = [
+      { ...common, text: 'First thought.', signature: 'first-signature' },
+      { ...common, text: 'Second thought.', signature: 'second-signature' }, ...second.slice(-2)
+    ];
+    assert.deepEqual(assistant.reasoning_details, expected, 'different attempts are different signed blocks');
+    assert.deepEqual(JSON.parse(w.fetches[1].body).messages[2].reasoning_details, expected.slice(0, 1), 'retry replays the first block unchanged');
+    await w.call([{ role: 'user', content: 'source text' }, assistant, { role: 'user', content: 'Continue' }], { operationId: 'follow-up' });
+    assert.deepEqual(JSON.parse(w.fetches[2].body).messages[2].reasoning_details, expected, 'later follow-ups replay each block unchanged');
+  }
+});
+
+test('reasoning and reasoning-details message traffic grows linearly with provider output', async () => {
+  for (const field of ['reasoning', 'reasoning_details']) {
+    const volumes = [];
+    for (const count of [512, 1024]) {
+      const piece = 'abcdefghijklmnop';
+      const fragment = field === 'reasoning' ? piece : [{ type: 'reasoning.text', text: piece, index: 0 }];
+      const text = sse({ choices: [{ delta: { [field]: fragment } }] }).repeat(count) + ended('answer');
+      const w = worker({ fetch: async () => new Response(text) });
+      await w.call();
+      const total = w.messages.reduce((bytes, message) => bytes + Buffer.byteLength(JSON.stringify(message)), 0);
+      const assistant = w.messages.find(m => m.action === 'streamEnd').assistantMessage;
+      assert.equal(field === 'reasoning' ? assistant.reasoning : assistant.reasoning_details[0].text, piece.repeat(count));
+      assert.ok(total < count * piece.length * 32, `${field}: ${total} bytes must not contain cumulative snapshots`);
+      volumes.push(total);
+    }
+    assert.ok(volumes[1] < volumes[0] * 2.2, `${field}: doubling output must approximately double serialized traffic`);
+  }
 });
 
 test('a stale delayed receiver failure cannot abort a newer operation', async () => {

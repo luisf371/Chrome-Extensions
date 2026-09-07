@@ -1013,6 +1013,7 @@
 
   function updateAssistantHistory(request) {
     const { uniqueId, fullResponse, originalContext, assistantMessage } = request;
+    const reasoningDelta = request.isDelta === true ? request.reasoningDelta : null;
     const operation = streamOperations.get(uniqueId);
     if (!operation || operation.finished) return;
     if (!chatHistories.has(uniqueId)) {
@@ -1027,7 +1028,8 @@
 
     const content = request.isDelta === true ? request.content :
       (typeof assistantMessage?.content === 'string' ? assistantMessage.content : fullResponse);
-    if (!operation.assistant && (content || assistantMessage?.reasoning || assistantMessage?.reasoning_details?.length)) {
+    if (!operation.assistant && (content || assistantMessage?.reasoning || assistantMessage?.reasoning_details?.length ||
+        reasoningDelta?.reasoning || reasoningDelta?.reasoning_details?.length)) {
       operation.assistant = { role: 'assistant', content: '' };
       history.push(operation.assistant);
     }
@@ -1036,6 +1038,13 @@
     if (typeof content === 'string') {
       if (request.isDelta === true) storedAssistantMessage.content += content;
       else storedAssistantMessage.content = content;
+    }
+    if (reasoningDelta?.reasoning) {
+      storedAssistantMessage.reasoning = (storedAssistantMessage.reasoning || '') + reasoningDelta.reasoning;
+    }
+    if (reasoningDelta?.reasoning_details?.length) {
+      storedAssistantMessage.reasoning_details ||= [];
+      mergeReasoningDetails(storedAssistantMessage.reasoning_details, reasoningDelta.reasoning_details, request.reasoningDetailsStart);
     }
     if (typeof assistantMessage?.reasoning === 'string' && assistantMessage.reasoning.length > 0) {
       storedAssistantMessage.reasoning = assistantMessage.reasoning;

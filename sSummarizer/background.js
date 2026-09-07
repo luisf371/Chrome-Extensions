@@ -1,7 +1,7 @@
 // background.js - Chrome Extension Service Worker
 // Handles URL content extraction and API communication for summarization
 
-importScripts('shared/azure-utils.js', 'shared/error-utils.js', 'shared/default-prompts.js');
+importScripts('shared/azure-utils.js', 'shared/error-utils.js', 'shared/default-prompts.js', 'shared/reasoning-utils.js');
 
 // Handle expected AbortErrors from cancelled API requests
 self.addEventListener('unhandledrejection', event => {
@@ -444,6 +444,7 @@ function createStreamState(overrides = {}) {
     errorMessage: null,
     reasoning: '',
     reasoning_details: [],
+    reasoningDetailsStart: 0,
     requestDiagnostics: null,
     recentEvents: [],
     resumeDeduper: null,
@@ -563,22 +564,6 @@ function appendResponseChunk(uniqueId, content) {
 
 function flushResumeOverlap(uniqueId) {
   appendResponseChunk(uniqueId, applyResumeOverlapDedupe(uniqueId, '', true));
-}
-
-function mergeReasoningDetails(target, details) {
-  for (const detail of details) {
-    const previous = target[target.length - 1];
-    const field = detail.type === 'reasoning.text' ? 'text' : detail.type === 'reasoning.summary' ? 'summary' : null;
-    const compatible = previous?.type === detail.type &&
-      ['id', 'format', 'index'].every(key => previous[key] == null || detail[key] == null || previous[key] === detail[key]);
-    if (field && compatible && (typeof detail[field] === 'string' || typeof detail.signature === 'string')) {
-      if (typeof detail[field] === 'string') previous[field] = (previous[field] || '') + detail[field];
-      for (const key of ['id', 'format', 'index']) if (previous[key] == null && detail[key] != null) previous[key] = detail[key];
-      if (typeof detail.signature === 'string') previous.signature = (previous.signature || '') + detail.signature;
-    } else {
-      target.push({ ...detail });
-    }
-  }
 }
 
 function recordFinishReason(state, data) {
@@ -829,7 +814,7 @@ async function handleIconClick(tab, directTextContent = null, customPrompt = nul
   tabIdMap.set(uniqueId, tab.id);
   try {
     const injection = await awaitOperation(operation, chrome.scripting.executeScript({
-      target: { tabId: tab.id }, files: ['content.js']
+      target: { tabId: tab.id }, files: ['shared/reasoning-utils.js', 'content.js']
     }));
     assertOperation(operation);
     operation.documentId = injection?.[0]?.documentId || null;
@@ -1017,6 +1002,7 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
         // Keep one operation and the same effective system/slash prompt throughout backoff.
         streamStates.set(uniqueId, createStreamState({
           reasoning: state.reasoning, reasoning_details: cloneReasoningDetails(state.reasoning_details),
+          reasoningDetailsStart: state.reasoning_details.length,
           // ponytail: dedupe checks only the last 4096 characters; use a prefix table for larger overlaps.
           resumeDeduper: { active: true, existingText: partial.content.slice(-4096), pending: '' }
         }));
@@ -1141,11 +1127,12 @@ function handleJsonLine(jsonLine, uniqueId, adapter) {
     const details = adapter.parseReasoningDetails?.(data);
     appendResponseChunk(uniqueId, applyResumeOverlapDedupe(uniqueId, rawContent));
     if (reasoning) state.reasoning += reasoning;
-    if (details) mergeReasoningDetails(state.reasoning_details, details);
-    // Carry opaque reasoning immediately too, so a worker disconnect cannot lose it.
-    if (reasoning || details) {
+    if (details) mergeReasoningDetails(state.reasoning_details, details, state.reasoningDetailsStart);
+    // Carry only new fragments; full snapshots here would make message traffic quadratic.
+    if (reasoning || details?.length) {
       void sendOperationMessage(operation, { action: 'appendToFloatingWindow', isDelta: true, content: '',
-        assistantMessage: getPartialAssistantMessage(uniqueId) }).catch(() => {});
+        reasoningDelta: { ...(reasoning ? { reasoning } : {}), ...(details?.length ? { reasoning_details: details } : {}) },
+        reasoningDetailsStart: state.reasoningDetailsStart }).catch(() => {});
     }
     recordFinishReason(state, data);
     appendStreamDiagnostic(uniqueId, {
