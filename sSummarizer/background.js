@@ -13,10 +13,9 @@ self.addEventListener('unhandledrejection', event => {
 
 // Maps unique request IDs to tab IDs for tracking multiple concurrent requests
 let tabIdMap = new Map();
-// Maps unique request IDs to AbortControllers for stopping API requests
+// Each window owns one operation; late callbacks must retain their original owner.
 let abortControllers = new Map();
-// Set of cancelled request IDs to prevent late execution
-let cancelledRequests = new Set();
+let sessionOwners = new Map();
 // Accumulate full responses for history tracking
 let responseAccumulators = new Map();
 // Track heartbeat ports from content scripts while streams are active
@@ -25,7 +24,7 @@ let streamStates = new Map();
 
 // Configuration constants
 const CONFIG = {
-  REQUEST_TIMEOUT: 30000, // 30 seconds timeout for API requests
+  REQUEST_TIMEOUT: 30000, // Maximum wait for headers or further stream progress
   CONTEXT_MENU_ID: "summarize-selection",
   OPENROUTER_RETRY_BACKOFF_MS: 1500
 };
@@ -36,26 +35,123 @@ const CONFIG = {
 const ZAI_CODING_BASE_URL = 'https://api.z.ai/api/coding/paas/v4';
 const ZAI_CODING_CHAT_COMPLETIONS_URL = ZAI_CODING_BASE_URL + '/chat/completions';
 
-async function sendUiRecoveryMessages(tabId, uniqueId, infoMessage = '[Info] Request stopped by user.') {
-  if (!tabId) return;
+function beginOperation(uniqueId, tabId, operationId = crypto.randomUUID(), documentId = null) {
+  const operation = { uniqueId, tabId, operationId, documentId, controller: new AbortController(), cancelled: false, settled: false, reader: null, timeoutId: null };
+  abortControllers.set(uniqueId, operation);
+  responseAccumulators.set(uniqueId, '');
+  streamStates.set(uniqueId, createStreamState());
+  return operation;
+}
+
+function ownsOperation(operation) {
+  return operation && abortControllers.get(operation.uniqueId) === operation;
+}
+
+function assertOperation(operation) {
+  if (!ownsOperation(operation) || operation.cancelled) throw new DOMException('Request cancelled', 'AbortError');
+  operation.controller.signal.throwIfAborted();
+}
+
+function awaitOperation(operation, promise) {
+  assertOperation(operation);
+  return new Promise((resolve, reject) => {
+    const signal = operation.controller.signal;
+    const onAbort = () => reject(signal.reason);
+    signal.addEventListener('abort', onAbort, { once: true });
+    Promise.resolve(promise).then(resolve, reject).finally(() => signal.removeEventListener('abort', onAbort));
+  });
+}
+
+function cancelOperation(operation) {
+  if (!operation || operation.settled) return;
+  operation.cancelled = true;
+  operation.controller.abort();
+  clearTimeout(operation.timeoutId);
+  clearTimeout(operation.backoffId);
+  if (operation.reader) void operation.reader.cancel().catch(() => {});
+  if (operation.extracting) {
+    const target = operation.documentId ? { tabId: operation.tabId, documentIds: [operation.documentId] } : { tabId: operation.tabId };
+    void chrome.scripting.executeScript({
+      target,
+      func: operationId => { if (typeof cancelContentExtraction === 'function') cancelContentExtraction(operationId); },
+      args: [operation.operationId]
+    }).catch(() => {});
+  }
+}
+
+function finishOperation(operation) {
+  operation.settled = true;
+  clearTimeout(operation.timeoutId);
+  clearTimeout(operation.backoffId);
+  if (operation.reader) {
+    void operation.reader.cancel().catch(() => {});
+    try { operation.reader.releaseLock(); } catch {}
+    operation.reader = null;
+  }
+  if (ownsOperation(operation)) {
+    abortControllers.delete(operation.uniqueId);
+    streamStates.delete(operation.uniqueId);
+    responseAccumulators.delete(operation.uniqueId);
+  }
+}
+
+function resetRequestTimeout(operation) {
+  clearTimeout(operation.timeoutId);
+  operation.timeoutId = setTimeout(() => {
+    operation.timedOut = true;
+    operation.controller.abort();
+    if (operation.reader) void operation.reader.cancel().catch(() => {});
+  }, CONFIG.REQUEST_TIMEOUT);
+}
+
+async function sendOperationMessage(operation, message) {
+  if (!ownsOperation(operation)) return;
+  return sendMessageSafely(operation.tabId, { ...message, uniqueId: operation.uniqueId, operationId: operation.operationId }, operation);
+}
+
+async function sendUiRecoveryMessages(operation, infoMessage) {
+  if (!ownsOperation(operation) || operation.notified || operation.consumerGone) return;
+  operation.notified = true;
+  flushResumeOverlap(operation.uniqueId);
+  const state = streamStates.get(operation.uniqueId);
+  const assistantMessage = getPartialAssistantMessage(operation.uniqueId);
   try {
-    await sendMessageSafely(tabId, { action: 'hideLoading', uniqueId });
-    if (infoMessage) {
-      await sendMessageSafely(tabId, {
-        action: 'appendToFloatingWindow',
-        content: infoMessage,
-        uniqueId
-      });
-    }
-    await sendMessageSafely(tabId, {
-      action: 'chatUnlock',
-      uniqueId,
-      placeholderKey: 'placeholderFollowUp'
-    });
+    await sendOperationMessage(operation, { action: 'hideLoading' });
+    if (infoMessage) await sendOperationMessage(operation, { action: 'appendToFloatingWindow', content: infoMessage });
+    await sendOperationMessage(operation, { action: 'chatUnlock', placeholderKey: 'placeholderFollowUp', originalContext: operation.originalContext, assistantMessage, incomplete: true, finishReason: state?.finishReason || null, outcome: state?.outcome || 'interrupted' });
   } catch (error) {
     console.log('[Background] UI recovery messaging failed:', error?.message || error);
   }
 }
+
+function removeSession(uniqueId) {
+  tabIdMap.delete(uniqueId);
+  sessionOwners.delete(uniqueId);
+  void chrome.storage.session.remove(`summarySession:${uniqueId}`).catch(() => {});
+}
+
+function cancelTabOperations(tabId) {
+  for (const operation of abortControllers.values()) {
+    if (operation.tabId === tabId) {
+      operation.consumerGone = true;
+      cancelOperation(operation);
+    }
+  }
+  for (const [uniqueId, ownerTab] of tabIdMap) if (ownerTab === tabId) removeSession(uniqueId);
+  // Include sessions restored after a worker restart.
+  void chrome.storage.session.get(null).then(sessions => {
+    for (const [key, owner] of Object.entries(sessions)) {
+      if (key.startsWith('summarySession:') && owner.tabId === tabId && !sessionOwners.has(Number(key.slice('summarySession:'.length)))) {
+        void chrome.storage.session.remove(key);
+      }
+    }
+  }).catch(() => {});
+}
+
+chrome.tabs.onRemoved.addListener(cancelTabOperations);
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.status === 'loading') cancelTabOperations(tabId);
+});
 
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== 'sSummarizer-stream-heartbeat') {
@@ -63,13 +159,16 @@ chrome.runtime.onConnect.addListener((port) => {
   }
 
   heartbeatPorts.add(port);
+  let heartbeatIdentity;
 
   port.onMessage.addListener((message) => {
     if (message?.type === 'heartbeat') {
+      heartbeatIdentity = { uniqueId: message.uniqueId, operationId: message.operationId };
       try {
         port.postMessage({
           type: 'heartbeatAck',
           uniqueId: message.uniqueId,
+          operationId: message.operationId,
           ts: Date.now()
         });
       } catch (e) {
@@ -79,6 +178,13 @@ chrome.runtime.onConnect.addListener((port) => {
 
   port.onDisconnect.addListener(() => {
     heartbeatPorts.delete(port);
+    const operation = abortControllers.get(heartbeatIdentity?.uniqueId);
+    if (operation?.operationId === heartbeatIdentity?.operationId && operation.tabId === port.sender?.tab?.id &&
+        (!operation.documentId || operation.documentId === port.sender?.documentId) && !operation.notified) {
+      operation.consumerGone = true;
+      cancelOperation(operation);
+      removeSession(operation.uniqueId);
+    }
   });
 });
 
@@ -208,8 +314,8 @@ const AnthropicAdapter = {
   },
 
   isStreamEnd(data) {
-    // Anthropic: message_stop event or stop_reason
-    return data?.type === 'message_stop' || data?.stop_reason;
+    // message_delta carries the outcome; message_stop ends trailing metadata.
+    return data?.type === 'message_stop';
   }
 };
 
@@ -275,16 +381,12 @@ const GeminiAdapter = {
   },
 
   parseStreamChunk(jsonData) {
-    // Gemini: candidates[0].content.parts[0].text
-    if (jsonData.candidates?.[0]?.content?.parts?.[0]?.text) {
-      return jsonData.candidates[0].content.parts[0].text;
-    }
-    return null;
+    return jsonData.candidates?.[0]?.content?.parts?.filter(part => !part.thought && typeof part.text === 'string').map(part => part.text).join('') || null;
   },
 
   isStreamEnd(data) {
     // Gemini: finishReason in candidates
-    return Boolean(data?.candidates?.[0]?.finishReason);
+    return Boolean(data?.candidates?.[0]?.finishReason || data?.promptFeedback?.blockReason);
   }
 };
 
@@ -367,17 +469,6 @@ function getAssistantMessagePayload(uniqueId, fullResponse) {
   return assistantMessage;
 }
 
-function clearStreamState(uniqueId) {
-  streamStates.delete(uniqueId);
-}
-
-function truncateForLog(value, maxLength = 400) {
-  if (typeof value !== 'string') {
-    return value;
-  }
-  return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
-}
-
 function summarizeMessageForDiagnostics(message) {
   const content = message?.content;
   return {
@@ -449,37 +540,75 @@ function shouldRetryProviderOverload(errorResult, providerKind, retryAttempt, un
   );
 }
 
-function applyResumeOverlapDedupe(uniqueId, chunk) {
-  if (!chunk) {
-    return chunk;
-  }
+function applyResumeOverlapDedupe(uniqueId, chunk, flush = false) {
+  const deduper = streamStates.get(uniqueId)?.resumeDeduper;
+  if (!deduper?.active) return chunk || '';
+  deduper.pending += chunk || '';
+  const { existingText, pending } = deduper;
+  // Wait while this prefix could still grow into a longer suffix match.
+  if (!flush && existingText.slice(0, -1).includes(pending)) return '';
+  let overlap = Math.min(existingText.length, pending.length);
+  while (overlap > 0 && !existingText.endsWith(pending.slice(0, overlap))) overlap--;
+  deduper.active = false;
+  deduper.pending = '';
+  return pending.slice(overlap);
+}
 
-  const streamState = streamStates.get(uniqueId);
-  const resumeDeduper = streamState?.resumeDeduper;
-  if (!resumeDeduper?.active) {
-    return chunk;
-  }
+function appendResponseChunk(uniqueId, content) {
+  const operation = abortControllers.get(uniqueId);
+  if (!content || !operation) return;
+  responseAccumulators.set(uniqueId, (responseAccumulators.get(uniqueId) || '') + content);
+  void sendOperationMessage(operation, { action: 'appendToFloatingWindow', content, isDelta: true }).catch(() => {});
+}
 
-  resumeDeduper.pending += chunk;
-  const { existingText, pending } = resumeDeduper;
-  const maxOverlap = Math.min(existingText.length, pending.length);
-  let overlapLength = 0;
+function flushResumeOverlap(uniqueId) {
+  appendResponseChunk(uniqueId, applyResumeOverlapDedupe(uniqueId, '', true));
+}
 
-  for (let i = maxOverlap; i > 0; i--) {
-    if (existingText.endsWith(pending.slice(0, i))) {
-      overlapLength = i;
-      break;
+function mergeReasoningDetails(target, details) {
+  for (const detail of details) {
+    const previous = target[target.length - 1];
+    const field = detail.type === 'reasoning.text' ? 'text' : detail.type === 'reasoning.summary' ? 'summary' : null;
+    const compatible = previous?.type === detail.type &&
+      ['id', 'format', 'index'].every(key => previous[key] == null || detail[key] == null || previous[key] === detail[key]);
+    if (field && compatible && (typeof detail[field] === 'string' || typeof detail.signature === 'string')) {
+      if (typeof detail[field] === 'string') previous[field] = (previous[field] || '') + detail[field];
+      for (const key of ['id', 'format', 'index']) if (previous[key] == null && detail[key] != null) previous[key] = detail[key];
+      if (typeof detail.signature === 'string') previous.signature = (previous.signature || '') + detail.signature;
+    } else {
+      target.push({ ...detail });
     }
   }
+}
 
-  if (pending.length === overlapLength) {
-    return '';
+function recordFinishReason(state, data) {
+  const reason = data?.choices?.[0]?.finish_reason ?? data?.delta?.stop_reason ?? data?.stop_reason ??
+    data?.candidates?.[0]?.finishReason ?? data?.promptFeedback?.blockReason;
+  if (!reason) return;
+  state.finishReason = reason;
+  if (['stop', 'STOP', 'end_turn', 'stop_sequence'].includes(reason)) {
+    state.outcome = 'complete';
+  } else if (['length', 'max_tokens', 'MAX_TOKENS', 'model_context_window_exceeded'].includes(reason)) {
+    state.outcome = 'truncated';
+    state.errorMessage = `The provider stopped at its output or context limit (${reason}). The answer is incomplete; you can ask a follow-up to continue.`;
+  } else if (data?.promptFeedback?.blockReason || ['content_filter', 'refusal', 'SAFETY', 'RECITATION', 'BLOCKLIST', 'PROHIBITED_CONTENT', 'SPII', 'IMAGE_SAFETY', 'IMAGE_PROHIBITED_CONTENT'].includes(reason)) {
+    state.outcome = 'blocked';
+    state.errorMessage = `The provider blocked this response (${reason}).`;
+  } else {
+    state.outcome = 'failed';
+    state.errorMessage = `The provider ended the response with ${reason}. The answer may be incomplete.`;
   }
+}
 
-  const dedupedChunk = pending.slice(overlapLength);
-  resumeDeduper.active = false;
-  resumeDeduper.pending = '';
-  return dedupedChunk;
+function validFollowUpMessages(messages) {
+  return Array.isArray(messages) && messages.length > 0 &&
+    messages[messages.length - 1]?.role === 'user' &&
+    messages.every(message => message && ['user', 'assistant'].includes(message.role) &&
+      typeof message.content === 'string' &&
+      (message.reasoning === undefined || typeof message.reasoning === 'string') &&
+      (message.reasoning_details === undefined || (Array.isArray(message.reasoning_details) &&
+        message.reasoning_details.every(detail => detail && typeof detail === 'object' && !Array.isArray(detail) &&
+          typeof detail.type === 'string'))));
 }
 
 // ===== END PROVIDER ADAPTERS =====
@@ -611,21 +740,66 @@ async function setupContextMenu() {
 
 // Add message listener for stopping API requests and handling follow-ups
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'stopApiRequest') {
-    stopApiRequest(request.uniqueId, sender?.tab?.id).finally(() => {
-      sendResponse({ success: true });
-    });
-    return true;
-  } else if (request.action === 'submitFollowUp') {
-    // Re-establish tab mapping if lost (e.g. due to Service Worker restart)
-    if (sender.tab && sender.tab.id) {
-      tabIdMap.set(request.uniqueId, sender.tab.id);
-    }
-
-    // Handle follow-up question
-    makeApiCall(request.messages, request.uniqueId);
-    sendResponse({ success: true });
+  if (!request || !['stopApiRequest', 'submitFollowUp'].includes(request.action)) return;
+  if (sender?.id !== chrome.runtime.id || !Number.isInteger(sender.tab?.id) || sender.frameId !== 0 ||
+      !Number.isSafeInteger(request.uniqueId) || typeof request.operationId !== 'string' || !request.operationId ||
+      (request.action === 'submitFollowUp' && !validFollowUpMessages(request.messages))) {
+    sendResponse({ success: false, error: 'Invalid request or sender.' });
+    return;
   }
+  const active = abortControllers.get(request.uniqueId);
+  if (request.action === 'stopApiRequest') {
+    if (active && (active.tabId !== sender.tab.id || active.operationId !== request.operationId ||
+        (active.documentId && active.documentId !== sender.documentId))) {
+      sendResponse({ success: false, error: 'Request does not own this operation.' });
+      return;
+    }
+    if (active) {
+      stopApiRequest(request.uniqueId, sender.tab.id, request.operationId, request.closeWindow === true)
+        .then(() => sendResponse({ success: true }), () => sendResponse({ success: false }));
+    } else {
+      const key = `summarySession:${request.uniqueId}`;
+      chrome.storage.session.get(key).then(async saved => {
+        const owner = sessionOwners.get(request.uniqueId) || saved[key];
+        if (!owner || owner.tabId !== sender.tab.id || owner.lastOperationId !== request.operationId ||
+            (owner.documentId && owner.documentId !== sender.documentId)) {
+          sendResponse({ success: false, error: 'Unknown session.' });
+          return;
+        }
+        await stopApiRequest(request.uniqueId, sender.tab.id, request.operationId, request.closeWindow === true);
+        sendResponse({ success: true });
+      }).catch(() => sendResponse({ success: false }));
+    }
+    return true;
+  }
+  if (active && !active.cancelled && !active.settled) {
+    sendResponse({ success: false, error: 'A request is already running.' });
+    return;
+  }
+  // Reserve before storage awaits so Stop can cancel even restored sessions.
+  const operation = beginOperation(request.uniqueId, sender.tab.id, request.operationId, sender.documentId);
+  (async () => {
+    try {
+      const key = `summarySession:${request.uniqueId}`;
+      const owner = sessionOwners.get(request.uniqueId) || (await awaitOperation(operation, chrome.storage.session.get(key)))[key];
+      assertOperation(operation);
+      if (!owner || owner.tabId !== sender.tab.id || (owner.documentId && owner.documentId !== sender.documentId) || owner.lastOperationId === request.operationId) {
+        throw new Error('Request does not own this session.');
+      }
+      owner.lastOperationId = request.operationId;
+      sessionOwners.set(request.uniqueId, owner);
+      await awaitOperation(operation, chrome.storage.session.set({ [key]: owner }));
+      assertOperation(operation);
+      tabIdMap.set(request.uniqueId, sender.tab.id);
+      sendResponse({ success: true });
+      await makeApiCall(request.messages, request.uniqueId, null, null, { operation });
+    } catch (error) {
+      sendResponse({ success: false, error: operation.cancelled ? 'Request stopped.' : error.message });
+      await operation.recoveryPromise;
+      finishOperation(operation);
+    }
+  })();
+  return true;
 });
 
 // Wrap click logic in its own async function so we can catch errors.
@@ -648,914 +822,342 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 async function handleIconClick(tab, directTextContent = null, customPrompt = null, commandName = null) {
-  // Validate tab and URL
-  if (!tab || !tab.id || !tab.url) {
-    console.log('[Background] Invalid tab object:', tab);
-    return;
-  }
-
-  // Check if URL is processable
-  if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.startsWith('moz-extension://')) {
-    return;
-  }
-
-  const uniqueId = Date.now() + Math.floor(Math.random() * 1000); // More unique ID (integer only)
+  if (!tab || !Number.isInteger(tab.id) || !tab.url ||
+      /^(chrome|chrome-extension|moz-extension):/.test(tab.url)) return;
+  const uniqueId = Date.now() + Math.floor(Math.random() * 1000);
+  const operation = beginOperation(uniqueId, tab.id);
   tabIdMap.set(uniqueId, tab.id);
-
-  // Inject content.js FIRST before sending any messages
   try {
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['content.js']
-    });
-  } catch (e) {
-    console.log('[Background] Failed to inject content.js:', e.message);
-    tabIdMap.delete(uniqueId);
-    return;
-  }
-
-  try {
-    await sendMessageSafely(tab.id, { action: 'createFloatingWindow', uniqueId, showLoading: true });
-  } catch (error) {
-    console.log('[Background] Failed to initialize UI:', error);
-    tabIdMap.delete(uniqueId);
-    return;
-  }
-
-  // If we have direct text (e.g. from context menu selection), skip scraping
-  if (directTextContent) {
-    makeApiCall(directTextContent, uniqueId, customPrompt, commandName);
-    return;
-  }
-
-  // Determine which extractor to run
-  let extractorFn;
-  let errorContext;
-
-  if (tab.url.includes('youtube.com/watch')) {
-    const match = tab.url.match(/[?&]v=([^&]+)/);
-    if (!match?.[1]) {
-      handleApiError(uniqueId, 'Could not extract video ID from the URL.');
+    const injection = await awaitOperation(operation, chrome.scripting.executeScript({
+      target: { tabId: tab.id }, files: ['content.js']
+    }));
+    assertOperation(operation);
+    operation.documentId = injection?.[0]?.documentId || null;
+    const owner = { tabId: tab.id, documentId: operation.documentId, lastOperationId: operation.operationId };
+    sessionOwners.set(uniqueId, owner);
+    await awaitOperation(operation, chrome.storage.session.set({ [`summarySession:${uniqueId}`]: owner }));
+    const ready = await sendOperationMessage(operation, { action: 'createFloatingWindow', showLoading: true });
+    assertOperation(operation);
+    if (!ready?.success) throw new Error(ready?.error || 'Could not initialize the summary window.');
+    operation.uiReady = true;
+    if (directTextContent) {
+      await makeApiCall(directTextContent, uniqueId, customPrompt, commandName, { operation });
       return;
     }
-    extractorFn = () => extractYouTubeCaptions();
-    errorContext = 'YouTube video';
-  } else if (tab.url.match(/reddit\.com\/r\/.*\/comments\//)) {
-    extractorFn = () => extractRedditThread();
-    errorContext = 'Reddit thread';
-  } else {
-    extractorFn = () => getPageContent();
-    errorContext = 'page';
-  }
-
-  try {
-    // Inject scraper, then run the extractor
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['scripts/content-scraper.js']
-    });
-
-    const results = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: extractorFn
-    });
-
-    const content = results?.[0]?.result;
-    if (content && content.trim().length > 0) {
-      makeApiCall(content, uniqueId, customPrompt, commandName);
+    let extractorFn, errorContext;
+    if (tab.url.includes('youtube.com/watch')) {
+      if (!tab.url.match(/[?&]v=([^&]+)/)?.[1]) throw new Error('Could not extract video ID from the URL.');
+      extractorFn = (operationId) => extractYouTubeCaptions(operationId);
+      errorContext = 'YouTube video';
+    } else if (tab.url.match(/reddit\.com\/r\/.*\/comments\//)) {
+      extractorFn = (operationId) => extractRedditThread(operationId);
+      errorContext = 'Reddit thread';
     } else {
-      handleApiError(uniqueId, `Could not extract content from this ${errorContext}.`);
+      extractorFn = () => getPageContent();
+      errorContext = 'page';
     }
-  } catch (err) {
-    console.log('[Background] Content extraction error:', err.message);
-    handleApiError(uniqueId, `Failed to extract ${errorContext} content: ${err.message}`);
+    const target = operation.documentId ? { tabId: tab.id, documentIds: [operation.documentId] } : { tabId: tab.id };
+    await awaitOperation(operation, chrome.scripting.executeScript({ target, files: ['scripts/content-scraper.js'] }));
+    assertOperation(operation);
+    operation.extracting = true;
+    const results = await awaitOperation(operation, chrome.scripting.executeScript({
+      target, func: extractorFn, args: [operation.operationId]
+    }));
+    operation.extracting = false;
+    assertOperation(operation);
+    const content = results?.[0]?.result;
+    if (typeof content !== 'string' || !content.trim()) throw new Error(`Could not extract content from this ${errorContext}.`);
+    await makeApiCall(content, uniqueId, customPrompt, commandName, { operation });
+  } catch (error) {
+    if (!operation.cancelled && ownsOperation(operation)) {
+      if (operation.uiReady) await handleApiError(uniqueId, error.message, operation);
+      else { console.log('[Background] Failed to initialize UI:', error.message); removeSession(uniqueId); }
+    }
+  } finally {
+    await operation.recoveryPromise;
+    if (!operation.settled) finishOperation(operation);
   }
 }
 
 /**
  * Helper function to safely send messages to content script
  */
-async function sendMessageSafely(tabId, message) {
+async function sendMessageSafely(tabId, message, operation = null) {
   return new Promise((resolve, reject) => {
-    chrome.tabs.sendMessage(tabId, message, (response) => {
-      if (chrome.runtime.lastError) {
-        // Only reject if it's a real error, not just "no response"
-        if (chrome.runtime.lastError.message.includes('port closed') ||
-          chrome.runtime.lastError.message.includes('Receiving end does not exist')) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else {
-          resolve(null);
+    const callback = response => {
+      const error = chrome.runtime.lastError;
+      if (response?.stale && ownsOperation(operation) && !operation.notified) {
+        operation.consumerGone = true;
+        cancelOperation(operation);
+        removeSession(operation.uniqueId);
+      }
+      if (error) {
+        if (ownsOperation(operation) && /Receiving end does not exist|No tab with id|No document with id|port closed|message port closed/i.test(error.message)) {
+          operation.consumerGone = true;
+          cancelOperation(operation);
+          removeSession(operation.uniqueId);
         }
+        reject(new Error(error.message));
       } else {
         resolve(response);
       }
-    });
+    };
+    if (operation?.documentId) chrome.tabs.sendMessage(tabId, message, { documentId: operation.documentId }, callback);
+    else chrome.tabs.sendMessage(tabId, message, callback);
   });
 }
 
 // Note: YouTube transcript fetching is now handled entirely by the content script
 // using the same approach as the Python youtube-transcript-api implementation
 
-async function makeApiCall(inputData, uniqueId, customUserPrompt = null, commandName = null, retryOptions = {}) {
-  const {
-    preserveAccumulator = false,
-    preservedOriginalContext = null,
-    retryAttempt = 0,
-    inheritedReasoning = '',
-    inheritedReasoningDetails = [],
-    resumeFromText = ''
-  } = retryOptions;
-  // Check if the request was explicitly cancelled
-  if (cancelledRequests.has(uniqueId)) {
-    cancelledRequests.delete(uniqueId);
-    responseAccumulators.delete(uniqueId);
-    return;
-  }
-
-  // Check if the window/request was already closed/cancelled
+async function makeApiCall(inputData, uniqueId, customUserPrompt = null, commandName = null, options = {}) {
   const tabId = tabIdMap.get(uniqueId);
-  if (!tabId) {
-    cancelledRequests.delete(uniqueId);
-    responseAccumulators.delete(uniqueId);
-    return;
-  }
-
-  const {
-    apiUrl,
-    model,
-    systemPrompt,
-    timestampPrompt,
-    apiKey,
-    enableDebugMode,
-    includeTimestamps,
-    apiProvider,
-    azureResource,
-    azureDeployment,
-    azureApiVersion,
-    openrouterDisableReasoning
-  } = await chrome.storage.local.get(
-    ['apiUrl', 'model', 'systemPrompt', 'timestampPrompt', 'apiKey', 'enableDebugMode', 'includeTimestamps', 'apiProvider', 'azureResource', 'azureDeployment', 'azureApiVersion', 'openrouterDisableReasoning']
-  );
-
-  const adapter = getAdapter(apiProvider);
-  const providerKind = (apiProvider || '').toLowerCase();
-  let resolvedApiUrl;
-
-  if (providerKind === 'azure') {
-    resolvedApiUrl = buildAzureApiUrl({ apiUrl, azureResource, azureDeployment, azureApiVersion });
-  } else if (providerKind === 'glm') {
-    resolvedApiUrl = ZAI_CODING_CHAT_COMPLETIONS_URL;
-  } else {
-    resolvedApiUrl = (apiUrl || '').trim();
-  }
-
-  // Universal Debug Mode Check - intercept BEFORE any processing/truncation
-  if (enableDebugMode) {
-    const tab = tabIdMap.get(uniqueId);
-    if (tab) {
-      let debugContent = '';
-
-      if (typeof inputData === 'string') {
-        debugContent = inputData;
-      } else if (Array.isArray(inputData)) {
-        // For follow-ups, show the latest user message or full history
-        debugContent = JSON.stringify(inputData, null, 2);
-      }
-
-      // Slash-command prompts now compose with the system prompt (same as a real
-      // call), so debug mode shows exactly what would be sent: the combined system
-      // prompt, and the extracted content as the user payload.
-      const effectiveSystemPrompt = composeSystemPrompt({
-        systemPrompt,
-        slashCommandPrompt: typeof inputData === 'string' ? customUserPrompt : null,
-        includeTimestamps,
-        timestampPrompt
-      });
-
-      await sendMessageSafely(tab, { action: 'hideLoading', uniqueId });
-
-      const label = commandName ? `/${commandName}` : (customUserPrompt ? 'Custom Prompt' : 'Default Summary');
-
-      await sendMessageSafely(tab, {
-        action: 'appendToFloatingWindow',
-        content: `**[DEBUG MODE]**\n\n**Action:** ${label}\n**Model:** ${model}\n**Target URL:** ${resolvedApiUrl}\n**System Prompt:**\n${effectiveSystemPrompt}\n\n**Content Payload (${debugContent.length} chars):**\n\n${debugContent}\n`,
-        uniqueId
-      });
-
-      // Unlock chat if it was an initial request
-      if (typeof inputData === 'string') {
-        await sendMessageSafely(tab, {
-          action: 'streamEnd',
-          uniqueId,
-          fullResponse: "[Debug Mode: No API Call Made]",
-          originalContext: inputData
-        });
-      } else {
-        await sendMessageSafely(tab, {
-          action: 'chatUnlock',
-          uniqueId,
-          placeholderKey: 'placeholderFollowUp'
-        });
-      }
-    }
-    return;
-  }
-
-  // Determine if this is an initial request (string) or follow-up (array)
-  let messages = [];
-  let originalContext = preservedOriginalContext; // Only set for initial request
-
-  // system = systemPrompt (hard rules) + slash-command prompt (+ timestamps when
-  // enabled); the extracted content is the user message. Follow-ups (array input)
-  // carry no slash prompt, so only the system prompt (and timestamps) apply to them.
-  const effectiveSystemPrompt = composeSystemPrompt({
-    systemPrompt,
-    slashCommandPrompt: typeof inputData === 'string' ? customUserPrompt : null,
-    includeTimestamps,
-    timestampPrompt
-  });
-
-  if (typeof inputData === 'string') {
-    // Initial Summary Request
-    const text = inputData;
-    if (!text) {
-      console.log('[API] Invalid text input');
-      await handleApiError(uniqueId, 'Invalid text content');
-      return;
-    }
-
-    const processedText = text.trim();
-
-    // Keep the prompt + content combined for the chat history (so follow-ups retain
-    // the task context). The API itself receives the slash-command prompt in the
-    // system role (via effectiveSystemPrompt) and the content as the user message.
-    const finalContent = customUserPrompt ? `${customUserPrompt}\n\n---\n\n${processedText}` : processedText;
-    originalContext = finalContent;
-
-    // If a custom user prompt (from a slash command) is provided, show it in the UI
-    if (customUserPrompt) {
-      const tab = tabIdMap.get(uniqueId);
-      if (tab) {
-        // Use slash command name if available, otherwise first line of prompt
-        const label = commandName ? `/${commandName}` : customUserPrompt.split('\n')[0].substring(0, 50);
-        const formattedPrompt = `\n**YOU:** ${label}${commandName ? '' : '...'}\n\n---\n`;
-        sendMessageSafely(tab, {
-          action: 'appendToFloatingWindow',
-          content: formattedPrompt,
-          uniqueId
-        });
-      }
-    }
-
-    messages = [
-      { role: 'user', content: processedText }
-    ];
-  } else if (Array.isArray(inputData)) {
-    // Follow-up Request
-    // System prompt injection is handled by the provider adapters natively
-    messages = [
-      ...inputData
-    ];
-  } else {
-    console.log('[API] Invalid input data type');
-    return;
-  }
-
-  // Validate configuration
-  if (!resolvedApiUrl || !apiKey) {
-    console.log('[API] API URL or API Key not set');
-    await handleApiError(uniqueId, 'API URL or API Key not set. Please configure in extension options by right-clicking the extension icon.');
-    return;
-  }
-
-  // Validate URL format and enforce HTTPS
+  if (tabId == null) return;
+  const operation = options.operation || beginOperation(uniqueId, tabId, options.operationId);
+  let providerKind = '', resolvedApiUrl = '';
   try {
-    const parsedUrl = new URL(resolvedApiUrl);
-    if (parsedUrl.protocol !== 'https:') {
-      console.log('[API] Non-HTTPS API URL rejected:', resolvedApiUrl);
-      await handleApiError(uniqueId, 'API URL must use HTTPS. Please reconfigure in extension options.');
-      return;
-    }
-  } catch (e) {
-    console.log('[API] Invalid API URL format:', resolvedApiUrl);
-    await handleApiError(uniqueId, 'Invalid API URL format. Please check your configuration.');
-    return;
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
-
-  // Store the abort controller for potential cancellation
-  abortControllers.set(uniqueId, { controller, timeoutId, reader: null });
-
-  // Initialize response accumulator
-  if (!preserveAccumulator || !responseAccumulators.has(uniqueId)) {
-    responseAccumulators.set(uniqueId, '');
-  }
-  streamStates.set(uniqueId, createStreamState({
-    reasoning: inheritedReasoning,
-    reasoning_details: cloneReasoningDetails(inheritedReasoningDetails),
-    resumeDeduper: resumeFromText
-      ? {
-        active: true,
-        existingText: resumeFromText,
-        pending: ''
-      }
-      : null
-  }));
-
-  try {
-    const requestBody = adapter.transformRequest(messages, model, effectiveSystemPrompt);
-
-    if (providerKind === 'openrouter' && openrouterDisableReasoning) {
-      requestBody.reasoning = { effort: 'none' };
-    }
-
-    let fetchUrl = resolvedApiUrl;
-    const shouldForceGeminiUrl = providerKind === 'gemini';
-    if (shouldForceGeminiUrl) {
-      const geminiModel = model?.trim() || 'gemini-pro';
-      fetchUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:streamGenerateContent?alt=sse`;
-    }
-
-    const streamState = streamStates.get(uniqueId);
-    if (streamState) {
-      streamState.requestDiagnostics = buildRequestDiagnostics({
-        uniqueId,
-        providerKind,
-        model,
-        fetchUrl,
-        requestBody,
-        messages,
-        openrouterDisableReasoning,
-        isFollowUp: Array.isArray(inputData),
-        retryAttempt
-      });
-    }
-
-    if (providerKind === 'openrouter' && streamState?.requestDiagnostics) {
-      logOpenRouterDiagnostics('request-start', streamState.requestDiagnostics);
-    }
-
-    const response = await fetch(fetchUrl, {
-      method: 'POST',
-      headers: adapter.buildHeaders(apiKey),
-      body: JSON.stringify(requestBody),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      const retryAfter = response.headers.get('retry-after');
-      console.log('[API] Error response body:', errorText);
-      if (providerKind === 'openrouter') {
-        logOpenRouterDiagnostics('http-error', {
-          request: streamStates.get(uniqueId)?.requestDiagnostics || null,
-          status: response.status,
-          statusText: response.statusText,
-          errorText: truncateForLog(errorText, 800)
-        });
-      }
-      abortControllers.delete(uniqueId);
-      // Throw a generic error for logging/control flow, but carry a friendly,
-      // status-aware message for the user on `userMessage` (see outer catch).
-      const httpError = new Error(`HTTP ${response.status}: ${response.statusText}`);
-      httpError.userMessage = formatHttpError({
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText,
-        providerKind,
-        retryAfter
-      });
-      throw httpError;
-    }
-
-    const tab = tabIdMap.get(uniqueId);
-    if (!tab) {
-      console.log('[API] No tab found for uniqueId:', uniqueId);
-      abortControllers.delete(uniqueId);
-      clearStreamState(uniqueId);
-      responseAccumulators.delete(uniqueId);
-      return;
-    }
-
-    if (!response.body) {
-      throw new Error('Response body is not available for streaming');
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-
-    // Store the reader so we can cancel it if needed
-    const abortInfo = abortControllers.get(uniqueId);
-    if (abortInfo) {
-      abortInfo.reader = reader;
-    }
-
-    try {
-      while (true) {
-        // Check if request was aborted before reading next chunk
-        const currentAbortInfo = abortControllers.get(uniqueId);
-        if (!currentAbortInfo) {
-          try { reader.cancel(); } catch (e) { /* already closed */ }
-          break;
-        }
-
-        const { done, value } = await reader.read();
-        if (done) {
-          let processResult = null;
-          if (buffer.length > 0) {
-            processResult = processBuffer(buffer + '\n', uniqueId, adapter);
-            buffer = processResult.buffer;
-          }
-
-          if (processResult?.errorMessage) {
-            if (shouldRetryProviderOverload(processResult, providerKind, retryAttempt, uniqueId)) {
-              const accumulatedResponse = responseAccumulators.get(uniqueId) || '';
-              const currentStreamState = streamStates.get(uniqueId);
-              const retryMessages = [
-                ...messages,
-                getPartialAssistantMessage(uniqueId),
-                { role: 'user', content: buildContinuationRetryPrompt() }
-              ];
-              if (providerKind === 'openrouter') {
-                logOpenRouterDiagnostics('auto-retry-continuation', {
-                  request: currentStreamState?.requestDiagnostics || null,
-                  recentEvents: currentStreamState?.recentEvents || [],
-                  retryAttempt: retryAttempt + 1,
-                  accumulatedResponseLength: accumulatedResponse.length
-                });
-              }
-              clearStreamState(uniqueId);
-              abortControllers.delete(uniqueId);
-              cancelledRequests.delete(uniqueId);
-              await new Promise((resolve) => setTimeout(resolve, CONFIG.OPENROUTER_RETRY_BACKOFF_MS));
-              return makeApiCall(retryMessages, uniqueId, null, null, {
-                preserveAccumulator: true,
-                preservedOriginalContext: originalContext,
-                retryAttempt: retryAttempt + 1,
-                inheritedReasoning: currentStreamState?.reasoning || '',
-                inheritedReasoningDetails: currentStreamState?.reasoning_details || [],
-                resumeFromText: accumulatedResponse
-              });
-            }
-            if (providerKind === 'openrouter') {
-              logOpenRouterDiagnostics('stream-error-before-eof', {
-                request: streamStates.get(uniqueId)?.requestDiagnostics || null,
-                recentEvents: streamStates.get(uniqueId)?.recentEvents || [],
-                errorMessage: processResult.errorMessage
-              });
-            }
-            await handleApiError(uniqueId, processResult.errorMessage);
-            clearStreamState(uniqueId);
-            abortControllers.delete(uniqueId);
-            cancelledRequests.delete(uniqueId);
-            break;
-          }
-
-          const streamState = streamStates.get(uniqueId);
-          if (!streamState?.sawTerminal) {
-            if (providerKind === 'openrouter') {
-              logOpenRouterDiagnostics('eof-without-terminal-marker', {
-                request: streamState?.requestDiagnostics || null,
-                recentEvents: streamState?.recentEvents || [],
-                accumulatedResponseLength: (responseAccumulators.get(uniqueId) || '').length
-              });
-            }
-            await sendUiRecoveryMessages(
-              tab,
-              uniqueId,
-              '[Info] Stream interrupted before the provider sent a completion marker. You can ask a follow-up to continue.'
-            );
-            clearStreamState(uniqueId);
-            abortControllers.delete(uniqueId);
-            cancelledRequests.delete(uniqueId);
-            responseAccumulators.delete(uniqueId);
-            break;
-          }
-
-          const fullResponse = responseAccumulators.get(uniqueId) || '';
-          await sendMessageSafely(tab, {
-            action: 'streamEnd',
-            uniqueId,
-            fullResponse,
-            originalContext,
-            assistantMessage: getAssistantMessagePayload(uniqueId, fullResponse)
-          });
-
-          await sendMessageSafely(tab, { action: 'hideLoading', uniqueId });
-          clearStreamState(uniqueId);
-          abortControllers.delete(uniqueId);
-          cancelledRequests.delete(uniqueId);
-          responseAccumulators.delete(uniqueId);
-          break;
-        }
-        buffer += decoder.decode(value, { stream: true });
-        const processResult = processBuffer(buffer, uniqueId, adapter);
-        buffer = processResult.buffer;
-
-        if (processResult.shouldStop) {
-          try { reader.cancel(); } catch (e) { /* already closed */ }
-
-          if (processResult.stopReason === 'cancelled') {
-            clearStreamState(uniqueId);
-            break;
-          }
-
-          if (processResult.errorMessage) {
-            if (shouldRetryProviderOverload(processResult, providerKind, retryAttempt, uniqueId)) {
-              const accumulatedResponse = responseAccumulators.get(uniqueId) || '';
-              const currentStreamState = streamStates.get(uniqueId);
-              const retryMessages = [
-                ...messages,
-                getPartialAssistantMessage(uniqueId),
-                { role: 'user', content: buildContinuationRetryPrompt() }
-              ];
-              if (providerKind === 'openrouter') {
-                logOpenRouterDiagnostics('auto-retry-continuation', {
-                  request: currentStreamState?.requestDiagnostics || null,
-                  recentEvents: currentStreamState?.recentEvents || [],
-                  retryAttempt: retryAttempt + 1,
-                  accumulatedResponseLength: accumulatedResponse.length
-                });
-              }
-              clearStreamState(uniqueId);
-              abortControllers.delete(uniqueId);
-              cancelledRequests.delete(uniqueId);
-              await new Promise((resolve) => setTimeout(resolve, CONFIG.OPENROUTER_RETRY_BACKOFF_MS));
-              return makeApiCall(retryMessages, uniqueId, null, null, {
-                preserveAccumulator: true,
-                preservedOriginalContext: originalContext,
-                retryAttempt: retryAttempt + 1,
-                inheritedReasoning: currentStreamState?.reasoning || '',
-                inheritedReasoningDetails: currentStreamState?.reasoning_details || [],
-                resumeFromText: accumulatedResponse
-              });
-            }
-            if (providerKind === 'openrouter') {
-              logOpenRouterDiagnostics('stream-error-mid-read', {
-                request: streamStates.get(uniqueId)?.requestDiagnostics || null,
-                recentEvents: streamStates.get(uniqueId)?.recentEvents || [],
-                errorMessage: processResult.errorMessage
-              });
-            }
-            await handleApiError(uniqueId, processResult.errorMessage);
-          } else {
-            if (providerKind === 'openrouter') {
-              logOpenRouterDiagnostics('stream-stop-without-error', {
-                request: streamStates.get(uniqueId)?.requestDiagnostics || null,
-                recentEvents: streamStates.get(uniqueId)?.recentEvents || [],
-                accumulatedResponseLength: (responseAccumulators.get(uniqueId) || '').length
-              });
-            }
-            await sendUiRecoveryMessages(
-              tab,
-              uniqueId,
-              '[Info] Stream interrupted before the provider sent a completion marker. You can ask a follow-up to continue.'
-            );
-            responseAccumulators.delete(uniqueId);
-          }
-
-          clearStreamState(uniqueId);
-          abortControllers.delete(uniqueId);
-          cancelledRequests.delete(uniqueId);
-          break;
-        }
-      }
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        if (!cancelledRequests.has(uniqueId)) {
-          if (providerKind === 'openrouter') {
-            logOpenRouterDiagnostics('abort-error-during-stream', {
-              request: streamStates.get(uniqueId)?.requestDiagnostics || null,
-              recentEvents: streamStates.get(uniqueId)?.recentEvents || [],
-              errorMessage: error.message
-            });
-          }
-          await sendUiRecoveryMessages(
-            tab,
-            uniqueId,
-            '[Info] Stream interrupted while waiting for more output. You can ask a follow-up to continue.'
-          );
-          responseAccumulators.delete(uniqueId);
-        }
-      } else {
-        console.log('[API] Stream reading error:', error);
-        if (providerKind === 'openrouter') {
-          logOpenRouterDiagnostics('reader-exception', {
-            request: streamStates.get(uniqueId)?.requestDiagnostics || null,
-            recentEvents: streamStates.get(uniqueId)?.recentEvents || [],
-            errorMessage: error.message,
-            stack: truncateForLog(error.stack || '', 1200)
-          });
-        }
-        // The connection dropped mid-stream. Distinguish a transport-level
-        // disconnect from other read failures so the user gets actionable text.
-        const streamErrorMessage = isNetworkError(error)
-          ? formatNetworkError(error, { providerKind, apiUrl: resolvedApiUrl })
-          : `The connection to the endpoint was interrupted while streaming the response (${error.message}). You can ask a follow-up to continue.`;
-        await handleApiError(uniqueId, streamErrorMessage);
-      }
-      clearStreamState(uniqueId);
-      abortControllers.delete(uniqueId);
-      cancelledRequests.delete(uniqueId);
-    }
-  } catch (err) {
-    clearTimeout(timeoutId);
-    if (providerKind === 'openrouter') {
-      logOpenRouterDiagnostics('request-exception', {
-        request: streamStates.get(uniqueId)?.requestDiagnostics || null,
-        recentEvents: streamStates.get(uniqueId)?.recentEvents || [],
-        errorMessage: err.message,
-        stack: truncateForLog(err.stack || '', 1200)
-      });
-    }
-    abortControllers.delete(uniqueId);
-    clearStreamState(uniqueId);
-    responseAccumulators.delete(uniqueId);
-    console.log('[API] call error:', err);
-
-    // User cancelled while the initial request was still in flight: the stop
-    // handler already reported it, so don't surface a spurious timeout/error.
-    if (err.name === 'AbortError' && cancelledRequests.has(uniqueId)) {
-      cancelledRequests.delete(uniqueId);
-      return;
-    }
-
-    let errorMessage;
-    if (err.userMessage) {
-      // Already formatted by the !response.ok branch above.
-      errorMessage = err.userMessage;
-    } else if (err.name === 'AbortError') {
-      errorMessage = `The request timed out after ${Math.round(CONFIG.REQUEST_TIMEOUT / 1000)} seconds with no response. The endpoint may be slow, unreachable, or disconnected — check your API URL and try again.`;
-    } else if (isNetworkError(err)) {
-      errorMessage = formatNetworkError(err, { providerKind, apiUrl: resolvedApiUrl });
+    assertOperation(operation);
+    let messages;
+    if (typeof inputData === 'string' && inputData.trim()) {
+      const content = inputData.trim();
+      operation.originalContext = customUserPrompt ? `${customUserPrompt}\n\n---\n\n${content}` : content;
+      messages = [{ role: 'user', content }];
+    } else if (validFollowUpMessages(inputData)) {
+      // Forward only supported conversation fields across the authenticated boundary.
+      messages = inputData.map(({ role, content, reasoning, reasoning_details }) => ({
+        role, content, ...(reasoning ? { reasoning } : {}),
+        ...(reasoning_details ? { reasoning_details: cloneReasoningDetails(reasoning_details) } : {})
+      }));
     } else {
-      errorMessage = `Unexpected error: ${err.message}`;
+      throw new Error('Invalid text content or conversation history');
     }
-
-    await handleApiError(uniqueId, errorMessage);
+    await sendOperationMessage(operation, { action: 'streamStart', originalContext: operation.originalContext || null });
+    assertOperation(operation);
+    const settings = await awaitOperation(operation, chrome.storage.local.get(
+      ['apiUrl', 'model', 'systemPrompt', 'timestampPrompt', 'apiKey', 'enableDebugMode', 'includeTimestamps', 'apiProvider', 'azureResource', 'azureDeployment', 'azureApiVersion', 'openrouterDisableReasoning']
+    ));
+    assertOperation(operation);
+    const { apiUrl, model, systemPrompt, timestampPrompt, apiKey, enableDebugMode, includeTimestamps, apiProvider,
+      azureResource, azureDeployment, azureApiVersion, openrouterDisableReasoning } = settings;
+    const adapter = getAdapter(apiProvider);
+    providerKind = (apiProvider || '').toLowerCase();
+    resolvedApiUrl = providerKind === 'azure' ? buildAzureApiUrl({ apiUrl, azureResource, azureDeployment, azureApiVersion })
+      : providerKind === 'glm' ? ZAI_CODING_CHAT_COMPLETIONS_URL : (apiUrl || '').trim();
+    const effectiveSystemPrompt = composeSystemPrompt({
+      systemPrompt, slashCommandPrompt: typeof inputData === 'string' ? customUserPrompt : null, includeTimestamps, timestampPrompt
+    });
+    if (enableDebugMode) {
+      const debugContent = typeof inputData === 'string' ? inputData : JSON.stringify(inputData, null, 2);
+      const label = commandName ? `/${commandName}` : customUserPrompt ? 'Custom Prompt' : 'Default Summary';
+      await sendOperationMessage(operation, { action: 'appendToFloatingWindow', content:
+        `**[DEBUG MODE]**\n\n**Action:** ${label}\n**Model:** ${model}\n**Target URL:** ${resolvedApiUrl}\n**System Prompt:**\n${effectiveSystemPrompt}\n\n**Content Payload (${debugContent.length} chars):**\n\n${debugContent}\n` });
+      await sendUiRecoveryMessages(operation, null);
+      return;
+    }
+    if (!resolvedApiUrl || !apiKey?.trim()) {
+      throw new Error('API URL or API Key not set. Please configure in extension options by right-clicking the extension icon.');
+    }
+    let parsedUrl;
+    try { parsedUrl = new URL(resolvedApiUrl); } catch { throw new Error('Invalid API URL format. Please check your configuration.'); }
+    if (parsedUrl.protocol !== 'https:') throw new Error('API URL must use HTTPS. Please reconfigure in extension options.');
+    if (customUserPrompt) {
+      const label = commandName ? `/${commandName}` : customUserPrompt.split('\n')[0].substring(0, 50);
+      await sendOperationMessage(operation, { action: 'appendToFloatingWindow', content: `\n**YOU:** ${label}${commandName ? '' : '...'}\n\n---\n` });
+    }
+    const fetchUrl = providerKind === 'gemini'
+      ? `https://generativelanguage.googleapis.com/v1beta/models/${model?.trim() || 'gemini-pro'}:streamGenerateContent?alt=sse`
+      : resolvedApiUrl;
+    for (let retryAttempt = 0; retryAttempt <= 1; retryAttempt++) {
+      assertOperation(operation);
+      const state = streamStates.get(uniqueId);
+      const requestBody = adapter.transformRequest(messages, model, effectiveSystemPrompt);
+      if (providerKind === 'openrouter' && openrouterDisableReasoning) requestBody.reasoning = { effort: 'none' };
+      state.requestDiagnostics = buildRequestDiagnostics({ uniqueId, providerKind, model, fetchUrl, requestBody, messages, openrouterDisableReasoning, isFollowUp: Array.isArray(inputData), retryAttempt });
+      if (providerKind === 'openrouter') logOpenRouterDiagnostics('request-start', state.requestDiagnostics);
+      resetRequestTimeout(operation);
+      const response = await awaitOperation(operation, fetch(fetchUrl, {
+        method: 'POST', headers: adapter.buildHeaders(apiKey), body: JSON.stringify(requestBody), signal: operation.controller.signal
+      }));
+      assertOperation(operation);
+      if (!response.ok) {
+        let errorText = '';
+        try { errorText = await awaitOperation(operation, response.text()); } catch (error) {
+          if (operation.cancelled || !ownsOperation(operation)) throw error;
+        }
+        const httpError = new Error(`HTTP ${response.status}`);
+        httpError.userMessage = formatHttpError({ status: response.status, statusText: response.statusText, body: errorText, providerKind, retryAfter: response.headers.get('retry-after') });
+        throw httpError;
+      }
+      if (!response.body) throw new Error('Response body is not available for streaming');
+      const reader = response.body.getReader();
+      operation.reader = reader;
+      const decoder = new TextDecoder('utf-8', { fatal: true });
+      let buffer = '', result = null;
+      while (!state.sawTerminal) {
+        const { done, value } = await awaitOperation(operation, reader.read());
+        assertOperation(operation);
+        if (value?.byteLength) {
+          resetRequestTimeout(operation);
+          buffer += decoder.decode(value, { stream: true });
+        }
+        if (done) buffer += decoder.decode();
+        result = processBuffer(buffer, uniqueId, adapter);
+        buffer = result.buffer;
+        if (result.errorMessage || result.shouldStop || done) break;
+      }
+      clearTimeout(operation.timeoutId);
+      void reader.cancel().catch(() => {});
+      try { reader.releaseLock(); } catch {}
+      operation.reader = null;
+      assertOperation(operation);
+      flushResumeOverlap(uniqueId);
+      if (result?.errorMessage && shouldRetryProviderOverload(result, providerKind, retryAttempt, uniqueId)) {
+        const partial = getPartialAssistantMessage(uniqueId);
+        messages = [...messages, partial, { role: 'user', content: buildContinuationRetryPrompt() }];
+        // Keep one operation and the same effective system/slash prompt throughout backoff.
+        streamStates.set(uniqueId, createStreamState({
+          reasoning: state.reasoning, reasoning_details: cloneReasoningDetails(state.reasoning_details),
+          // ponytail: dedupe checks only the last 4096 characters; use a prefix table for larger overlaps.
+          resumeDeduper: { active: true, existingText: partial.content.slice(-4096), pending: '' }
+        }));
+        await awaitOperation(operation, new Promise(resolve => {
+          operation.backoffId = setTimeout(resolve, CONFIG.OPENROUTER_RETRY_BACKOFF_MS);
+        }));
+        continue;
+      }
+      if (result?.errorMessage || state.errorMessage) {
+        await handleApiError(uniqueId, result?.errorMessage || state.errorMessage, operation);
+      } else if (!state.sawTerminal) {
+        await sendUiRecoveryMessages(operation, '[Info] Stream interrupted before the provider sent a completion marker. You can ask a follow-up to continue.');
+      } else {
+        operation.notified = true;
+        const fullResponse = responseAccumulators.get(uniqueId) || '';
+        await sendOperationMessage(operation, {
+          action: 'streamEnd', fullResponse, originalContext: operation.originalContext,
+          assistantMessage: getAssistantMessagePayload(uniqueId, fullResponse), finishReason: state.finishReason || null, outcome: 'complete'
+        });
+        await sendOperationMessage(operation, { action: 'hideLoading' });
+      }
+      break;
+    }
+  } catch (error) {
+    if (!ownsOperation(operation) || operation.cancelled || operation.consumerGone) return;
+    let message = error.userMessage;
+    if (!message && operation.timedOut) {
+      message = `The request timed out after ${Math.round(CONFIG.REQUEST_TIMEOUT / 1000)} seconds without provider progress. You can ask a follow-up to continue.`;
+    } else if (!message && isNetworkError(error)) {
+      message = formatNetworkError(error, { providerKind, apiUrl: resolvedApiUrl });
+    }
+    await handleApiError(uniqueId, message || error.message || 'The provider request failed.', operation);
+  } finally {
+    await operation.recoveryPromise;
+    finishOperation(operation);
   }
 }
 
 /**
  * Stop an ongoing API request
  */
-async function stopApiRequest(uniqueId, fallbackTabId = null) {
-
-  // Mark request as cancelled to prevent future execution
-  cancelledRequests.add(uniqueId);
-
-  const abortInfo = abortControllers.get(uniqueId);
-  if (abortInfo) {
-    const { controller, timeoutId, reader } = abortInfo;
-
-    // Abort the fetch request
-    controller.abort();
-    clearTimeout(timeoutId);
-
-    // Cancel the stream reader if it exists
-    if (reader) {
-      try {
-        reader.cancel();
-      } catch (e) {
-        // reader may already be closed — safe to ignore
-      }
+async function stopApiRequest(uniqueId, fallbackTabId = null, operationId = null, closeWindow = false) {
+  const operation = abortControllers.get(uniqueId);
+  if (operation && (!operationId || operation.operationId === operationId) &&
+      (fallbackTabId == null || operation.tabId === fallbackTabId)) {
+    cancelOperation(operation);
+    if (closeWindow) operation.consumerGone = true;
+    else {
+      operation.recoveryPromise = sendUiRecoveryMessages(operation, '[Info] Request stopped by user.');
+      await operation.recoveryPromise;
     }
-
-    abortControllers.delete(uniqueId);
-    clearStreamState(uniqueId);
-
-    // Send notification to UI that request was stopped
-    const tab = tabIdMap.get(uniqueId) || fallbackTabId;
-    if (tab) {
-      await sendUiRecoveryMessages(tab, uniqueId, '[Info] Request stopped by user.');
-    }
-
-    tabIdMap.delete(uniqueId);
-    responseAccumulators.delete(uniqueId);
-  } else {
-    // Service worker may have restarted and lost in-memory state. Still recover the UI if possible.
-    const tab = tabIdMap.get(uniqueId) || fallbackTabId;
-    if (tab) {
-      await sendUiRecoveryMessages(tab, uniqueId, '[Info] Request was interrupted or already ended.');
-    }
-    clearStreamState(uniqueId);
-    tabIdMap.delete(uniqueId);
-    responseAccumulators.delete(uniqueId);
   }
-
-  // Clear the cancellation flag now that the stop has been fully handled.
-  // The in-flight stream loop can exit via a non-throwing break (when the
-  // abort lands between reads) without ever clearing this flag, which would
-  // otherwise leak here and silently drop a later follow-up that reuses the
-  // same uniqueId (makeApiCall returns early when the id is still cancelled).
-  cancelledRequests.delete(uniqueId);
+  if (closeWindow && (!operation || operation.operationId === operationId)) removeSession(uniqueId);
 }
 
 /**
  * Handle API errors consistently
  */
-async function handleApiError(uniqueId, message) {
-  // Clean up abort controller if it exists
-  const abortInfo = abortControllers.get(uniqueId);
-  if (abortInfo) {
-    clearTimeout(abortInfo.timeoutId);
-    abortControllers.delete(uniqueId);
-  }
-  clearStreamState(uniqueId);
-
-  const tab = tabIdMap.get(uniqueId);
-  if (tab) {
-    try {
-      await sendMessageSafely(tab, { action: 'hideLoading', uniqueId });
-      await sendMessageSafely(tab, {
-        action: 'appendToFloatingWindow',
-        content: `[Error] ${message}`,
-        uniqueId
-      });
-      await sendMessageSafely(tab, {
-        action: 'chatUnlock',
-        uniqueId,
-        placeholderKey: 'placeholderFollowUp'
-      });
-    } catch (e) {
-      console.log('[API] Failed to send error message to tab:', e);
-    }
-  }
-  cancelledRequests.delete(uniqueId);
-  responseAccumulators.delete(uniqueId);
-  // tabIdMap entry intentionally kept — session stays open for user retries.
+async function handleApiError(uniqueId, message, operation = abortControllers.get(uniqueId)) {
+  if (!ownsOperation(operation) || operation.cancelled) return;
+  await sendUiRecoveryMessages(operation, `[Error] ${message}`);
 }
 
 function processBuffer(buffer, uniqueId, adapter) {
-  const abortInfo = abortControllers.get(uniqueId);
-  if (!abortInfo) {
-    return { buffer: '', shouldStop: true, stopReason: 'cancelled' };
+  const operation = abortControllers.get(uniqueId);
+  const state = streamStates.get(uniqueId);
+  if (!operation || operation.cancelled || !state) return { buffer: '', shouldStop: true, stopReason: 'cancelled' };
+  state.sseData ||= [];
+  if (state.skipNextLf && buffer.length) {
+    if (buffer[0] === '\n') buffer = buffer.slice(1);
+    state.skipNextLf = false;
   }
-
-  const lines = buffer.split('\n');
-  buffer = lines.pop();
-
-  for (const line of lines) {
-    if (!abortControllers.get(uniqueId)) {
-      return { buffer: '', shouldStop: true, stopReason: 'cancelled' };
-    }
-
-    const trimmedLine = line.trim();
-    if (!trimmedLine || trimmedLine.startsWith(':')) {
-      continue;
-    }
-
-    if (!trimmedLine.startsWith('data:')) {
-      continue;
-    }
-
-    const jsonLine = trimmedLine.substring(5).trim();
-    if (!jsonLine) {
-      continue;
-    }
-
-    if (jsonLine === '[DONE]') {
-      const streamState = streamStates.get(uniqueId);
-      if (streamState) {
-        streamState.sawDone = true;
-        streamState.sawTerminal = true;
+  while (buffer.length) {
+    const end = buffer.search(/[\r\n]/);
+    if (end < 0) break;
+    const line = buffer.slice(0, end);
+    // A final CR already ends the line; swallow a following LF on the next read.
+    state.skipNextLf = buffer[end] === '\r' && end === buffer.length - 1;
+    buffer = buffer.slice(end + (buffer[end] === '\r' && buffer[end + 1] === '\n' ? 2 : 1));
+    if (!line) {
+      if (!state.sseData.length) continue;
+      const json = state.sseData.join('\n');
+      state.sseData = [];
+      if (!json) continue;
+      if (json === '[DONE]') {
+        state.sawDone = true;
+        state.sawTerminal = true;
+        appendStreamDiagnostic(uniqueId, { type: 'done' });
+      } else {
+        const result = handleJsonLine(json, uniqueId, adapter);
+        if (result?.errorMessage) return { buffer: '', shouldStop: true, stopReason: 'error', ...result };
       }
-      appendStreamDiagnostic(uniqueId, { type: 'done' });
-      continue;
-    }
-
-    const result = handleJsonLine(jsonLine, uniqueId, adapter);
-    if (result?.errorMessage) {
-      return { buffer: '', shouldStop: true, stopReason: 'error', ...result };
+      if (state.sawTerminal) return { buffer: '', shouldStop: true, stopReason: 'terminal', errorMessage: state.errorMessage };
+    } else if (line === 'data' || line.startsWith('data:')) {
+      state.sseData.push(line === 'data' ? '' : line.slice(5).replace(/^ /, ''));
     }
   }
-
+  // SSE requires a blank line to dispatch; EOF never certifies a partial event.
   return { buffer, shouldStop: false };
 }
 
 function handleJsonLine(jsonLine, uniqueId, adapter) {
+  const operation = abortControllers.get(uniqueId);
+  const state = streamStates.get(uniqueId);
+  if (!operation || operation.cancelled || !state) return null;
   try {
-    if (!jsonLine) return;
-
-    const abortInfo = abortControllers.get(uniqueId);
-    if (!abortInfo) {
-      return;
-    }
-
     const data = JSON.parse(jsonLine);
-    const streamState = streamStates.get(uniqueId);
-    if (!streamState) {
-      return null;
-    }
-
-    if (data?.error?.message) {
-      appendStreamDiagnostic(uniqueId, {
-        type: 'error',
-        errorCode: data.error.code || null,
-        errorMessage: truncateForLog(data.error.message, 500),
-        provider: data.provider || null,
-        model: data.model || null,
-        metadata: data.error.metadata || null
+    if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Expected a provider event object');
+    if (data.error) {
+      state.outcome = 'failed';
+      state.sawTerminal = true;
+      state.errorMessage = formatStreamError({
+        message: data.error.message || 'The provider returned a stream error.',
+        code: data.error.code || data.error.type,
+        providerKind: state.requestDiagnostics?.providerKind
       });
-      if (streamState.requestDiagnostics?.providerKind === 'openrouter') {
-        logOpenRouterDiagnostics('sse-error-chunk', {
-          request: streamState.requestDiagnostics,
-          recentEvents: streamState.recentEvents,
-          errorChunk: data
-        });
-      }
-      streamState.errorMessage = formatStreamError({
-        message: data.error.message,
-        code: data.error.code,
-        providerKind: streamState.requestDiagnostics?.providerKind
-      });
-      streamState.sawTerminal = true;
-      return {
-        // Keep the raw numeric code on the return value — the OpenRouter
-        // auto-retry path matches on errorCode === 503 / provider_overloaded.
-        errorMessage: streamState.errorMessage,
-        errorCode: data.error.code || null,
-        errorMetadata: data.error.metadata || null,
-        provider: data.provider || null,
-        model: data.model || null
-      };
+      return { errorMessage: state.errorMessage, errorCode: data.error.code || null, errorMetadata: data.error.metadata || null };
     }
-
-    const tab = tabIdMap.get(uniqueId);
-
-    const rawContentChunk = adapter.parseStreamChunk(data);
-    const contentChunk = applyResumeOverlapDedupe(uniqueId, rawContentChunk);
-    const reasoningChunk = typeof adapter.parseReasoning === 'function' ? adapter.parseReasoning(data) : null;
-    const reasoningDetails = typeof adapter.parseReasoningDetails === 'function' ? adapter.parseReasoningDetails(data) : null;
+    const rawContent = adapter.parseStreamChunk(data);
+    if (rawContent != null && typeof rawContent !== 'string') throw new Error('Expected a text delta');
+    const reasoning = adapter.parseReasoning?.(data);
+    const details = adapter.parseReasoningDetails?.(data);
+    appendResponseChunk(uniqueId, applyResumeOverlapDedupe(uniqueId, rawContent));
+    if (reasoning) state.reasoning += reasoning;
+    if (details) mergeReasoningDetails(state.reasoning_details, details);
+    // Carry opaque reasoning immediately too, so a worker disconnect cannot lose it.
+    if (reasoning || details) {
+      void sendOperationMessage(operation, { action: 'appendToFloatingWindow', isDelta: true, content: '',
+        assistantMessage: getPartialAssistantMessage(uniqueId) }).catch(() => {});
+    }
+    recordFinishReason(state, data);
     appendStreamDiagnostic(uniqueId, {
-      type: 'chunk',
-      finishReason: data?.choices?.[0]?.finish_reason || null,
-      hasContent: Boolean(rawContentChunk),
-      contentLength: rawContentChunk?.length || 0,
-      dedupedContentLength: contentChunk?.length || 0,
-      hasReasoning: Boolean(reasoningChunk),
-      reasoningLength: reasoningChunk?.length || 0,
-      reasoningDetailsCount: Array.isArray(reasoningDetails) ? reasoningDetails.length : 0,
-      provider: data?.provider || null,
-      model: data?.model || null
+      type: 'chunk', finishReason: state.finishReason || null, contentLength: rawContent?.length || 0,
+      reasoningLength: reasoning?.length || 0, reasoningDetailsCount: details?.length || 0
     });
-
-    if (tab && contentChunk) {
-      chrome.tabs.sendMessage(tab, {
-        action: 'appendToFloatingWindow',
-        content: contentChunk,
-        uniqueId
-      }, () => {
-        void chrome.runtime.lastError;
-      });
-
-      const current = responseAccumulators.get(uniqueId) || '';
-      responseAccumulators.set(uniqueId, current + contentChunk);
-    }
-
-    if (reasoningChunk) {
-      streamState.reasoning += reasoningChunk;
-    }
-
-    if (reasoningDetails) {
-      streamState.reasoning_details.push(...reasoningDetails);
-    }
-
-    if (adapter.isStreamEnd(data)) {
-      streamState.sawTerminal = true;
-      if (data?.choices?.[0]?.finish_reason === 'error') {
-        streamState.errorMessage = streamState.errorMessage || 'The provider ended the response with an error before it finished. This is usually temporary — try again, or ask a follow-up to continue.';
-        return {
-          errorMessage: streamState.errorMessage,
-          errorCode: null,
-          errorMetadata: null,
-          provider: data?.provider || null,
-          model: data?.model || null
-        };
-      }
-    }
-  } catch (e) {
-    appendStreamDiagnostic(uniqueId, {
-      type: 'parse-failure',
-      message: e.message,
-      rawLine: truncateForLog(jsonLine, 600)
-    });
-    const streamState = streamStates.get(uniqueId);
-    if (streamState?.requestDiagnostics?.providerKind === 'openrouter') {
-      logOpenRouterDiagnostics('json-parse-failure', {
-        request: streamState.requestDiagnostics,
-        recentEvents: streamState.recentEvents,
-        parseError: e.message,
-        rawLine: truncateForLog(jsonLine, 1000)
-      });
-    }
-    console.warn('[API] Failed to parse JSON line:', e.message);
+    if (adapter.isStreamEnd(data)) state.sawTerminal = true;
+  } catch (error) {
+    state.outcome = 'protocol_error';
+    state.errorMessage = `Invalid provider stream data: ${error.message}. The answer may be incomplete.`;
+    appendStreamDiagnostic(uniqueId, { type: 'parse-failure', message: error.message });
+    return { errorMessage: state.errorMessage };
   }
-
   return null;
 }

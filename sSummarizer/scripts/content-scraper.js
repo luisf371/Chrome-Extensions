@@ -6,13 +6,40 @@
  * This runs in the context of the YouTube page
  * Based on the Python youtube-transcript-api implementation
  */
-async function extractYouTubeCaptions() {
+// Preserve pending operations when this script is injected again in the same tab.
+var contentExtractionRequests = contentExtractionRequests || new Map();
+
+function startContentExtraction(operationId) {
+    const existing = operationId && contentExtractionRequests.get(operationId);
+    if (existing) return existing;
+    const controller = new AbortController();
+    const request = {
+        signal: controller.signal,
+        abort: () => controller.abort(),
+        finish() {
+            controller.abort(); // Release unread error bodies as well as pending requests.
+            clearTimeout(timeoutId);
+            if (contentExtractionRequests.get(operationId) === request) contentExtractionRequests.delete(operationId);
+        }
+    };
+    const timeoutId = setTimeout(() => { controller.abort(); request.finish(); }, 15000);
+    if (operationId) contentExtractionRequests.set(operationId, request);
+    return request;
+}
+
+function cancelContentExtraction(operationId) {
+    // Retain early Stop until an already-dispatched extraction registers, or its deadline expires.
+    if (operationId) startContentExtraction(operationId).abort();
+}
+
+async function extractYouTubeCaptions(operationId) {
+    const request = startContentExtraction(operationId);
 
     try {
         // Method 1: Use YouTube Internal API
         const videoId = extractVideoIdFromUrl(window.location.href);
         if (videoId) {
-            const transcriptData = await getTranscriptViaInternalAPI(videoId);
+            const transcriptData = await getTranscriptViaInternalAPI(videoId, request.signal);
             if (transcriptData && transcriptData.length > 100) {
                 return transcriptData;
             }
@@ -32,6 +59,8 @@ async function extractYouTubeCaptions() {
     } catch (error) {
         console.log('[YT Extractor] Error in extractYouTubeCaptions:', error);
         return await fallbackToTitleDescription();
+    } finally {
+        request.finish();
     }
 }
 
@@ -65,12 +94,13 @@ function extractVideoIdFromUrl(url) {
 /**
  * Get transcript using YouTube's internal API (mimicking Python implementation)
  */
-async function getTranscriptViaInternalAPI(videoId) {
+async function getTranscriptViaInternalAPI(videoId, signal) {
   try {
     
     // Step 1: Fetch the YouTube watch page HTML
     const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
     const response = await fetch(watchUrl, {
+      signal,
       headers: {
         'User-Agent': 'com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip'
       }
@@ -93,6 +123,7 @@ async function getTranscriptViaInternalAPI(videoId) {
     // Step 3: Make request to YouTube InnerTube API
     const innertubeUrl = `https://www.youtube.com/youtubei/v1/player?key=${apiKey}`;
     const innertubeResponse = await fetch(innertubeUrl, {
+      signal,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -160,7 +191,7 @@ async function getTranscriptViaInternalAPI(videoId) {
       captionUrl += `&tlang=${encodeURIComponent(lang)}`;
     }
     
-    const captionResponse = await fetch(captionUrl);
+    const captionResponse = await fetch(captionUrl, { signal });
     if (!captionResponse.ok) {
       return null;
     }
@@ -406,7 +437,9 @@ function getNormalizedNodeText(node) {
  * Extract content from a Reddit thread, supporting both 'Shreddit' (modern) and Legacy layouts.
  * Cleans noise (ads, timestamps, sidebars) and limits comment depth/count.
  */
-async function extractRedditThread() {
+async function extractRedditThread(operationId) {
+  const request = startContentExtraction(operationId);
+  try {
 
   // Load user settings for limits and sort
   const { redditMaxComments, redditDepth, redditSort } = await new Promise(resolve =>
@@ -419,7 +452,6 @@ async function extractRedditThread() {
   const depthLimit = Number.isFinite(parsedDepth) ? parsedDepth : 3;
   const sortType = redditSort || 'current';
 
-  try {
     // Handle Sort Logic
     let doc = document;
     let isFetched = false;
@@ -435,7 +467,7 @@ async function extractRedditThread() {
              url.searchParams.set('sort', sortType);
              url.searchParams.set('limit', '500'); // Request more comments
              try {
-                 const response = await fetch(url.toString());
+                 const response = await fetch(url.toString(), { signal: request.signal });
                  if (response.ok) {
                      const html = await response.text();
                      const parser = new DOMParser();
@@ -529,6 +561,8 @@ ${commentsText.join('\n\n')}
   } catch (e) {
     console.error('[Reddit Extractor] Error:', e);
     return `Error extracting Reddit thread: ${e.message}`;
+  } finally {
+    request.finish();
   }
 }
 

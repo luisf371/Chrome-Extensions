@@ -271,7 +271,9 @@ document.addEventListener('DOMContentLoaded', function () {
         : { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
 
     const body = {
-      max_tokens: 20,
+      ...(providerKind === 'openai' && /^(?:o\d(?:-|$)|gpt-5(?:[.-]|$))/i.test(trimmedModel || '')
+        ? { max_completion_tokens: 1024 } // Reasoning and visible output share this budget.
+        : { max_tokens: 20 }),
       stream: false,
       messages: [{ role: 'user', content: userMessage }]
     };
@@ -294,6 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
   }
 
+  let statusTimeout = null;
   const statusDiv = document.createElement('div');
   statusDiv.id = 'status-message';
   const apiSection = apiUrlInput.closest('.form-section');
@@ -720,6 +723,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function showStatus(message, type) {
+    clearTimeout(statusTimeout);
+    statusTimeout = null;
     statusDiv.dataset.type = type;
     statusDiv.textContent = message;
     statusDiv.style.display = 'block';
@@ -727,7 +732,7 @@ document.addEventListener('DOMContentLoaded', function () {
     showToast(message, type);
 
     if (type === 'success' || type === 'info') {
-      setTimeout(() => {
+      statusTimeout = setTimeout(() => {
         statusDiv.style.display = 'none';
       }, 3000);
     }
@@ -815,6 +820,36 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  function validateTestConnectionResponse(data, providerKind) {
+    if (data?.error) {
+      const detail = extractProviderErrorDetail(JSON.stringify(data));
+      throw new Error(detail.message || 'The provider returned an error.');
+    }
+
+    let text;
+    let finishReason;
+    let complete;
+    if (providerKind === 'anthropic') {
+      text = Array.isArray(data?.content) && data.content.filter(part => part?.type === 'text' && typeof part.text === 'string').map(part => part.text).join('');
+      finishReason = data?.stop_reason;
+      complete = data?.type === 'message' && data?.role === 'assistant' && data?.stop_details?.type !== 'refusal' && ['end_turn', 'stop_sequence'].includes(finishReason);
+    } else if (providerKind === 'gemini') {
+      const candidate = Array.isArray(data?.candidates) && data.candidates[0];
+      const parts = candidate?.content?.parts;
+      text = Array.isArray(parts) && parts.filter(part => !part?.thought && typeof part?.text === 'string').map(part => part.text).join('');
+      finishReason = data?.promptFeedback?.blockReason || candidate?.finishReason;
+      complete = !data?.promptFeedback?.blockReason && finishReason === 'STOP';
+    } else {
+      const choice = Array.isArray(data?.choices) && data.choices[0];
+      text = choice?.message?.content;
+      finishReason = choice?.finish_reason;
+      complete = choice?.message?.role === 'assistant' && !choice.message.refusal && finishReason === 'stop';
+    }
+    if (!complete || typeof text !== 'string' || !text.trim()) {
+      throw new Error(`The endpoint did not return a complete text response${finishReason ? ` (${clampErrorText(String(finishReason))})` : ''}. Verify the provider and model; a test token limit may also need more room for reasoning.`);
+    }
+  }
+
   function setupTestConnection() {
     const testButton = document.getElementById('test-connection');
     if (!testButton) return;
@@ -840,30 +875,39 @@ document.addEventListener('DOMContentLoaded', function () {
       testButton.textContent = 'Testing...';
       showStatus('Testing API connection...', 'info');
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const providerKind = (currentValues.apiProvider || 'openai').toLowerCase();
+      let response;
       try {
         const { fetchUrl, fetchOptions } = buildTestConnectionRequest(currentValues);
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        const response = await fetch(fetchUrl, { ...fetchOptions, signal: controller.signal });
-        clearTimeout(timeoutId);
+        response = await fetch(fetchUrl, { ...fetchOptions, signal: controller.signal });
+        const responseText = await response.text();
 
         if (response.ok) {
-          showStatus('API connection successful! Your settings are working correctly.', 'success');
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch {
+            throw new Error('The endpoint returned an empty or invalid JSON response. Verify the API URL and provider.');
+          }
+          validateTestConnectionResponse(data, providerKind);
+          showStatus('Non-streaming API test succeeded with a valid text response. Streaming has not been tested.', 'success');
         } else {
-          const errorText = await response.text();
           const errorMessage = formatHttpError({
             status: response.status,
             statusText: response.statusText,
-            body: errorText,
-            providerKind: (currentValues.apiProvider || 'openai').toLowerCase(),
+            body: responseText,
+            providerKind,
             retryAfter: response.headers.get('retry-after')
           });
           showStatus(errorMessage, 'error');
         }
       } catch (error) {
         let errorMessage;
-        if (error.name === 'AbortError') {
+        if (response && !response.ok) {
+          errorMessage = formatHttpError({ status: response.status, statusText: response.statusText, body: '', providerKind, retryAfter: response.headers.get('retry-after') });
+        } else if (error.name === 'AbortError') {
           errorMessage = 'Connection timed out after 10 seconds. The endpoint may be slow, unreachable, or disconnected — verify the API URL.';
         } else if (isNetworkError(error)) {
           errorMessage = formatNetworkError(error, {
@@ -875,6 +919,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         showStatus(errorMessage, 'error');
       } finally {
+        clearTimeout(timeoutId);
         testButton.disabled = false;
         testButton.textContent = 'Test Connection';
       }
