@@ -149,9 +149,6 @@ function cancelTabOperations(tabId) {
 }
 
 chrome.tabs.onRemoved.addListener(cancelTabOperations);
-chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-  if (changeInfo.status === 'loading') cancelTabOperations(tabId);
-});
 
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== 'sSummarizer-stream-heartbeat') {

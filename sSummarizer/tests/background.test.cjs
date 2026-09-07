@@ -297,6 +297,73 @@ test('early heartbeat disconnect cancels only its matching generation', async ()
   assert.equal(w.fetches.length, 0);
 });
 
+test('tab loading notifications preserve an active document stream and its owner', async () => {
+  let fixture;
+  const w = worker({ fetch: async (url, init) => {
+    fixture = streamResponse(sse(delta('partial')), { open: true, signal: init.signal });
+    return fixture.response;
+  } });
+  const pending = w.context.handleIconClick({ id: 7, url: 'https://example.invalid/page' }, 'source');
+  for (let i = 0; i < 5; i++) await tick();
+  const created = w.messages.find(m => m.action === 'createFloatingWindow');
+  for (const change of [
+    { status: 'loading', url: 'https://example.invalid/page#section' },
+    { status: 'loading', url: 'https://example.invalid/route' },
+    { status: 'loading' }
+  ]) {
+    for (const listener of w.chrome.tabs.onUpdated.listeners) listener(7, change);
+    await tick();
+    assert.equal(w.fetches[0].signal.aborted, false, 'tab loading alone does not prove the recipient departed');
+    assert.equal(w.run(`sessionOwners.has(${created.uniqueId})`), true);
+    assert.ok(w.sessionData[`summarySession:${created.uniqueId}`]);
+  }
+  fixture.control.enqueue(new TextEncoder().encode(sse('[DONE]')));
+  await settles(pending);
+  assert.equal(w.messages.find(m => m.action === 'streamEnd')?.fullResponse, 'partial');
+});
+
+test('completed document sessions accept follow-ups after tab loading notifications', async () => {
+  const w = worker();
+  await w.context.handleIconClick({ id: 7, url: 'https://example.invalid/page' }, 'source');
+  const created = w.messages.find(m => m.action === 'createFloatingWindow');
+  for (const listener of w.chrome.tabs.onUpdated.listeners) listener(7, { status: 'loading' });
+  await tick();
+  assert.equal(w.run(`sessionOwners.has(${created.uniqueId})`), true);
+  assert.ok(w.sessionData[`summarySession:${created.uniqueId}`]);
+  const reply = deferred();
+  w.chrome.runtime.onMessage.listeners[0]({
+    action: 'submitFollowUp', uniqueId: created.uniqueId, operationId: 'follow-up-after-loading',
+    messages: [{ role: 'user', content: 'source' }, { role: 'assistant', content: 'answer' }, { role: 'user', content: 'Continue' }]
+  }, { id: 'test-extension', tab: { id: 7 }, frameId: 0, documentId: 'doc-7' }, reply.resolve);
+  assert.equal((await reply.promise).success, true);
+  for (let i = 0; i < 5; i++) await tick();
+  assert.equal(w.fetches.length, 2);
+});
+
+test('only the matching document and generation heartbeat disconnect cancels a stream', async () => {
+  const w = worker({ fetch: async (url, init) => streamResponse('', { open: true, signal: init.signal }).response });
+  const pending = w.context.handleIconClick({ id: 7, url: 'https://example.invalid/page' }, 'source');
+  for (let i = 0; i < 5; i++) await tick();
+  const created = w.messages.find(m => m.action === 'createFloatingWindow');
+  const disconnect = (tabId, documentId, operationId) => {
+    const port = { name: 'sSummarizer-stream-heartbeat', sender: { tab: { id: tabId }, documentId }, onMessage: event(), onDisconnect: event(), postMessage() {} };
+    w.chrome.runtime.onConnect.listeners[0](port);
+    port.onMessage.listeners[0]({ type: 'heartbeat', uniqueId: created.uniqueId, operationId });
+    port.onDisconnect.listeners[0]();
+  };
+  for (const identity of [[99, 'doc-7', created.operationId], [7, 'old-document', created.operationId], [7, 'doc-7', 'old-operation']]) {
+    disconnect(...identity);
+    assert.equal(w.fetches[0].signal.aborted, false);
+    assert.equal(w.run(`sessionOwners.has(${created.uniqueId})`), true);
+  }
+  disconnect(7, 'doc-7', created.operationId);
+  await settles(pending);
+  assert.equal(w.fetches[0].signal.aborted, true);
+  assert.equal(w.run(`sessionOwners.has(${created.uniqueId})`), false);
+  assert.equal(w.sessionData[`summarySession:${created.uniqueId}`], undefined);
+  assert.equal(w.timers.size, 0);
+});
+
 test('healthy long streams renew the idle deadline on actual body progress', async () => {
   let fixture;
   const w = worker({ fetch: async (url, init) => { fixture = streamResponse('', { open: true, signal: init.signal }); return fixture.response; } });
