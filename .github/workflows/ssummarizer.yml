@@ -1,0 +1,51 @@
+name: sSummarizer
+
+on:
+  push:
+    paths:
+      - 'sSummarizer/**'
+      - '.github/workflows/ssummarizer.yml'
+  pull_request:
+    paths:
+      - 'sSummarizer/**'
+      - '.github/workflows/ssummarizer.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Regression tests
+        run: |
+          for test in sSummarizer/tests/*.test.cjs; do
+            node "$test"
+          done
+      - name: Runtime JavaScript and JSON syntax
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { execFileSync } = require('node:child_process');
+          let checked = 0;
+          for (const name of fs.readdirSync('sSummarizer', { recursive: true })) {
+            const file = path.join('sSummarizer', name);
+            if (name.endsWith('.js')) {
+              execFileSync(process.execPath, ['--check', file], { stdio: 'inherit' });
+              checked++;
+            } else if (name.endsWith('.json')) {
+              JSON.parse(fs.readFileSync(file, 'utf8'));
+              checked++;
+            }
+          }
+          console.log(`Syntax checked ${checked} JavaScript/JSON files.`);
+          NODE

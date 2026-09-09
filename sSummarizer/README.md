@@ -73,6 +73,21 @@ sSummarizer minimally requests only the following browser permissions to functio
 
 sSummarizer is designed with a privacy-first approach. It only accesses webpage content when you explicitly activate it to generate a summary. The extracted text is then sent over HTTPS to your configured AI provider's API, and to no one else. Your API key is stored locally in `chrome.storage.local`; note that this storage is not encrypted at rest, so it offers the same protection as other data saved in your browser profile. The key is sent only to the provider endpoint you configure, to authenticate your requests. The extension has no backend of its own, so it does not collect, store, transmit, or monetize your personal data, browsing history, or API keys.
 
+## Development checks
+
+From the repository root, run the offline regressions with Node.js 22 or newer:
+
+```bash
+node sSummarizer/tests/background.test.cjs
+node sSummarizer/tests/content.test.cjs
+node sSummarizer/tests/options.test.cjs
+node sSummarizer/tests/scraper.test.cjs
+```
+
+These tests use Node built-ins with synthetic requests and browser boundaries. They need no packages, API keys, provider calls, or Chrome profile. The scoped GitHub Actions workflow also checks every runtime JavaScript file and parses the manifest and all six locale JSON files.
+
+The options connection test validates a complete non-streaming provider response within 10 seconds; it does not certify streaming. Source retrieval has a shared 15-second deadline and falls back to local page content when available.
+
 ## License
 
 MIT License

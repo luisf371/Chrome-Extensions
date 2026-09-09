@@ -23,6 +23,7 @@
   let streamHeartbeatPorts = new Map();
   let streamHeartbeatTimers = new Map();
   let activeStreams = new Set();
+  let streamOperations = new Map();
   let contentRenderTimers = new Map();
   let renderCache = new Map(); // { stableOffset, stableHtml, codeBlockOpen }
 
@@ -41,21 +42,30 @@
   const STREAM_RENDER_BATCH_MS = 50;
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    const operation = streamOperations.get(request.uniqueId);
+    if (request.action !== 'createFloatingWindow' &&
+        (!operation || operation.operationId !== request.operationId || operation.finished)) {
+      sendResponse({ success: false, stale: true });
+      return;
+    }
     switch (request.action) {
       case 'createFloatingWindow':
-        createFloatingWindow(request.uniqueId);
-        if (request.showLoading) {
-          startStreamSession(request.uniqueId);
-          showLoading(request.uniqueId);
-        }
+        createFloatingWindow(request.uniqueId).then(() => {
+          startStreamSession(request.uniqueId, request.operationId);
+          if (request.showLoading) showLoading(request.uniqueId);
+          sendResponse({ success: true });
+        }).catch(error => sendResponse({ success: false, error: error.message }));
+        return true;
+      case 'streamStart':
+        updateAssistantHistory(request);
         sendResponse({ success: true });
         break;
       case 'appendToFloatingWindow':
+        if (request.isDelta === true) updateAssistantHistory(request);
         handleMessage(request.content, request.uniqueId);
         sendResponse({ success: true });
         break;
       case 'showLoading':
-        startStreamSession(request.uniqueId);
         showLoading(request.uniqueId);
         sendResponse({ success: true });
         break;
@@ -64,12 +74,14 @@
         sendResponse({ success: true });
         break;
       case 'streamEnd':
-        stopStreamSession(request.uniqueId);
         handleStreamEnd(request);
         sendResponse({ success: true });
         break;
       case 'chatUnlock':
+        updateAssistantHistory(request);
         stopStreamSession(request.uniqueId);
+        hideLoading(request.uniqueId);
+        flushContentRender(request.uniqueId);
         setChatEnabled(request.uniqueId, true, request.placeholderKey || 'placeholderFollowUp');
         sendResponse({ success: true });
         break;
@@ -416,7 +428,9 @@
     } catch (error) {
       console.log('[Content] Error creating floating window:', error);
       // Clean up on error
+      floatingWindows.get(uniqueId)?.host?.remove();
       cleanupWindowState(uniqueId);
+      throw error;
     }
   }
 
@@ -531,7 +545,9 @@
       // Send stop request to background script to abort any ongoing API request
       chrome.runtime.sendMessage({
         action: 'stopApiRequest',
-        uniqueId: uniqueId
+        uniqueId: uniqueId,
+        operationId: streamOperations.get(uniqueId)?.operationId,
+        closeWindow: true
       }, (response) => {
         if (chrome.runtime.lastError) {
           console.warn('[Content] Error sending stop request:', chrome.runtime.lastError.message);
@@ -572,6 +588,7 @@
     slashCommandsCache.delete(uniqueId);
     selectedSlashCommand.delete(uniqueId);
     dropdownSelectedIndex.delete(uniqueId);
+    streamOperations.delete(uniqueId);
   }
 
   /**
@@ -994,11 +1011,11 @@
 
   // ———— Chat Functionality ————
 
-  function handleStreamEnd(request) {
+  function updateAssistantHistory(request) {
     const { uniqueId, fullResponse, originalContext, assistantMessage } = request;
-    flushContentRender(uniqueId);
-
-    // Initialize history if not present
+    const reasoningDelta = request.isDelta === true ? request.reasoningDelta : null;
+    const operation = streamOperations.get(uniqueId);
+    if (!operation || operation.finished) return;
     if (!chatHistories.has(uniqueId)) {
       chatHistories.set(uniqueId, []);
     }
@@ -1009,18 +1026,40 @@
       history.push({ role: 'user', content: originalContext });
     }
 
-    // Add the assistant's response, preserving reasoning metadata when provided.
-    const storedAssistantMessage = {
-      role: 'assistant',
-      content: typeof assistantMessage?.content === 'string' ? assistantMessage.content : fullResponse
-    };
+    const content = request.isDelta === true ? request.content :
+      (typeof assistantMessage?.content === 'string' ? assistantMessage.content : fullResponse);
+    if (!operation.assistant && (content || assistantMessage?.reasoning || assistantMessage?.reasoning_details?.length ||
+        reasoningDelta?.reasoning || reasoningDelta?.reasoning_details?.length)) {
+      operation.assistant = { role: 'assistant', content: '' };
+      history.push(operation.assistant);
+    }
+    const storedAssistantMessage = operation.assistant;
+    if (!storedAssistantMessage) return;
+    if (typeof content === 'string') {
+      if (request.isDelta === true) storedAssistantMessage.content += content;
+      else storedAssistantMessage.content = content;
+    }
+    if (reasoningDelta?.reasoning) {
+      storedAssistantMessage.reasoning = (storedAssistantMessage.reasoning || '') + reasoningDelta.reasoning;
+    }
+    if (reasoningDelta?.reasoning_details?.length) {
+      storedAssistantMessage.reasoning_details ||= [];
+      mergeReasoningDetails(storedAssistantMessage.reasoning_details, reasoningDelta.reasoning_details, request.reasoningDetailsStart);
+    }
     if (typeof assistantMessage?.reasoning === 'string' && assistantMessage.reasoning.length > 0) {
       storedAssistantMessage.reasoning = assistantMessage.reasoning;
     }
     if (Array.isArray(assistantMessage?.reasoning_details) && assistantMessage.reasoning_details.length > 0) {
       storedAssistantMessage.reasoning_details = assistantMessage.reasoning_details;
     }
-    history.push(storedAssistantMessage);
+  }
+
+  function handleStreamEnd(request) {
+    const { uniqueId } = request;
+    updateAssistantHistory(request);
+    stopStreamSession(uniqueId);
+    hideLoading(uniqueId);
+    flushContentRender(uniqueId);
 
     const win = floatingWindows.get(uniqueId); // ShadowRoot
     if (win) {
@@ -1059,7 +1098,8 @@
     const sendBtn = win.querySelector(`#chat-send-${uniqueId}`);
     const dropdown = win.querySelector(`#slash-dropdown-${uniqueId}`);
 
-    const submit = () => {
+    const submit = (event) => {
+      if (!event?.isTrusted) return;
       const selected = selectedSlashCommand.get(uniqueId);
       let textToSend = '';
 
@@ -1206,6 +1246,7 @@
 
     if (input) {
       input.addEventListener('keydown', (e) => {
+        if (!e.isTrusted) return;
         e.stopPropagation();
 
         const isLocked = selectedSlashCommand.get(uniqueId) !== null;
@@ -1234,7 +1275,7 @@
             if (confirmDropdownSelection(uniqueId)) {
               return;
             }
-            submit();
+            submit(e);
             return;
           }
           if (e.key === 'Escape') {
@@ -1246,7 +1287,7 @@
         } else {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            submit();
+            submit(e);
             return;
           }
         }
@@ -1290,7 +1331,8 @@
   }
 
   function sendFollowUp(uniqueId, question) {
-    startStreamSession(uniqueId);
+    const operationId = crypto.getRandomValues(new Uint32Array(4)).join('-');
+    startStreamSession(uniqueId, operationId);
     setChatEnabled(uniqueId, false, 'placeholderThinking');
     const win = floatingWindows.get(uniqueId); // ShadowRoot
     if (win) {
@@ -1311,25 +1353,43 @@
     history.push({ role: 'user', content: question });
 
     // Send to background
-    chrome.runtime.sendMessage({
-      action: 'submitFollowUp',
-      uniqueId: uniqueId,
-      messages: history
-    }, (response) => {
-      if (chrome.runtime.lastError) {
-        console.log('Error sending follow-up:', chrome.runtime.lastError.message);
-        setChatEnabled(uniqueId, true, 'placeholderFollowUp');
-      }
-    });
+    const onFailure = (message) => {
+      if (streamOperations.get(uniqueId)?.operationId !== operationId || !activeStreams.has(uniqueId)) return;
+      stopStreamSession(uniqueId);
+      hideLoading(uniqueId);
+      handleMessage(`\n\n---\n[Error] Could not send follow-up: ${message}`, uniqueId);
+      flushContentRender(uniqueId);
+      setChatEnabled(uniqueId, true, 'placeholderFollowUp');
+    };
+    try {
+      chrome.runtime.sendMessage({
+        action: 'submitFollowUp',
+        uniqueId: uniqueId,
+        operationId,
+        messages: history
+      }, (response) => {
+        const error = chrome.runtime.lastError?.message ||
+          (response?.success !== true ? response?.error || 'Request was not acknowledged.' : '');
+        if (error) onFailure(error);
+      });
+    } catch (error) {
+      onFailure(error.message);
+    }
   }
 
-  function startStreamSession(uniqueId) {
+  function startStreamSession(uniqueId, operationId) {
+    if (streamOperations.get(uniqueId)?.operationId !== operationId) {
+      stopStreamSession(uniqueId);
+      streamOperations.set(uniqueId, { operationId, assistant: null, finished: false });
+    }
     activeStreams.add(uniqueId);
     startHeartbeat(uniqueId);
   }
 
   function stopStreamSession(uniqueId) {
     activeStreams.delete(uniqueId);
+    const operation = streamOperations.get(uniqueId);
+    if (operation) operation.finished = true;
     stopHeartbeat(uniqueId);
   }
 
@@ -1339,6 +1399,7 @@
     }
 
     try {
+      const operationId = streamOperations.get(uniqueId)?.operationId;
       const port = chrome.runtime.connect({ name: 'sSummarizer-stream-heartbeat' });
       streamHeartbeatPorts.set(uniqueId, port);
 
@@ -1347,6 +1408,7 @@
       });
 
       port.onDisconnect.addListener(() => {
+        if (streamHeartbeatPorts.get(uniqueId) !== port) return;
         streamHeartbeatPorts.delete(uniqueId);
         const timerId = streamHeartbeatTimers.get(uniqueId);
         if (timerId) {
@@ -1366,6 +1428,7 @@
           currentPort.postMessage({
             type: 'heartbeat',
             uniqueId,
+            operationId,
             ts: Date.now()
           });
         } catch (e) {
@@ -1399,13 +1462,14 @@
 
   function recoverInterruptedStream(uniqueId) {
     if (!activeStreams.has(uniqueId)) return;
-    activeStreams.delete(uniqueId);
+    stopStreamSession(uniqueId);
 
     const win = floatingWindows.get(uniqueId);
     if (!win) return;
 
     hideLoading(uniqueId);
     handleMessage('\n\n---\n[Info] Stream interrupted (background worker restarted or disconnected). You can ask a follow-up to continue.', uniqueId);
+    flushContentRender(uniqueId);
     setChatEnabled(uniqueId, true, 'placeholderFollowUp');
   }
 
