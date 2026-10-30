@@ -13,6 +13,14 @@
   api.isRetryableRuntimeError = function isRetryableRuntimeError(type, error) {
     if (!constants.RETRYABLE_MESSAGE_TYPES.has(type) || !chrome.runtime?.id) return false;
     const message = error?.message || '';
+    // A closed port can mean the worker already applied the change before it
+    // died, so resending a create would make a duplicate playlist.
+    if (type === 'CREATE_PLAYLIST') {
+      return (
+        /receiving end does not exist/i.test(message) ||
+        /could not establish connection/i.test(message)
+      );
+    }
     return (
       /receiving end does not exist/i.test(message) ||
       /message port closed/i.test(message) ||

@@ -40,6 +40,11 @@
     const subscriptionState = await api.waitForSubscriptionState(getVisibleVideoSubscribeButton, { gen });
     if (subscriptionState === 'unknown' || gen !== state.initGeneration) return;
 
+    // YouTube may have rebuilt the owner row while we waited: re-query the
+    // button instead of using the one captured before the wait.
+    const liveSubscribeBtn = getVisibleVideoSubscribeButton();
+    if (!liveSubscribeBtn?.parentElement) return;
+
     const ownerEl = getVisibleVideoTopRow()?.querySelector('#owner');
     const handleLink = ownerEl?.querySelector('a[href*="/@"]')
       || ownerEl?.querySelector('a[href*="/channel/"]');
@@ -62,7 +67,7 @@
 
     // Match the native subscribe button's height so the trigger aligns with
     // the owner row's controls.
-    const siblingButton = subscribeBtn.querySelector('button');
+    const siblingButton = liveSubscribeBtn.querySelector('button');
     const siblingHeight = Math.round(siblingButton?.getBoundingClientRect().height || 0);
     state.quickAddTriggerHeightPx = siblingHeight > 0 ? siblingHeight : null;
 
@@ -70,7 +75,7 @@
     state.quickAddHost = document.createElement('div');
     state.quickAddHost.className = 'syp-host';
     state.quickAddHost.style.cssText = 'all: initial; display: inline-flex; align-items: center; vertical-align: middle; margin-left: 8px; position: relative; z-index: 2000;';
-    subscribeBtn.parentElement.insertBefore(state.quickAddHost, subscribeBtn.nextSibling);
+    liveSubscribeBtn.parentElement.insertBefore(state.quickAddHost, liveSubscribeBtn.nextSibling);
 
     state.quickAddShadow = state.quickAddHost.attachShadow({ mode: 'open' });
     api.renderQuickAddButton(handle, channelName);

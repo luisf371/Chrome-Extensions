@@ -12,10 +12,13 @@
       return;
     }
     if (!state.data || gen !== state.initGeneration) return;
-    const el = await api.waitForElement('ytd-channel-renderer');
+    // Hidden renderers left over from an earlier page must not be picked.
+    const getVisibleRenderer = () => Array.from(document.querySelectorAll('ytd-channel-renderer'))
+      .find(api.isVisibleElement) || null;
+    const el = await api.waitForElement(getVisibleRenderer);
     if (!el || gen !== state.initGeneration) return;
     injectChannelListButtons();
-    observeChannelsList();
+    if (!observeChannelsList(el)) return;
     state.initSucceeded = true;
   }
 
@@ -235,7 +238,9 @@
         renderChannelListButton(shadow, host, handle, channelName, false);
       };
       api.armDocumentCloseListener(state.channelListCloseState, closeHandler);
-    } else {
+    } else if (!state.activeChannelListDropdown) {
+      // The close listener is shared by all rows: a closed row must not drop
+      // the one that belongs to another row's open dropdown.
       api.clearDocumentCloseListener(state.channelListCloseState);
     }
   }
@@ -264,10 +269,14 @@
     });
   }
 
-  function observeChannelsList() {
-    const container = document.querySelector('ytd-section-list-renderer #contents')
-      || document.querySelector('ytd-browse[page-subtype="channels"] #contents');
-    if (!container) return;
+  // Observes the list that holds the given (visible) channel row, so a stale
+  // hidden list from another page is never watched. Returns false when no
+  // container is found so init can retry.
+  function observeChannelsList(renderer) {
+    const sectionList = renderer.closest('ytd-section-list-renderer')
+      || renderer.closest('ytd-browse[page-subtype="channels"]');
+    const container = sectionList?.querySelector('#contents');
+    if (!container) return false;
 
     state.channelsListObserver = new MutationObserver(() => {
       clearTimeout(state.channelsListDebounceTimer);
@@ -277,6 +286,7 @@
     });
 
     state.channelsListObserver.observe(container, { childList: true, subtree: true });
+    return true;
   }
 
   pages.channelsList = {

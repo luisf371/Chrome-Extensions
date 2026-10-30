@@ -21,7 +21,17 @@
     }
   }
 
+  // Retries of a page whose init has not succeeded back off and stop after a
+  // few attempts; a navigation to a new URL starts the count over.
+  const MAX_INIT_POLL_RETRIES = 6;
+  let initPollRetries = 0;
+  let initPollNextRetryAt = 0;
+
   function scheduleNavigation(url) {
+    if (url !== state.lastUrl) {
+      initPollRetries = 0;
+      initPollNextRetryAt = 0;
+    }
     if (url === state.lastUrl && (state.initSucceeded || state.initInProgress)) return;
     clearTimeout(state.navDebounceTimer);
     state.navDebounceTimer = setTimeout(() => {
@@ -88,14 +98,36 @@
     return true;
   }
 
+  function stopUrlPoll() {
+    clearInterval(state.pollInterval);
+    state.pollInterval = null;
+  }
+
   function startUrlPoll() {
     if (state.pollInterval) return;
     state.lastUrl = window.location.href;
     state.pollInterval = setInterval(() => {
+      // After an extension reload/update this orphaned script can no longer
+      // reach the background worker: stop polling and remove its UI.
+      if (!chrome.runtime?.id) {
+        stopUrlPoll();
+        clearTimeout(state.navDebounceTimer);
+        state.initGeneration += 1;
+        cleanup();
+        return;
+      }
+
       const url = window.location.href;
       if (url !== state.lastUrl) {
         scheduleNavigation(url);
-      } else if (!state.initSucceeded && !state.initInProgress && state.currentPage) {
+      } else if (state.initSucceeded) {
+        initPollRetries = 0;
+        initPollNextRetryAt = 0;
+      } else if (!state.initInProgress && state.currentPage) {
+        const now = Date.now();
+        if (initPollRetries >= MAX_INIT_POLL_RETRIES || now < initPollNextRetryAt) return;
+        initPollRetries += 1;
+        initPollNextRetryAt = now + Math.min(1000 * (2 ** initPollRetries), 30000);
         scheduleNavigation(url);
       }
     }, 500);
@@ -106,7 +138,11 @@
     if (url.includes('/feed/channels')) return 'channelsList';
     const canonicalUrl = document.querySelector('link[rel="canonical"]')?.href || '';
     if (api.isChannelPageUrl(url, canonicalUrl)) return 'channel';
-    if (url.includes('/watch')) return 'video';
+    let pathname = '';
+    try {
+      pathname = new URL(url).pathname;
+    } catch {}
+    if (pathname === '/watch') return 'video';
     return null;
   }
 

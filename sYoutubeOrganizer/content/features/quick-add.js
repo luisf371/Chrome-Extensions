@@ -587,7 +587,13 @@
         if (emptyEl && list.children.length <= 1) emptyEl.style.display = '';
       };
 
+      // The shadow root is open, so typing here would otherwise reach
+      // YouTube's document-level hotkeys (mute, fullscreen, seek, ...).
+      ['keypress', 'keyup'].forEach((type) => {
+        input.addEventListener(type, (event) => event.stopPropagation());
+      });
       input.addEventListener('keydown', (event) => {
+        event.stopPropagation();
         if (event.key === 'Enter') {
           event.preventDefault();
           void commit();
