@@ -80,13 +80,18 @@
     const httpsPattern = /^https?:\/\//i;
 
     // Adaptive bookmark tooltips
+    // javascript: bookmarks get href="#", so their real URL is kept in data-url
+    const getBookmarkURL = function(a){
+        return a.dataset.url || a.href;
+    };
+
     const adaptBookmarkTooltips = function(){
         const bookmarks = document.querySelectorAll('li.child a');
         for (let i = 0, l = bookmarks.length; i < l; i++){
             const bookmark = bookmarks[i];
             if (bookmark.classList.contains('titled')){
                 if (bookmark.scrollWidth <= bookmark.offsetWidth){
-                    bookmark.title = bookmark.href;
+                    bookmark.title = getBookmarkURL(bookmark);
                     bookmark.classList.remove('titled');
                 }
             } else if (bookmark.scrollWidth > bookmark.offsetWidth){
@@ -112,8 +117,10 @@
         }
         tooltipURL = Utils.htmlspecialchars(tooltipURL);
         const name = Utils.htmlspecialchars(title) || (httpsPattern.test(url) ? Utils.htmlspecialchars(url.replace(httpsPattern, '')) : _m('noTitle'));
-        const href = (/^javascript:/i.test(url)) ? '#' : u;
-        return '<a href="' + href + '"' + ' title="' + tooltipURL + '" tabindex="0" ' + extras + '>' + 
+        const isScript = /^javascript:/i.test(url);
+        const href = isScript ? '#' : u;
+        const dataURL = isScript ? ' data-url="' + u + '"' : '';
+        return '<a href="' + href + '"' + dataURL + ' title="' + tooltipURL + '" tabindex="0" ' + extras + '>' + 
             '<img src="' + favicon + '" width="16" height="16" alt=""><i>' + name + '</i></a>';
     };
 
@@ -156,12 +163,12 @@
                                 Utils.inject(ul, $('neat-tree-item-' + _id));
                                 div.remove();
                             }).catch(console.error);
-                        })(_id);
+                        })(id);
                     }
                 }
             } else {
                 html += '<li class="child"' + idHTML + ' role="treeitem" data-parentid="' + parentID + '">' + 
-                    generateBookmarkHTML(title, url, 'style="padding-inline-start: ' + paddingStart + 'px"');
+                    generateBookmarkHTML(d.title, url, 'style="padding-inline-start: ' + paddingStart + 'px"');
             }
             html += '</li>';
         }
@@ -189,7 +196,8 @@
                     $tree.style.overflow = oriOverflow;
                 }, 1);
                 setTimeout(function(){
-                    setSetting('focusID', null);
+                    // only forget the remembered item if the user has not focused another one since
+                    if (settings.focusID === focusID) setSetting('focusID', null);
                 }, 4000);
             }
         }
@@ -224,7 +232,7 @@
         const el = e.target;
         const tagName = el.tagName;
         if (tagName != 'SPAN') return;
-        if (e.shiftKey || e.ctrlKey) return;
+        if (e.shiftKey || e.ctrlKey || e.metaKey) return;
         const parent = el.parentNode;
         parent.classList.toggle('open');
         const expanded = parent.classList.contains('open');
@@ -272,13 +280,14 @@
 
         chrome.tabs.query({active: true, currentWindow: true}).then(function(tabs){
              const tab = tabs[0];
-             chrome.bookmarks.create({
+             if (!tab) return;
+             return chrome.bookmarks.create({
                  parentId: folderId,
                  title: tab.title,
                  url: tab.url
              }).then(function(createdNode) {
-                 // Update UI if folder is open
-                 if (li && li.classList.contains('open')) {
+                 // Update UI if the folder's list is loaded (it may be collapsed)
+                 if (li) {
                      const ul = li.querySelector('ul');
                      if (ul) {
                          const level = parseInt(ul.dataset.level);
@@ -298,7 +307,7 @@
                      btn.textContent = '+';
                  }, 1500);
              });
-        });
+        }).catch(console.error);
     });
     
     // Force middle clicks to trigger the focus event
@@ -330,6 +339,10 @@
         prevValue = value;
         searchMode = true;
         chrome.bookmarks.search(value).then(function(results){
+            // a newer query (or a cleared box) has replaced this one
+            if (value !== prevValue) return;
+            // folders have no url, only show real bookmarks
+            results = results.filter(function(r){ return r.url; });
             const v = value.toLowerCase();
             let vPattern = new RegExp('^' + Utils.escapeRegExp(value).replace(/\s+/g, '.*'), 'i');
             if (results.length > 1){
@@ -361,6 +374,7 @@
             html += '</ul>';
             $tree.style.display = 'none';
             $results.innerHTML = html;
+            $results.dataset.query = value;
             $results.style.display = 'block';
 
             // Group result items by parent folder so each folder's name is
@@ -403,6 +417,8 @@
                 if (firstFocusable) firstFocusable.focus();
             }
         } else if (code === 'Enter' && searchInput.value.length){ // enter
+            // results must belong to what is typed now, not to an earlier query
+            if (!searchMode || $results.dataset.query !== searchInput.value.trim()) return;
             const item = $results.querySelector('ul>li:first-child a');
             if (!item) return;
             item.focus();
@@ -709,7 +725,7 @@
             const item = li.querySelector('span');
             if (bookmarkCount || folderCount){
                 let dialog = '';
-                const folderName = '<cite>' + Utils.htmlspecialchars(item.textContent.trim()) + '</cite>';
+                const folderName = '<cite>' + Utils.htmlspecialchars(item.querySelector('i').textContent.trim()) + '</cite>';
                 if (bookmarkCount && folderCount){
                     dialog = _m('confirmDeleteFolderSubfoldersBookmarks', [folderName, folderCount, bookmarkCount]);
                 } else if (bookmarkCount){
@@ -998,13 +1014,12 @@
                     if (nextLi){
                         nextLi.querySelector('a, span').focus();
                     } else {
-                        let lastLi = null;
                         do {
                             li = li.parentNode.parentNode;
-                            if (li) nextLi = li.nextElementSibling;
-                            if (nextLi) lastLi = nextLi.querySelector('a, span');
-                            if (lastLi) lastLi.focus(); // down on the last item in tree
-                        } while (li && !nextLi);
+                            if (!li || li.tagName != 'LI') break; // reached the top of the list
+                            nextLi = li.nextElementSibling;
+                            if (nextLi) nextLi.querySelector('a, span').focus(); // down on the last item in a folder
+                        } while (!nextLi);
                     }
                 }
                 break;
