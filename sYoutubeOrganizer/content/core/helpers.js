@@ -19,7 +19,14 @@
     // Exclude '#' as well as '/' and '?' so URL fragments (e.g. /@Linus#about)
     // don't leak into the handle and get rejected by normalizeStoredHandle.
     const match = url.match(/\/@([^/?#]+)/);
-    if (match) return '@' + match[1];
+    if (match) {
+      // hrefs percent-encode non-ASCII handles; stored handles are decoded.
+      try {
+        return '@' + decodeURIComponent(match[1]);
+      } catch {
+        return '@' + match[1];
+      }
+    }
     const channelMatch = url.match(/\/channel\/([^/?#]+)/);
     if (channelMatch) return channelMatch[1];
     return null;

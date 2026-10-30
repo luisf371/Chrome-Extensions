@@ -59,7 +59,8 @@
     void api.sendMsg({
       type: 'REGISTER_CHANNEL',
       handle,
-      name: channelName,
+      // A handle-only fallback must not replace a stored real name.
+      ...(channelName !== handle ? { name: channelName } : {}),
       subscribed: subscriptionState === 'subscribed'
     }).catch((error) => {
       console.warn('SYO failed to register video channel', error);

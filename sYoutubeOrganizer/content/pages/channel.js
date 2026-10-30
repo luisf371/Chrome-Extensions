@@ -14,14 +14,16 @@
 
     return Array.from(scope.querySelectorAll('[role="text"]'))
       .map((el) => el.textContent?.trim())
-      .find((text) => /^@[A-Za-z0-9._-]+$/.test(text || '')) || null;
+      .find((text) => /^@[\p{L}\p{N}\p{M}._-]+$/u.test(text || '')) || null;
   }
 
   function registerObservedChannel(handle, channelName, observedState) {
     return api.sendMsg({
       type: 'REGISTER_CHANNEL',
       handle,
-      name: channelName,
+      // When the header has not rendered, the name is just the handle:
+      // leave it out so a stored real name is not replaced by it.
+      ...(channelName && channelName !== handle ? { name: channelName } : {}),
       ...(observedState === 'unknown' ? {} : { subscribed: observedState === 'subscribed' })
     });
   }

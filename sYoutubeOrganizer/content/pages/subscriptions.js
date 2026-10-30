@@ -1416,7 +1416,13 @@
     const handleLink = card.querySelector('a[href*="/@"]');
     if (handleLink) {
       const match = handleLink.getAttribute('href').match(/\/@([^/?#]+)/);
-      if (match) return '@' + match[1];
+      if (match) {
+        try {
+          return '@' + decodeURIComponent(match[1]);
+        } catch {
+          return '@' + match[1];
+        }
+      }
     }
     const channelLink = card.querySelector('a[href*="/channel/"]');
     if (channelLink) {

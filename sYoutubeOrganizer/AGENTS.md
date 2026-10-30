@@ -153,7 +153,7 @@ Persistent storage is centered on:
     [id]: { id, name, parentId, color, order, createdAt }
   },
   channels: {
-    [handle]: { channelId, name, lastRegistered }
+    [handle]: { handle, channelId, name, subscribed?, updatedAt }
   },
   channelPlaylists: {
     [handle]: [playlistId, ...]
@@ -175,7 +175,8 @@ Key assumptions:
 - channel identity is normalized before storage
 - playlist/channel relationship ownership lives in `channelPlaylists`
 - subscriptions filter preference is stored under `settings`, not export/import payloads
-- the injected playlist button only mounts when the nearby YouTube subscribe control's state is determinable (`content/core/helpers.js`); assigning on an unsubscribed channel is an explicit Subscribe & add action, never a silent subscription
+- `channels[handle].subscribed` is the last observed subscription state (absent when never determined); the options "Uncategorized" list only shows channels with `subscribed === true`
+- watch and channels-list buttons only mount when the nearby YouTube subscribe control's state is determinable (`content/core/helpers.js`); the channel-page button mounts even while the state is still unknown. Assigning on an unsubscribed channel is an explicit Subscribe & add action, never a silent subscription
 
 Transient tab state lives in `content/core/state.js` and tracks:
 
