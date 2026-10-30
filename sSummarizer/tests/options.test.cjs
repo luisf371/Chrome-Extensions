@@ -17,7 +17,7 @@ function options(fetch, values = {}) {
   const statusDiv = { dataset: {}, style: {}, textContent: '' };
   const button = { disabled: false, addEventListener(name, fn) { click = fn; } };
   const settings = { apiProvider: 'openai', apiUrl: 'https://api.openai.com/v1/chat/completions', apiKey: 'synthetic-key', model: 'gpt-test', ...values };
-  const context = vm.createContext({ URL, AbortController, console, fetch, statusDiv, statusTimeout: null,
+  const context = vm.createContext({ URL, AbortController, console, fetch, statusDiv, statusTimeout: null, chrome: { i18n: { getMessage: () => '' } },
     showToast() {}, window: { confirm: () => true }, document: { getElementById: () => button },
     getFormValues: () => ({ ...settings }), getResolvedApiUrl: values => values.apiUrl,
     validateApiUrl: () => true, validateApiKey: () => true, validateModel: () => true, validateAzureConfig: () => true,
@@ -128,4 +128,19 @@ test('replaced info and success timers cannot hide a persistent error', () => {
     assert.equal(app.statusDiv.style.display, 'block');
     assert.equal(app.statusDiv.dataset.type, 'error');
   }
+});
+
+test('probe requests match real requests for Anthropic, Gemini and GLM', () => {
+  const app = options(async () => Response.json(good));
+  const build = values => app.context.buildTestConnectionRequest(values);
+  const anthropic = build({ apiProvider: 'anthropic', apiUrl: 'https://api.anthropic.com/v1/messages', apiKey: 'k', model: 'claude-sonnet-4-6' });
+  assert.equal(anthropic.fetchOptions.headers['anthropic-dangerous-direct-browser-access'], 'true');
+  for (const [model, expected] of [['models/gemini-2.5-flash', 'gemini-2.5-flash'], ['gemini-x?y', 'gemini-x%3Fy']]) {
+    assert.equal(build({ apiProvider: 'gemini', apiKey: 'k', model }).fetchUrl,
+      `https://generativelanguage.googleapis.com/v1beta/models/${expected}:generateContent`);
+  }
+  const glm = JSON.parse(build({ apiProvider: 'glm', apiUrl: 'https://api.z.ai/api/coding/paas/v4/chat/completions', apiKey: 'k', model: 'glm-5' }).fetchOptions.body);
+  assert.deepEqual({ ...glm.thinking }, { type: 'disabled' });
+  assert.equal(glm.max_tokens, 20);
+  assert.equal(Object.hasOwn(JSON.parse(build({ apiProvider: 'groq', apiUrl: 'https://x', apiKey: 'k', model: 'm' }).fetchOptions.body), 'thinking'), false);
 });

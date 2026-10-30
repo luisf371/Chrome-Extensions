@@ -425,5 +425,21 @@
   "menuSummarizeSelection": {
     "message": "总结选中内容",
     "description": "Label for the summarize selection context menu item"
+  },
+  "labelOpenrouterDisableReasoning": {
+    "message": "禁用 OpenRouter 推理 / thinking",
+    "description": "OpenRouter reasoning toggle label"
+  },
+  "helpOpenrouterDisableReasoning": {
+    "message": "在 OpenRouter 请求中发送 `reasoning: { effort: \"none\" }`。当推理模型卡住、在输出中途停止，或你想要直接的回答时很有用。",
+    "description": "OpenRouter reasoning toggle help text"
+  },
+  "tooltipSetDefault": {
+    "message": "设为默认：点击工具栏图标时运行。",
+    "description": "Tooltip for the inactive default-command star button"
+  },
+  "tooltipIsDefault": {
+    "message": "默认命令：点击工具栏图标时运行。点击可取消。",
+    "description": "Tooltip for the active default-command star button"
   }
 }

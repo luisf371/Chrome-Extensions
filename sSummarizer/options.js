@@ -246,8 +246,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (providerKind === 'gemini') {
+      const geminiModel = (trimmedModel || '').replace(/^models\//, '') || 'gemini-flash-latest';
       const fetchUrl = provider === 'gemini'
-        ? `https://generativelanguage.googleapis.com/v1beta/models/${trimmedModel || 'gemini-flash-latest'}:generateContent`
+        ? `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:generateContent`
         : resolvedApiUrl;
 
       const headers = provider === 'gemini'
@@ -286,6 +287,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (providerKind === 'openrouter' && openrouterDisableReasoning) {
       body.reasoning = { effort: 'none' };
+    }
+
+    // Real GLM requests turn thinking off; do the same so the small token cap is not used up by reasoning.
+    if (providerKind === 'glm') {
+      body.thinking = { type: 'disabled' };
     }
 
     return {
@@ -706,7 +712,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       saveButton.disabled = false;
 
-      if (buttonText) buttonText.textContent = 'Save Settings';
+      if (buttonText) buttonText.textContent = chrome.i18n.getMessage('btnSave') || 'Save Settings';
 
       if (chrome.runtime.lastError) {
 
@@ -714,7 +720,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       } else {
 
-        showStatus('Settings saved successfully!', 'success');
+        showStatus(chrome.i18n.getMessage('statusSaved') || 'Settings saved successfully!', 'success');
 
         [apiKeyInput, apiUrlInput, modelInput, systemPromptInput, azureResourceInput, azureDeploymentInput, azureApiVersionInput].filter(Boolean).forEach(resetFieldState);
 
@@ -752,7 +758,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
       apiKeyInput.type = isPassword ? 'text' : 'password';
 
-      toggleButton.textContent = isPassword ? 'Hide' : 'Show';
+      toggleButton.textContent = isPassword
+        ? (chrome.i18n.getMessage('btnHide') || 'Hide')
+        : (chrome.i18n.getMessage('btnShow') || 'Show');
 
       toggleButton.title = isPassword ? 'Hide API Key' : 'Show API Key';
 
@@ -923,13 +931,15 @@ document.addEventListener('DOMContentLoaded', function () {
       } finally {
         clearTimeout(timeoutId);
         testButton.disabled = false;
-        testButton.textContent = 'Test Connection';
+        testButton.textContent = chrome.i18n.getMessage('btnTest') || 'Test Connection';
       }
     });
   }
 
   const MAX_SLASH_COMMANDS = 10;
   let slashCommands = [];
+  // What is currently in storage, so a command being retyped keeps its last complete version.
+  let savedSlashCommands = [];
 
   function setupSlashCommands() {
     const addBtn = document.getElementById('add-command-btn');
@@ -939,6 +949,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     chrome.storage.local.get(['slashCommands'], (result) => {
       slashCommands = result.slashCommands || [];
+      savedSlashCommands = slashCommands.slice();
       renderSlashCommands();
     });
 
@@ -1098,9 +1109,18 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function saveSlashCommands() {
-    const validCommands = slashCommands.filter(cmd =>
-      cmd.command.trim() && cmd.prompt.trim()
-    );
+    // A command with an empty name or prompt is not stored, but an already-saved one keeps its
+    // last complete version until the field is filled in again (or the command is deleted).
+    const validCommands = [];
+    slashCommands.forEach(cmd => {
+      if (cmd.command.trim() && cmd.prompt.trim()) {
+        validCommands.push(cmd);
+        return;
+      }
+      const previous = cmd.id !== undefined && savedSlashCommands.find(c => c.id === cmd.id);
+      if (previous) validCommands.push({ ...previous, isDefault: cmd.isDefault });
+    });
+    savedSlashCommands = validCommands;
 
     chrome.storage.local.set({ slashCommands: validCommands }, () => {
       if (chrome.runtime.lastError) {
