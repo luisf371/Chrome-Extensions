@@ -554,16 +554,23 @@
                 url.disabled = true;
                 url.value = '';
             }
+            // the input may clean up the value it was given, so compare against what it holds
+            EditDialog.originalUrl = url.value;
         },
         close: function(){
             const urlInput = $('edit-dialog-url');
             let url = urlInput.value;
-            
+
             if (/^(javascript|data):/i.test(url)) {
-                // not allowed: keep the dialog open instead of silently dropping the new URL
-                urlInput.setCustomValidity(' ');
-                urlInput.focus();
-                return;
+                if (url !== EditDialog.originalUrl) {
+                    // not allowed: keep the dialog open instead of silently dropping the new URL
+                    urlInput.setCustomValidity(' ');
+                    urlInput.focus();
+                    return;
+                }
+                // an untouched bookmarklet: an empty url leaves its address as it is,
+                // so renaming it still works
+                url = '';
             }
 
             if (!urlInput.validity.valid && url.length > 0){
@@ -586,7 +593,8 @@
             cancelFn();
         },
         fn: function(){},
-        cancelFn: function(){}
+        cancelFn: function(){},
+        originalUrl: ''
     };
 
     // Bookmark handling
