@@ -40,7 +40,7 @@ async function extractYouTubeCaptions(operationId) {
         const videoId = extractVideoIdFromUrl(window.location.href);
         if (videoId) {
             const transcriptData = await getTranscriptViaInternalAPI(videoId, request.signal);
-            if (transcriptData && transcriptData.length > 100) {
+            if (transcriptData && transcriptData.trim()) {
                 return transcriptData;
             }
         } else {
@@ -49,7 +49,7 @@ async function extractYouTubeCaptions(operationId) {
 
         // Method 2: Try to access transcript panel
         const transcriptPanelData = await extractFromTranscriptPanel();
-        if (transcriptPanelData && transcriptPanelData.length > 100) {
+        if (transcriptPanelData && transcriptPanelData.trim()) {
             return transcriptPanelData;
         }
 
@@ -337,7 +337,7 @@ async function extractFromTranscriptPanel() {
       if (transcriptItems.length > 0) {
         const text = Array.from(transcriptItems).map(item => item.textContent?.trim()).filter(Boolean).join(' ');
         
-        if (text.length > 100) {
+        if (text.trim()) {
           return text;
         }
       }
@@ -360,8 +360,12 @@ async function fallbackToTitleDescription() {
     const description = await extractVideoDescription();
     
     if (title) {
-      const shortDesc = description ? (description.length > 1000 ? description.substring(0, 1000) + '...' : description) : "";
-      return `Video Title: ${title}\n\nDescription: ${shortDesc}`;
+      // Cut by code point so an emoji at the limit is not split into a lone surrogate.
+      const descChars = description ? Array.from(description) : [];
+      const shortDesc = descChars.length > 1000 ? descChars.slice(0, 1000).join('') + '...' : (description || "");
+      // Without a transcript the model only sees the title and description; say so in the content
+      // so the summary states it instead of looking like a transcript-based one.
+      return `[No transcript was available for this video. Only its title and description are provided below. Begin your answer by telling the reader that this summary is based on the title and description only, and do not invent details about the video.]\n\nVideo Title: ${title}\n\nDescription: ${shortDesc}`;
     }
     
     return null;
@@ -560,7 +564,8 @@ ${commentsText.join('\n\n')}
 
   } catch (e) {
     console.error('[Reddit Extractor] Error:', e);
-    return `Error extracting Reddit thread: ${e.message}`;
+    // Return nothing so the caller reports an extraction failure instead of summarising the error text.
+    return null;
   } finally {
     request.finish();
   }

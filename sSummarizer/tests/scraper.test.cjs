@@ -7,18 +7,25 @@ const { test } = require('node:test');
 const source = fs.readFileSync(path.resolve(__dirname, '../scripts/content-scraper.js'), 'utf8');
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const bodies = ['"INNERTUBE_API_KEY":"test"', JSON.stringify({ captions: { playerCaptionsTracklistRenderer: { captionTracks: [{ baseUrl: 'https://example.invalid/captions', languageCode: 'en' }] } } }), '<transcript/>'];
-function scraper({ heldRequest = 0, holdBody = false, reddit = false, status = 200 } = {}) {
+function scraper({ heldRequest = 0, holdBody = false, reddit = false, status = 200, xml = '<transcript/>', description = null } = {}) {
   const timers = new Map(), requests = [];
   let timerId = 0;
-  const document = { querySelector: selector => /h1/.test(selector) ? { textContent: 'Local title' } : null, querySelectorAll: () => [], body: { innerText: 'Local page text' } };
-  const context = vm.createContext({ URL, AbortController, console: { log() {}, warn() {}, error() {} }, document,
+  const document = { querySelector: selector => /h1/.test(selector) ? { textContent: 'Local title' } : description && selector === '#description-text' ? { textContent: description } : null, querySelectorAll: () => [], body: { innerText: 'Local page text' } };
+  // Minimal stand-in for DOMParser that understands <text start="N">...</text> caption elements.
+  class DOMParser {
+    parseFromString(text) {
+      const items = [...text.matchAll(/<text start="([^"]*)">([^<]*)<\/text>/g)].map(m => ({ textContent: m[2], getAttribute: name => name === 'start' ? m[1] : null }));
+      return { querySelector: () => null, querySelectorAll: () => items };
+    }
+  }
+  const context = vm.createContext({ URL, AbortController, DOMParser, console: { log() {}, warn() {}, error() {} }, document,
     window: { location: { href: reddit ? 'https://www.reddit.com/r/test/comments/123/title/' : 'https://www.youtube.com/watch?v=abcdefghijk' } },
     chrome: { storage: { local: { get(defaults, callback) { callback({ ...defaults, redditSort: 'top' }); } } } },
     setTimeout(fn, ms) { const id = ++timerId; timers.set(id, { fn, ms }); return id; }, clearTimeout(id) { timers.delete(id); },
     fetch: async (url, init = {}) => {
       init.signal?.throwIfAborted();
       const index = requests.push({ url, ...init }) - 1;
-      if (index !== heldRequest) return new Response(bodies[index]);
+      if (index !== heldRequest) return new Response(index === 2 ? xml : bodies[index]);
       if (holdBody) return new Response(new ReadableStream({ start(controller) { init.signal?.addEventListener('abort', () => controller.error(init.signal.reason)); } }), { status });
       return new Promise((resolve, reject) => init.signal?.addEventListener('abort', () => reject(init.signal.reason)));
     }
@@ -74,4 +81,24 @@ test('HTTP source failures abort unread bodies before returning the local fallba
     assert.equal(app.requests[0].signal.aborted, true);
     assert.equal(app.timers.size, 0);
   }
+});
+
+test('a short but valid transcript is used instead of falling back to the page', async () => {
+  const app = scraper({ heldRequest: -1, xml: '<transcript><text start="0">Hello there</text><text start="2">Short clip</text></transcript>' });
+  assert.equal(await app.start('operation-1'), 'Hello there Short clip');
+});
+
+test('without a transcript the fallback says so and never splits a surrogate pair', async () => {
+  const app = scraper({ heldRequest: -1, description: 'a'.repeat(999) + '\u{1F600}' + 'tail' });
+  const result = await app.start('operation-1');
+  assert.match(result, /^\[No transcript was available/);
+  assert.match(result, /Video Title: Local title/);
+  assert.ok(result.includes('a'.repeat(999) + '\u{1F600}...'));
+  assert.doesNotMatch(result, /[\uD800-\uDBFF](?![\uDC00-\uDFFF])/);
+});
+
+test('a Reddit extraction failure returns nothing instead of text for the model', async () => {
+  const app = scraper({ heldRequest: -1, reddit: true });
+  app.context.chrome.storage.local.get = () => { throw new Error('boom'); };
+  assert.equal(await app.start('operation-1'), null);
 });
