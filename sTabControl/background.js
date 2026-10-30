@@ -18,6 +18,9 @@ const duplicateCheckInProgress = new Set();
 // same URL in the same burst can't each treat the other as the duplicate and
 // remove it (a delete-both race).
 const duplicateUrlsInFlight = new Set();
+// Tabs created since the last committed web page; only these are de-duplicated,
+// so a link click, back/forward or redirect inside an existing tab never closes it.
+const freshTabs = new Set();
 let readyPromise = bootstrap();
 readyPromise.catch(handleStartupError);
 
@@ -34,12 +37,14 @@ if (storageApi && storageApi.onChanged && storageApi.onChanged.addListener) {
 }
 
 chrome.tabs.onCreated.addListener(tab => {
+   freshTabs.add(tab.id);
    handleTabCreated(tab).catch(handleRuntimeError);
 });
 chrome.tabs.onActivated.addListener(activeInfo => {
    handleTabActivated(activeInfo).catch(handleRuntimeError);
 });
 chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+   freshTabs.delete(tabId);
    handleTabRemoved(tabId, removeInfo).catch(handleRuntimeError);
 });
 chrome.tabs.onMoved.addListener((tabId, moveInfo) => {
@@ -372,6 +377,7 @@ async function handleTabAttached(tabId, attachInfo) {
 
 async function handleTabReplaced(addedTabId, removedTabId) {
    await waitForReady();
+   freshTabs.delete(removedTabId);
    let changed = false;
    for (const state of windowState.values()) {
       const index = state.order.indexOf(removedTabId);
@@ -511,7 +517,6 @@ async function handleNavigationCommitted(details) {
    await waitForReady();
    
    if (details.frameId !== 0) return;
-   if (!settingsCache.preventDuplicates) return;
    
    const { tabId, url, transitionType, transitionQualifiers } = details;
    
@@ -521,8 +526,16 @@ async function handleNavigationCommitted(details) {
       return;
    }
 
+   // Only the first web page loaded in a newly opened tab is checked. Later
+   // navigations (link clicks, form submits, back/forward) happen in a tab the
+   // user is working in and must not close it.
+   const isFreshTab = freshTabs.delete(tabId);
+   if (!settingsCache.preventDuplicates) return;
+   if (!isFreshTab) return;
+
    if (transitionType === 'reload') return;
    if (transitionQualifiers && transitionQualifiers.includes('from_address_bar')) return;
+   if (transitionQualifiers && transitionQualifiers.includes('forward_back')) return;
    if (duplicateCheckInProgress.has(tabId)) return;
 
    const normalizedUrl = normalizeUrl(url);
@@ -551,7 +564,14 @@ async function handleNavigationCommitted(details) {
       if (existingTab) {
          console.log('[sTabControl] Duplicate detected. Mode:', settingsCache.duplicateMode);
          
-         switch (settingsCache.duplicateMode) {
+         // Never close a pinned tab; keep it and close the new one instead.
+         const mode = settingsCache.duplicateMode === 'close_old' && existingTab.pinned
+            ? 'close_new'
+            : settingsCache.duplicateMode;
+         // A duplicate opened in the background must not pull focus away.
+         const takeFocus = currentTab.active;
+
+         switch (mode) {
             case 'close_old': {
                // Smoothest: Keep current, remove old
                await removeDuplicateTab(existingTab.id);
@@ -560,9 +580,11 @@ async function handleNavigationCommitted(details) {
             case 'close_new': {
                // Data Preservation: Focus old, remove new
                await removeDuplicateTab(currentTab.id);
-               await activateTab(existingTab.id);
-               if (existingTab.windowId !== currentTab.windowId) {
-                  await chrome.windows.update(existingTab.windowId, { focused: true });
+               if (takeFocus) {
+                  await activateTab(existingTab.id);
+                  if (existingTab.windowId !== currentTab.windowId) {
+                     await chrome.windows.update(existingTab.windowId, { focused: true });
+                  }
                }
                 break;
              }
@@ -581,10 +603,12 @@ async function handleNavigationCommitted(details) {
                await removeDuplicateTab(currentTab.id);
 
                // Focus the existing tab (it's now at the new position)
-               await activateTab(existingTab.id);
-               if (existingTab.windowId !== targetWindowId) {
-                await chrome.windows.update(targetWindowId, { focused: true });
-                }
+               if (takeFocus) {
+                  await activateTab(existingTab.id);
+                  if (existingTab.windowId !== targetWindowId) {
+                     await chrome.windows.update(targetWindowId, { focused: true });
+                  }
+               }
                 
                 break;
              }
