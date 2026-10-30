@@ -843,6 +843,16 @@
           const currentLine = lines[i];
           const itemMatch = currentLine.match(/^(\s*(?:\*\*(?:YOU):\*\*\s*)?)([-*]|\d+\.)\s+(.*)$/);
 
+          // Blank lines between items do not end the list when another item follows.
+          if (!currentLine.trim()) {
+            let next = i + 1;
+            while (next < lines.length && !lines[next].trim()) next++;
+            if (next < lines.length && lines[next].match(/^(\s*(?:\*\*(?:YOU):\*\*\s*)?)([-*]|\d+\.)\s+(.*)$/)) {
+              i = next;
+              continue;
+            }
+          }
+
           if (!itemMatch && !currentLine.match(/^\s+.*$/)) break;
 
           if (itemMatch) {
@@ -866,7 +876,9 @@
               if (listStack.length > 0 && listStack[listStack.length - 1].type !== type) {
                 listHtml += `</${listStack.pop().type}>\n`;
               }
-              listHtml += `<${type}>\n`;
+              // Keep the number of a list that starts above 1 (e.g. a list split across paragraphs).
+              const startNumber = type === 'ol' ? parseInt(marker, 10) : 1;
+              listHtml += startNumber > 1 ? `<ol start="${startNumber}">\n` : `<${type}>\n`;
               listStack.push({ type, indent });
             }
             listHtml += `<li>${prefix ? processInline(prefix) : ''}${processInline(content)}</li>\n`;
@@ -885,7 +897,7 @@
       // Paragraphs
       if (line.trim()) {
         let paragraphContent = line;
-        while (i + 1 < lines.length && lines[i + 1].trim() && !lines[i + 1].match(/^-{3,}$/) && !lines[i + 1].match(/^#{1,6}\s/) && !lines[i + 1].match(/^(\s*)([-*]|\d+\.)\s/)) {
+        while (i + 1 < lines.length && lines[i + 1].trim() && !lines[i + 1].match(/^-{3,}$/) && !lines[i + 1].match(/^#{1,6}\s/) && !lines[i + 1].startsWith('```') && !lines[i + 1].match(/^(\s*)([-*]|\d+\.)\s/)) {
           paragraphContent += '\n' + lines[i + 1];
           i++;
         }
@@ -1239,7 +1251,9 @@
       const cmdName = value.substring(1).toLowerCase();
       const commands = slashCommandsCache.get(id) || [];
       const match = commands.find(c => c.command.toLowerCase() === cmdName);
-      if (match) {
+      // Do not lock while a longer command (e.g. /tldr after /tl) can still be typed.
+      const hasLongerMatch = commands.some(c => c.command.toLowerCase().startsWith(cmdName) && c.command.toLowerCase() !== cmdName);
+      if (match && !hasLongerMatch) {
         selectSlashCommand(id, match);
       }
     };
@@ -1248,6 +1262,8 @@
       input.addEventListener('keydown', (e) => {
         if (!e.isTrusted) return;
         e.stopPropagation();
+        // Enter that confirms an IME candidate must not send the half-typed text.
+        if (e.isComposing || e.keyCode === 229) return;
 
         const isLocked = selectedSlashCommand.get(uniqueId) !== null;
         const dd = win.querySelector(`#slash-dropdown-${uniqueId}`);
