@@ -982,6 +982,25 @@
         e.stopPropagation();
     });
 
+    // Counts everything inside the folder, not only its direct children
+    const deleteFolder = function(id){
+        chrome.bookmarks.getSubTree(id).then(function(nodes){
+            let bookmarkCount = 0, folderCount = 0;
+            const count = function(node){
+                (node.children || []).forEach(function(child){
+                    if (typeof child.url == 'undefined'){
+                        folderCount++;
+                        count(child);
+                    } else {
+                        bookmarkCount++;
+                    }
+                });
+            };
+            if (nodes.length) count(nodes[0]);
+            actions.deleteBookmarks(id, bookmarkCount, folderCount);
+        });
+    };
+
     const folderContextHandler = function(e){
         if (!currentContext) return;
         const el = e.target;
@@ -1011,7 +1030,7 @@
                     actions.editBookmarkFolder(id);
                     break;
                 case 'folder-delete':
-                    actions.deleteBookmarks(id, urlsLen, children.length-urlsLen);
+                    deleteFolder(id);
                     break;
             }
         });
@@ -1029,9 +1048,19 @@
     // Keyboard navigation
     let keyBuffer = '';
     let keyBufferTimer;
+    // The parent's row may not exist (search results) or be hidden (tree under search)
+    const focusParentRow = function(parentID){
+        if (searchMode) return;
+        const parentLi = $('neat-tree-item-' + parentID);
+        if (parentLi) parentLi.querySelector('span').focus();
+    };
     const treeKeyDown = function(e){
         let item = document.activeElement;
-        if (!/^(a|span)$/i.test(item.tagName)) item = $tree.querySelector('.focus') || $tree.querySelector('li:first-child>span');
+        if (item.classList.contains('add-bookmark-btn')){
+            // Enter/Space press the button itself, other keys move from its folder row
+            if (e.code === 'Enter' || e.code === 'Space') return;
+            item = item.parentNode;
+        } else if (!/^(a|span)$/i.test(item.tagName)) item = $tree.querySelector('.focus') || $tree.querySelector('li:first-child>span');
         let li = item.parentNode;
         let code = e.code;
         const metaKey = e.metaKey;
@@ -1090,7 +1119,7 @@
                 } else if (rtl){
                     const parentID = li.dataset.parentid;
                     if (parentID == '0') return;
-                    $('neat-tree-item-' + parentID).querySelector('span').focus();
+                    focusParentRow(parentID);
                 }
                 break;
             case 'ArrowLeft': // left (right for RTL)
@@ -1105,7 +1134,7 @@
                 } else if (!rtl){
                     const parentID = li.dataset.parentid;
                     if (parentID == '0') return;
-                    $('neat-tree-item-' + parentID).querySelector('span').focus();
+                    focusParentRow(parentID);
                 }
                 break;
             case 'Space': // space
@@ -1179,6 +1208,7 @@
                 break;
             case 'F2': // F2, not for Mac
                 if (os == 'mac') break;
+                if (li.dataset.parentid == '0') break; // root folders can not be renamed
                 var id = li.id.replace(/(neat\-tree|results)\-item\-/, '');
                 actions.editBookmarkFolder(id);
                 break;
@@ -1233,6 +1263,7 @@
 
     const treeKeyUp = function(e){
         let item = document.activeElement;
+        if (item.classList.contains('add-bookmark-btn')) return;
         if (!/^(a|span)$/i.test(item.tagName)) item = $tree.querySelector('.focus') || $tree.querySelector('li:first-child>span');
         const li = item.parentNode;
         switch (e.code){
@@ -1240,14 +1271,10 @@
                 if (os != 'mac') break; // somehow delete button on mac gives backspace
             case 'Delete': // delete
                 e.preventDefault();
+                if (li.dataset.parentid == '0') break; // root folders can not be deleted
                 const id = li.id.replace(/(neat\-tree|results)\-item\-/, '');
                 if (li.classList.contains('parent')){
-                    chrome.bookmarks.getChildren(id).then(function(children){
-                        const urlsLen = Utils.clean(Array.from(children).map(function(c){
-                            return c.url;
-                        })).length;
-                        actions.deleteBookmarks(id, urlsLen, children.length-urlsLen);
-                    });
+                    deleteFolder(id);
                 } else {
                     actions.deleteBookmark(id);
                 }
@@ -1349,12 +1376,12 @@
             e.preventDefault();
             draggedOut = false;
             draggedBookmark = el;
-            if (settings.zoom) zoomLevel = (Utils.toInt(settings.zoom) / 100);
+            zoomLevel = settings.zoom ? (Utils.toInt(settings.zoom) / 100) : 1;
             bookmarkClone.innerHTML = el.innerHTML;
             el.focus();
         }
     });
-    let scrollTree, scrollTreeInterval = 100, scrollTreeSpot = 10;
+    let scrollTree, scrollTreeInterval = 100, scrollTreeSpot = 10, scrollTreeStep = 24;
     const stopScrollTree = function(){
         clearInterval(scrollTree);
         scrollTree = null;
@@ -1388,14 +1415,14 @@
                 if (treeScrollTop == 0){
                     stopScrollTree();
                 } else if (!scrollTree) scrollTree = setInterval(function(){
-                    $tree.scrollByLines(-1);
+                    $tree.scrollTop -= scrollTreeStep;
                     dropOverlay.style.left = '-999px';
                 }, scrollTreeInterval);
             } else if (clientY >= treeBottom - scrollTreeSpot){
                 if (treeScrollTop == (treeScrollHeight - treeOffsetHeight)){
                     stopScrollTree();
                 } else if (!scrollTree) scrollTree = setInterval(function(){
-                    $tree.scrollByLines(1);
+                    $tree.scrollTop += scrollTreeStep;
                     dropOverlay.style.left = '-999px';
                 }, scrollTreeInterval);
             } else {
@@ -1457,6 +1484,19 @@
             }
         }
     });
+    // Refresh the data a moved row (and everything below it) keeps about its place in the tree
+    const relevel = function(li, level, parentID){
+        li.dataset.parentid = parentID;
+        li.firstElementChild.style.paddingInlineStart = (14 * level) + 'px';
+        const ul = li.querySelector(':scope>ul');
+        if (ul){
+            ul.dataset.level = level + 1;
+            const id = li.id.replace('neat-tree-item-', '');
+            Array.from(ul.children).forEach(function(child){
+                relevel(child, level + 1, id);
+            });
+        }
+    };
     const onDrop = function(){
         draggedBookmark = null;
         bookmarkClone.style.left = '-999px';
@@ -1468,7 +1508,11 @@
         if (!draggedBookmark) return;
         stopScrollTree();
         if (!canDrop){
-            if (draggedOut) noOpenBookmark = true;
+            if (draggedOut){
+                // swallow the click that follows the release; if none reaches the tree, forget it
+                noOpenBookmark = true;
+                setTimeout(function(){ noOpenBookmark = false; }, 100);
+            }
             draggedOut = false;
             onDrop();
             return;
@@ -1499,10 +1543,10 @@
                         index: moveBottom ? ++index : index
                     }).then(function(){
                         Utils.inject(draggedBookmarkParent, elParent, moveBottom ? 'after' : 'before');
-                        draggedBookmark.style.paddingInlineStart = el.style.paddingInlineStart || el.style.webkitPaddingStart;
+                        relevel(draggedBookmarkParent, parseInt(elParent.parentNode.dataset.level), parentId);
                         draggedBookmark.focus();
                         onDrop();
-                    });
+                    }).catch(onDrop); // a refused move must not leave the drag active
                 }
             });
         } else if (el.tagName == 'SPAN'){
@@ -1529,10 +1573,10 @@
                         index: moveBottom ? ++index : index
                     }).then(function(){
                         Utils.inject(draggedBookmarkParent, elParent, moveBottom ? 'after' : 'before');
-                        draggedBookmark.style.paddingInlineStart = el.style.paddingInlineStart || el.style.webkitPaddingStart;
+                        relevel(draggedBookmarkParent, parseInt(elParent.parentNode.dataset.level), parentId);
                         draggedBookmark.focus();
                         onDrop();
-                    });
+                    }).catch(onDrop);
                 });
             } else {
                 chrome.bookmarks.move(draggedID, {
@@ -1540,7 +1584,7 @@
                 }).then(function(){
                     const ul = elParent.querySelector('ul');
                     const level = parseInt(elParent.parentNode.dataset.level) + 1;
-                    draggedBookmark.style.paddingInlineStart = (14 * level) + 'px';
+                    relevel(draggedBookmarkParent, level, id);
                     if (ul){
                         Utils.inject(draggedBookmarkParent, ul);
                     } else {
@@ -1548,7 +1592,7 @@
                     }
                     el.focus();
                     onDrop();
-                });
+                }).catch(onDrop);
             }
         } else {
             onDrop();
@@ -1629,6 +1673,7 @@
     document.addEventListener('wheel', function(e){
         if (!e.metaKey && !e.ctrlKey) return;
         e.preventDefault();
+        if (!e.deltaY) return; // sideways scroll: zoom(0) would reset the zoom
         // deltaY is usually positive for scrolling down, negative for scrolling up
         // zoom expects positive for zoom in (scrolling up)
         zoom(-e.deltaY);
