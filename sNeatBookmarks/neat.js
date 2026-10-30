@@ -506,10 +506,12 @@
             $('confirm-dialog-text').innerHTML = Utils.widont(opts.dialog);
             $('confirm-dialog-button-1').innerHTML = opts.button1;
             $('confirm-dialog-button-2').innerHTML = opts.button2;
-            if (opts.fn1) ConfirmDialog.fn1 = opts.fn1;
-            if (opts.fn2) ConfirmDialog.fn2 = opts.fn2;
-            $('confirm-dialog-button-' + (opts.focusButton || 1)).focus();
+            // never reuse the callbacks of an earlier dialog
+            ConfirmDialog.fn1 = opts.fn1 || function(){};
+            ConfirmDialog.fn2 = opts.fn2 || function(){};
+            // show first: a hidden dialog can not take focus
             document.body.classList.add('needConfirm');
+            $('confirm-dialog-button-' + (opts.focusButton || 1)).focus();
         },
         close: function(){
             document.body.classList.remove('needConfirm');
@@ -519,24 +521,30 @@
     };
 
     // Edit dialog event listener
-    $('edit-dialog').addEventListener('submit', function(){
+    $('edit-dialog').addEventListener('submit', function(e){
+        e.preventDefault();
         EditDialog.close();
-        return false;
     }, false);
+    $('edit-dialog-url').addEventListener('input', function(){
+        this.setCustomValidity('');
+    });
 
     // Edit dialog
     const EditDialog = window.EditDialog = {
         open: function(opts){
             if (!opts) return;
             $('edit-dialog-text').innerHTML = Utils.widont(opts.dialog);
-            if (opts.fn) EditDialog.fn = opts.fn;
+            EditDialog.fn = opts.fn || function(){};
+            EditDialog.cancelFn = opts.cancel || function(){};
             const type = opts.type || 'bookmark';
             const name = $('edit-dialog-name');
+            body.classList.add('needEdit'); // show first: a hidden dialog can not take focus
             name.value = opts.name;
             name.focus();
             name.select();
             name.scrollLeft = 0; // very delicate, show first few words instead of last
             const url = $('edit-dialog-url');
+            url.setCustomValidity('');
             if (type == 'bookmark'){
                 url.style.display = '';
                 url.disabled = false;
@@ -546,14 +554,16 @@
                 url.disabled = true;
                 url.value = '';
             }
-            body.classList.add('needEdit');
         },
         close: function(){
             const urlInput = $('edit-dialog-url');
             let url = urlInput.value;
             
             if (/^(javascript|data):/i.test(url)) {
-                url = '';
+                // not allowed: keep the dialog open instead of silently dropping the new URL
+                urlInput.setCustomValidity(' ');
+                urlInput.focus();
+                return;
             }
 
             if (!urlInput.validity.valid && url.length > 0){
@@ -561,10 +571,22 @@
                 if (!urlInput.validity.valid) url = ''; 
                 else url = urlInput.value;
             }
-            EditDialog.fn($('edit-dialog-name').value, url);
+            const fn = EditDialog.fn;
+            EditDialog.fn = function(){};
+            EditDialog.cancelFn = function(){};
+            fn($('edit-dialog-name').value, url);
             body.classList.remove('needEdit');
         },
-        fn: function(){}
+        // close without saving
+        cancel: function(){
+            const cancelFn = EditDialog.cancelFn;
+            EditDialog.fn = function(){};
+            EditDialog.cancelFn = function(){};
+            body.classList.remove('needEdit');
+            cancelFn();
+        },
+        fn: function(){},
+        cancelFn: function(){}
     };
 
     // Bookmark handling
@@ -610,7 +632,11 @@
             chrome.windows.create({
                 url: url,
                 incognito: incognito
-            });
+            }).catch(actions.showError);
+        },
+
+        showError: function(){
+            AlertDialog.open('<strong>' + _m('errorOccured') + '</strong>');
         },
 
         openBookmarks: function(urls, selected){
@@ -642,10 +668,13 @@
         openBookmarksNewWindow: function(urls, incognito){
             const urlsLen = urls.length;
             const open = function(){
+                // one URL Chrome refuses (javascript:) would fail the whole window
+                const openable = urls.filter(function(u){ return !/^javascript:/i.test(u); });
+                if (!openable.length) return;
                 chrome.windows.create({
-                    url: urls,
+                    url: openable,
                     incognito: incognito
-                });
+                }).catch(actions.showError);
             };
             if (!dontConfirmOpenFolder && urlsLen > openBookmarksLimit){
                 const dialog = incognito ? _m('confirmOpenBookmarksNewIncognitoWindow', ''+urlsLen) : _m('confirmOpenBookmarksNewWindow', ''+urlsLen);
@@ -673,6 +702,10 @@
                     type: type,
                     name: node.title,
                     url: url,
+                    cancel: function(){
+                        const li = $((searchMode ? 'results-item-' : 'neat-tree-item-') + id);
+                        if (li) li.firstElementChild.focus();
+                    },
                     fn: function(name, url){
                         chrome.bookmarks.update(id, {
                             title: name,
@@ -772,7 +805,7 @@
         const ctrlMeta = (e.ctrlKey || e.metaKey);
         const shift = e.shiftKey;
         if (el.tagName == 'A'){
-            const url = el.href;
+            const url = getBookmarkURL(el);
             if (ctrlMeta){ // ctrl/meta click
                 actions.openBookmarkNewTab(url, middleClickBgTab ? shift : !shift);
             } else { // click
@@ -852,7 +885,8 @@
     let currentContext = null;
     let macCloseContextMenu = false;
     body.addEventListener('contextmenu', function(e){
-        e.preventDefault();
+        // keep the native Cut/Copy/Paste menu in text fields
+        if (!/^(input|textarea)$/i.test(e.target.tagName)) e.preventDefault();
         clearMenu();
         if (os == 'mac'){
             macCloseContextMenu = false;
@@ -910,10 +944,11 @@
 
     const bookmarkContextHandler = function(e){
         e.stopPropagation();
+        e.preventDefault(); // body's handler never sees this event, so hide the native menu here
         if (!currentContext) return;
         const el = e.target;
         if (!el.classList.contains('command')) return;
-        const url = currentContext.href;
+        const url = getBookmarkURL(currentContext);
         switch (el.id){
             case 'bookmark-new-tab':
                 actions.openBookmarkNewTab(url);
@@ -1551,7 +1586,7 @@
     // Closing dialogs on escape
     const closeDialogs = function(){
             if (body.classList.contains('needConfirm')) { ConfirmDialog.fn2(); ConfirmDialog.close(); }
-            if (body.classList.contains('needEdit')) EditDialog.close();
+            if (body.classList.contains('needEdit')) EditDialog.cancel();
             if (body.classList.contains('needAlert')) AlertDialog.close();
     };
     document.addEventListener('keydown', function(e){
