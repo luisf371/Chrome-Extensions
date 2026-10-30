@@ -127,7 +127,7 @@ function saveOptions() {
   chrome.storage.sync.set(settings, () => {
     if (chrome.runtime.lastError) {
       console.error("Settings not saved:", chrome.runtime.lastError.message);
-      showToast(chrome.i18n.getMessage('statusError') || 'Could not save', 'error');
+      showToast(chrome.i18n.getMessage('statusError') || 'Could not save configuration', 'error');
       return;
     }
     console.log("Settings saved:", settings);

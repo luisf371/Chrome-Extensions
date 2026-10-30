@@ -79,6 +79,10 @@
     "message": "Configuration Saved",
     "description": "Save success message"
   },
+  "statusError": {
+    "message": "Could not save configuration",
+    "description": "Save failure message"
+  },
   "footerContact": {
     "message": "Contact:",
     "description": "Footer contact label"
