@@ -33,6 +33,9 @@
   let highlightedElements = [];
   let initialized = false;
   let threadPersisted = false;
+  let threadLoadFailed = false;
+  let initGeneration = 0;
+  let appliedColor = null;
 
   const RedditVersion = {
     OLD: 'old',
@@ -51,29 +54,43 @@
     return match ? match[1] : null;
   }
 
+  // "HH:MM" -> minutes since midnight; falls back to the default time when the
+  // stored value is empty or malformed (otherwise the comparisons become NaN).
+  function parseMinutes(value, fallback) {
+    const match = /^(\d{1,2}):(\d{2})$/.exec(value || '');
+    if (!match) return parseMinutes(fallback);
+    return Number(match[1]) * 60 + Number(match[2]);
+  }
+
+  // Only plain hex colors are allowed into the injected stylesheet.
+  function safeColor(value, fallback) {
+    return /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value) ? value : fallback;
+  }
+
   function getHighlightColor() {
+    const lightColor = safeColor(settings.highlightColor, DEFAULT_SETTINGS.highlightColor);
+    const darkColor = safeColor(settings.darkModeColor, DEFAULT_SETTINGS.darkModeColor);
+
     if (settings.autoChangeTheme) {
       const now = new Date();
-      const [startH, startM] = settings.themeStartTime.split(':').map(Number);
-      const [endH, endM] = settings.themeEndTime.split(':').map(Number);
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      const startMinutes = startH * 60 + startM;
-      const endMinutes = endH * 60 + endM;
+      const startMinutes = parseMinutes(settings.themeStartTime, DEFAULT_SETTINGS.themeStartTime);
+      const endMinutes = parseMinutes(settings.themeEndTime, DEFAULT_SETTINGS.themeEndTime);
 
       const isDarkTime = startMinutes > endMinutes
         ? (currentMinutes >= startMinutes || currentMinutes <= endMinutes)
         : (currentMinutes >= startMinutes && currentMinutes <= endMinutes);
 
-      return isDarkTime ? settings.darkModeColor : settings.highlightColor;
+      return isDarkTime ? darkColor : lightColor;
     }
 
     if (settings.useSystemTheme) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? settings.darkModeColor
-        : settings.highlightColor;
+        ? darkColor
+        : lightColor;
     }
 
-    return settings.useDarkTheme ? settings.darkModeColor : settings.highlightColor;
+    return settings.useDarkTheme ? darkColor : lightColor;
   }
 
   function injectHighlightStyles() {
@@ -81,6 +98,7 @@
     if (existingStyle) existingStyle.remove();
 
     const color = getHighlightColor();
+    appliedColor = color;
     const style = document.createElement('style');
     style.id = 'rnch-styles';
     style.textContent = `
@@ -108,12 +126,15 @@
     // un-highlighted (it cannot be compared against the last-visit boundary).
     if (version === RedditVersion.OLD) {
       const timeEl = element.querySelector('time[datetime]');
+      // A comment with no timestamp of its own would otherwise pick up the
+      // time of a nested reply.
+      if (timeEl && timeEl.closest('.thing.comment') !== element) return null;
       return timeEl ? new Date(timeEl.getAttribute('datetime')).getTime() : null;
     }
 
     if (version === RedditVersion.NEW) {
       const timeEl = element.querySelector('faceplate-timeago[ts], time[datetime]');
-      if (timeEl) {
+      if (timeEl && timeEl.closest('shreddit-comment') === element) {
         const ts = timeEl.getAttribute('ts') || timeEl.getAttribute('datetime');
         return ts ? new Date(ts).getTime() : null;
       }
@@ -145,12 +166,25 @@
   // discovered out of order (e.g. a collapsed mid-thread branch is expanded
   // after initial load and its replies are appended later).
   function sortHighlightedElements() {
+    const focused = highlightedElements[currentHighlightIndex];
     highlightedElements.sort((a, b) => {
       const pos = a.compareDocumentPosition(b);
       if (pos & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
       if (pos & Node.DOCUMENT_POSITION_PRECEDING) return 1;
       return 0;
     });
+    // Keep the focus index on the same element after the re-sort.
+    if (focused) currentHighlightIndex = highlightedElements.indexOf(focused);
+  }
+
+  // After SPA navigation the previous thread's comments can still be in the DOM
+  // for a moment; their permalink points at another thread.
+  function belongsToCurrentThread(comment, version) {
+    if (version !== RedditVersion.NEW) return true;
+    const permalink = comment.getAttribute('permalink');
+    if (!permalink) return true;
+    const match = permalink.match(/\/comments\/([a-z0-9]+)/i);
+    return !match || match[1].toLowerCase() === String(threadId).toLowerCase();
   }
 
   function highlightComments(version) {
@@ -160,10 +194,15 @@
     let count = 0;
 
     comments.forEach(comment => {
-      comment.setAttribute(PROCESSED_ATTR, 'true');
+      if (!belongsToCurrentThread(comment, version)) return;
 
+      // Leave the comment unprocessed when its time is not readable yet, so a
+      // later pass can try again.
       const timestamp = getCommentTimestamp(comment, version);
-      if (timestamp && timestamp > threadData.lastVisit) {
+      if (!Number.isFinite(timestamp)) return;
+
+      comment.setAttribute(PROCESSED_ATTR, 'true');
+      if (timestamp > threadData.lastVisit) {
         const target = getHighlightTarget(comment, version);
         target.classList.add(HIGHLIGHT_CLASS);
         highlightedElements.push(target);
@@ -178,17 +217,29 @@
     }
   }
 
+  // sendMessage throws synchronously once the extension has been reloaded or
+  // updated (orphaned content script), so a bare .catch() is not enough.
   function updateBadge() {
-    chrome.runtime.sendMessage({
-      type: 'UPDATE_BADGE',
-      count: newCommentCount
-    }).catch(() => {});
+    try {
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_BADGE',
+        count: newCommentCount
+      }).catch(() => {});
+    } catch (e) {
+      // Extension context invalidated.
+    }
   }
 
   // --- Per-thread listeners (named so they can be removed on teardown) -------
 
   function handleKeydown(e) {
-    if (e.target.matches('input, textarea, [contenteditable]')) return;
+    // Leave shortcuts such as Ctrl+P / Cmd+K alone.
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    // e.target is retargeted to the host element for fields inside shadow DOM;
+    // composedPath()[0] is the real element.
+    const origin = e.composedPath()[0] || e.target;
+    if (origin.isContentEditable || (origin.matches && origin.matches('input, textarea, select, [contenteditable]'))) return;
+    if (e.target.matches('input, textarea, select, [contenteditable]')) return;
     if (highlightedElements.length === 0) return;
 
     let newIndex = currentHighlightIndex;
@@ -229,11 +280,11 @@
   function setupMutationObserver(version) {
     if (observer) observer.disconnect();
 
-    const targetSelector = version === RedditVersion.NEW
-      ? 'shreddit-comment-tree, [slot="comments"]'
-      : '.commentarea, .nestedlisting';
-
-    const target = document.querySelector(targetSelector);
+    // Watch the whole body: the comment tree can be mounted late or replaced
+    // (sort change, SPA navigation), which would orphan an observer bound to
+    // one tree element. Mutations are debounced and already-processed comments
+    // are skipped, so this stays cheap.
+    const target = document.body;
     if (!target) return;
 
     let debounceTimer = null;
@@ -255,14 +306,47 @@
   // comments that lazy-load below the fold after init are still newer than the
   // stored boundary on the user's *next* visit (background.js stamps a fresh
   // lastVisit = Date.now() on save). Guarded so it runs at most once per thread.
+  // The flag is cleared again when the page becomes visible, so reading that
+  // happens after a tab switch is recorded on the next hide / leave.
   function persistThreadData() {
     if (!threadId || threadPersisted) return;
+    // If the previous visit could not be loaded, saving now would overwrite the
+    // stored boundary with the current time.
+    if (threadLoadFailed) return;
     threadPersisted = true;
-    chrome.runtime.sendMessage({
-      type: 'SAVE_THREAD_DATA',
-      threadId,
-      data: {}
-    }).catch(() => {});
+    try {
+      chrome.runtime.sendMessage({
+        type: 'SAVE_THREAD_DATA',
+        threadId,
+        data: {}
+      }).catch(() => {});
+    } catch (e) {
+      // Extension context invalidated.
+    }
+  }
+
+  // Called when the extension was reloaded/updated while this page stayed open:
+  // chrome.* no longer works, so stop everything this script started.
+  function retireOrphanedScript() {
+    clearInterval(navUrlPollTimer);
+    clearInterval(colorRefreshTimer);
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+    document.removeEventListener('keydown', handleKeydown);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('pagehide', persistThreadData);
+    window.removeEventListener('popstate', handleUrlChange);
+    colorSchemeMedia.removeEventListener('change', handleColorSchemeChange);
+  }
+
+  function isExtensionContextValid() {
+    try {
+      return !!(chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+      return false;
+    }
   }
 
   function teardown() {
@@ -293,7 +377,10 @@
     threadData = null;
     threadId = null;
     threadPersisted = false;
+    threadLoadFailed = false;
     initialized = false;
+    // Invalidate any init() still waiting on a message round-trip.
+    initGeneration++;
     updateBadge();
   }
 
@@ -308,23 +395,34 @@
 
     threadId = id;
     threadPersisted = false;
+    threadLoadFailed = false;
     initialized = true;
+    const generation = initGeneration;
 
+    let loadedSettings;
     try {
-      settings = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
+      loadedSettings = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
     } catch (e) {
-      settings = { ...DEFAULT_SETTINGS };
+      loadedSettings = null;
     }
-    if (!settings) settings = { ...DEFAULT_SETTINGS };
+    // teardown() ran (and maybe a new init) while we were waiting: drop this one.
+    if (generation !== initGeneration) return;
+    settings = loadedSettings || { ...DEFAULT_SETTINGS };
 
+    let loadedThreadData;
+    let loadFailed = false;
     try {
-      threadData = await chrome.runtime.sendMessage({
+      loadedThreadData = await chrome.runtime.sendMessage({
         type: 'GET_THREAD_DATA',
         threadId
       });
     } catch (e) {
-      threadData = null;
+      loadedThreadData = null;
+      loadFailed = true;
     }
+    if (generation !== initGeneration) return;
+    threadData = loadedThreadData;
+    threadLoadFailed = loadFailed;
 
     injectHighlightStyles();
     highlightComments(version);
@@ -343,6 +441,10 @@
   let navUrlPollTimer = null;
 
   function handleUrlChange() {
+    if (!isExtensionContextValid()) {
+      retireOrphanedScript();
+      return;
+    }
     if (window.location.href === lastUrl) return;
     lastUrl = window.location.href;
 
@@ -367,6 +469,8 @@
     tryInit();
   }
 
+  let colorRefreshTimer = null;
+
   function installNavigationHooks() {
     window.addEventListener('popstate', handleUrlChange);
     // Content scripts run in an isolated world, so overriding history.pushState
@@ -388,6 +492,15 @@
 
   // --- One-time, page-lifetime listeners (registered once, never duplicated) -
 
+  function handleVisibilityChange() {
+    if (document.visibilityState === 'hidden') {
+      persistThreadData();
+    } else {
+      // Back on the page (tab switch, bfcache restore): record the next hide.
+      threadPersisted = false;
+    }
+  }
+
   function installGlobalListeners() {
     colorSchemeMedia.addEventListener('change', handleColorSchemeChange);
     chrome.storage.onChanged.addListener(handleStorageChanged);
@@ -396,9 +509,18 @@
     // covers tab close / full navigation; visibilitychange->hidden is the
     // reliable signal on mobile and bfcache cases.
     window.addEventListener('pagehide', persistThreadData);
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') persistThreadData();
-    });
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // The time-based theme can flip while the page stays open.
+    colorRefreshTimer = setInterval(() => {
+      if (!isExtensionContextValid()) {
+        retireOrphanedScript();
+        return;
+      }
+      if (initialized && settings && settings.autoChangeTheme && getHighlightColor() !== appliedColor) {
+        injectHighlightStyles();
+      }
+    }, 60000);
 
     installNavigationHooks();
   }
