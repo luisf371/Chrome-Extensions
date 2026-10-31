@@ -299,8 +299,7 @@ const AnthropicAdapter = {
       model: model?.trim() || 'claude-sonnet-4-6',
       system: systemPrompt || undefined,
       messages: filteredMessages,
-      // Claude 3 / 3.5 models reject larger values (4096 for most Claude 3); newer models allow far more.
-      max_tokens: /^claude-3(?:-5)?-/i.test(model?.trim() || '') ? 4096 : 16000,
+      max_tokens: 16000,
       stream: true
     };
   },
@@ -536,6 +535,13 @@ function getPartialAssistantMessage(uniqueId) {
 function isRetryableStatus(status) {
   return !(status >= 400 && status < 500) || [408, 409, 429].includes(status);
 }
+
+// String error codes/types/statuses (OpenAI, Anthropic, Gemini) that no resend can fix.
+const FINAL_STREAM_ERROR_CODES = new Set([
+  'invalid_request_error', 'authentication_error', 'permission_error', 'not_found_error', 'request_too_large',
+  'context_length_exceeded', 'invalid_api_key', 'model_not_found', 'insufficient_quota',
+  'invalid_argument', 'unauthenticated', 'permission_denied', 'not_found', 'failed_precondition'
+]);
 
 function applyResumeOverlapDedupe(uniqueId, chunk, flush = false) {
   const deduper = streamStates.get(uniqueId)?.resumeDeduper;
@@ -1062,7 +1068,8 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
           const message = result?.errorMessage || state.errorMessage;
           if (message) {
             failure = { kind: 'stream', code: result?.errorCode ?? state.finishReason ?? null, message,
-              retryable: Boolean(result?.retryable) || state.finishReason === 'error' };
+              // An explicit error event decides; a bare finish_reason "error" stays retryable.
+              retryable: result?.retryable ?? state.finishReason === 'error' };
           } else if (!state.sawTerminal) {
             failure = { kind: 'eof', retryable: true, info: true,
               message: 'Stream interrupted before the provider sent a completion marker. You can ask a follow-up to continue.' };
@@ -1212,10 +1219,12 @@ function handleJsonLine(jsonLine, uniqueId, adapter) {
         providerKind: state.requestDiagnostics?.providerKind
       });
       appendStreamDiagnostic(uniqueId, { type: 'error', code });
-      // Mid-stream errors are upstream failures; providers use arbitrary string codes, so only
-      // a numeric/digit-string deterministic 4xx is final.
+      // Mid-stream errors are usually upstream failures; only a numeric/digit-string deterministic
+      // 4xx or a known request/auth/quota code is final (a resend fails the same way).
       const status = /^\d+$/.test(String(code)) ? Number(code) : null;
-      return { errorMessage: state.errorMessage, errorCode: code, retryable: isRetryableStatus(status) };
+      const final = [data.error.code, data.error.type, data.error.status]
+        .some(value => FINAL_STREAM_ERROR_CODES.has(String(value).toLowerCase()));
+      return { errorMessage: state.errorMessage, errorCode: code, retryable: !final && isRetryableStatus(status) };
     }
     const rawContent = adapter.parseStreamChunk(data);
     if (rawContent != null && typeof rawContent !== 'string') throw new Error('Expected a text delta');

@@ -577,6 +577,9 @@ test('mid-stream errors retry unless a deterministic 4xx or a non-error finish',
     [sse({ error: { message: 'no code' } }), true],
     [sse({ type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }), true],
     [sse({ error: { code: 400, message: 'bad request' } }), false],
+    [sse({ error: { code: 'context_length_exceeded', type: 'invalid_request_error', message: 'too long' }, choices: [{ delta: {}, finish_reason: 'error' }] }), false],
+    [sse({ type: 'error', error: { type: 'authentication_error', message: 'bad key' } }), false],
+    [sse({ error: { status: 'INVALID_ARGUMENT', message: 'bad arg' } }), false],
     [sse({ choices: [{ delta: {}, finish_reason: 'error' }] }), true],
     [sse({ choices: [{ delta: {}, finish_reason: 'tool_calls' }] }), false]
   ]) {
@@ -660,9 +663,6 @@ test('Anthropic requests carry the browser-access header and a larger output lim
   await settles(w.call());
   assert.equal(w.fetches[0].headers['anthropic-dangerous-direct-browser-access'], 'true');
   assert.equal(JSON.parse(w.fetches[0].body).max_tokens, 16000);
-  const legacy = worker({ settings: { apiProvider: 'anthropic', apiUrl: 'https://api.anthropic.com/v1/messages', model: 'claude-3-haiku-20240307' } });
-  await settles(legacy.call());
-  assert.equal(JSON.parse(legacy.fetches[0].body).max_tokens, 4096);
 });
 
 test('Gemini model ids are normalised and encoded in the request URL', async () => {
