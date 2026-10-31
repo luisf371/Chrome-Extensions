@@ -62,8 +62,19 @@ async function getThreadData(threadId) {
   return threads[threadId] ?? null;
 }
 
+// Saves run one at a time: each one reads and rewrites the whole threads map,
+// so overlapping saves (several tabs closing together) would drop each other's
+// updates.
+let saveQueue = Promise.resolve();
+
+function saveThreadData(threadId, data) {
+  const result = saveQueue.then(() => writeThreadData(threadId, data));
+  saveQueue = result.catch(() => {});
+  return result;
+}
+
 // Save thread data with automatic pruning
-async function saveThreadData(threadId, data) {
+async function writeThreadData(threadId, data) {
   const { threads = {}, settings = DEFAULT_SETTINGS } = await chrome.storage.local.get(['threads', 'settings']);
   
   // Add/update the thread
