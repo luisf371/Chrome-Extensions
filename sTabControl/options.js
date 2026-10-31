@@ -110,6 +110,7 @@ function showToast(message, type = 'success') {
 let saveTimeout = null;
 
 function saveOptions() {
+  saveTimeout = null;
   const settings = {};
   
   SETTING_IDS.forEach(id => {
@@ -124,6 +125,11 @@ function saveOptions() {
   });
 
   chrome.storage.sync.set(settings, () => {
+    if (chrome.runtime.lastError) {
+      console.error("Settings not saved:", chrome.runtime.lastError.message);
+      showToast(chrome.i18n.getMessage('statusError') || 'Could not save configuration', 'error');
+      return;
+    }
     console.log("Settings saved:", settings);
     const msg = chrome.i18n.getMessage('statusSaved') || 'Saved';
     showToast(msg, 'success');
@@ -138,7 +144,20 @@ function queueSave() {
   saveTimeout = setTimeout(saveOptions, 300);
 }
 
+// The popup is destroyed as soon as it loses focus, so write any pending change now.
+function flushPendingSave() {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+    saveOptions();
+  }
+}
+
 function initAutoSave() {
+  window.addEventListener('pagehide', flushPendingSave);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushPendingSave();
+  });
+
   // Listen to all form changes
   SETTING_IDS.forEach(id => {
     const element = document.getElementById(id);

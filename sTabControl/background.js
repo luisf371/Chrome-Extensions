@@ -18,7 +18,11 @@ const duplicateCheckInProgress = new Set();
 // same URL in the same burst can't each treat the other as the duplicate and
 // remove it (a delete-both race).
 const duplicateUrlsInFlight = new Set();
-let readyPromise = bootstrap().catch(handleStartupError);
+// Tabs created since the last committed web page; only these are de-duplicated,
+// so a link click, back/forward or redirect inside an existing tab never closes it.
+const freshTabs = new Set();
+let readyPromise = bootstrap();
+readyPromise.catch(handleStartupError);
 
 if (storageApi && storageApi.onChanged && storageApi.onChanged.addListener) {
    storageApi.onChanged.addListener((changes, areaName) => {
@@ -33,12 +37,14 @@ if (storageApi && storageApi.onChanged && storageApi.onChanged.addListener) {
 }
 
 chrome.tabs.onCreated.addListener(tab => {
+   freshTabs.add(tab.id);
    handleTabCreated(tab).catch(handleRuntimeError);
 });
 chrome.tabs.onActivated.addListener(activeInfo => {
    handleTabActivated(activeInfo).catch(handleRuntimeError);
 });
 chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+   freshTabs.delete(tabId);
    handleTabRemoved(tabId, removeInfo).catch(handleRuntimeError);
 });
 chrome.tabs.onMoved.addListener((tabId, moveInfo) => {
@@ -49,6 +55,9 @@ chrome.tabs.onDetached.addListener((tabId, detachInfo) => {
 });
 chrome.tabs.onAttached.addListener((tabId, attachInfo) => {
    handleTabAttached(tabId, attachInfo).catch(handleRuntimeError);
+});
+chrome.tabs.onReplaced.addListener((addedTabId, removedTabId) => {
+   handleTabReplaced(addedTabId, removedTabId).catch(handleRuntimeError);
 });
 chrome.webNavigation.onCommitted.addListener(details => {
    handleNavigationCommitted(details).catch(handleRuntimeError);
@@ -138,12 +147,19 @@ async function rebuildStateFromWindows() {
       openWindowIds.add(win.id);
       const state = getOrCreateWindowState(win.id);
       const openTabIds = new Set(tabs.map(tab => tab.id));
+      // A restored active tab is kept even if it is already gone: the event that
+      // woke the worker may be that tab closing, and it must still count as active.
+      const hadRestoredActive = state.activeTabId !== null;
       state.order = state.order.filter(tabId => openTabIds.has(tabId));
       for (const tab of tabs) {
          if (!state.order.includes(tab.id)) {
             state.order.push(tab.id);
          }
-         if (tab.active) {
+         if (hadRestoredActive) {
+            if (tab.id === state.activeTabId) {
+               state.activeTabIndex = tab.index;
+            }
+         } else if (tab.active) {
             state.activeTabId = tab.id;
             state.activeTabIndex = tab.index;
          }
@@ -160,27 +176,32 @@ async function rebuildStateFromWindows() {
 async function handleTabCreated(tab) {
    await waitForReady();
    const state = getOrCreateWindowState(tab.windowId);
+   // Read the previously active tab now, before any await: later steps can run
+   // after the new tab has already been recorded as the active one.
+   const previousActiveId = state.activeTabId !== tab.id ? state.activeTabId : null;
    removeTabFromState(state, tab.id);
    state.order.push(tab.id);
 
    if (!state.fromRemoval) {
-      await repositionTab(tab);
+      await repositionTab(tab, previousActiveId);
    }
 
    if (state.fromRemoval || settingsCache.tabsOpenMethod === 'foreground') {
       await activateTab(tab.id);
    } else if (settingsCache.tabsOpenMethod === 'background') {
-      const url = typeof tab.url === 'string' ? tab.url : '';
-      if (!url.startsWith('chrome') && state.activeTabId && state.activeTabId !== tab.id) {
-         await activateTab(state.activeTabId);
+      // A new tab's url is empty while pending, so also look at pendingUrl.
+      const url = tab.url || tab.pendingUrl || '';
+      if (!/^chrome[-a-z]*:/i.test(url) && previousActiveId) {
+         await activateTab(previousActiveId);
       }
    }
 
    state.fromRemoval = false;
+   await refreshActiveIndex(state);
    await persistSessionState();
 }
 
-async function repositionTab(tab) {
+async function repositionTab(tab, previousActiveId) {
    if (tab.pinned) return;
    switch (settingsCache.tabsBehaviour) {
       case 'first': {
@@ -193,9 +214,28 @@ async function repositionTab(tab) {
          break;
       case 'left':
       case 'right': {
-         const activeTab = await getActiveTab(tab.windowId);
-         if (!activeTab) return;
-         let targetIndex = activeTab.index;
+         // The new tab may already be the active one, so use the tab the user
+         // came from (or the opener) as the reference.
+         let refTab = null;
+         const refId = previousActiveId || tab.openerTabId;
+         if (refId) {
+            try {
+               refTab = await chrome.tabs.get(refId);
+            } catch (error) {
+               logIgnorableError(error);
+            }
+         }
+         if (!refTab && !tab.active) refTab = await getActiveTab(tab.windowId);
+         if (!refTab || refTab.windowId !== tab.windowId || refTab.id === tab.id) return;
+         let refIndex = refTab.index;
+         try {
+            // Moving a tab from the left of the reference tab shifts it one slot left.
+            if ((await chrome.tabs.get(tab.id)).index < refIndex) refIndex -= 1;
+         } catch (error) {
+            logIgnorableError(error);
+            return;
+         }
+         let targetIndex = refIndex;
          if (settingsCache.tabsBehaviour === 'right') targetIndex += 1;
          const pinnedCount = await countPinnedTabs(tab.windowId);
          if (targetIndex < pinnedCount) targetIndex = pinnedCount;
@@ -232,6 +272,14 @@ async function handleTabRemoved(tabId, removeInfo) {
    
    if (duplicateRemovals.has(tabId)) {
       duplicateRemovals.delete(tabId);
+      // Skip the after-close activation, but still forget the closed tab.
+      const dupState = windowState.get(removeInfo.windowId);
+      if (dupState) {
+         removeTabFromState(dupState, tabId);
+         if (dupState.activeTabId === tabId) dupState.activeTabId = null;
+         if (removeInfo.isWindowClosing) windowState.delete(removeInfo.windowId);
+         await persistSessionState();
+      }
       return;
    }
    
@@ -251,6 +299,7 @@ async function handleTabRemoved(tabId, removeInfo) {
       await handlePostRemovalActivation(windowId, state);
    } else {
       state.fromRemoval = false;
+      await refreshActiveIndex(state);
    }
 
    await persistSessionState();
@@ -294,16 +343,11 @@ async function handleTabMoved(tabId, moveInfo) {
    } else if (state.activeTabId !== null) {
       // Another tab moved past the active one: its tracked index must shift too,
       // otherwise the "left"/"right" after-close activation targets the wrong tab.
-      const { fromIndex, toIndex } = moveInfo;
-      const activeIndex = state.activeTabIndex;
-      let shifted = activeIndex;
-      if (fromIndex < activeIndex && toIndex >= activeIndex) {
-         shifted -= 1;
-      } else if (fromIndex > activeIndex && toIndex <= activeIndex) {
-         shifted += 1;
-      }
-      if (shifted !== activeIndex) {
-         state.activeTabIndex = shifted;
+      // Read the live index instead of shifting it, so overlapping events can't
+      // apply the same shift twice.
+      const before = state.activeTabIndex;
+      await refreshActiveIndex(state);
+      if (state.activeTabIndex !== before) {
          await persistSessionState();
       }
    }
@@ -315,6 +359,7 @@ async function handleTabDetached(tabId, detachInfo) {
    if (!state) return;
    removeTabFromState(state, tabId);
    state.activeTabId = state.activeTabId === tabId ? null : state.activeTabId;
+   await refreshActiveIndex(state);
    await persistSessionState();
 }
 
@@ -322,10 +367,43 @@ async function handleTabAttached(tabId, attachInfo) {
    await waitForReady();
    const state = getOrCreateWindowState(attachInfo.newWindowId);
    if (!state.order.includes(tabId)) {
-      const insertionIndex = Math.min(Math.max(attachInfo.newPosition, 0), state.order.length);
-      state.order.splice(insertionIndex, 0, tabId);
+      // order is most-recently-used first, not strip order: an attached tab has
+      // not been used here yet, so it goes last (activation moves it to the front).
+      state.order.push(tabId);
    }
+   await refreshActiveIndex(state);
    await persistSessionState();
+}
+
+async function handleTabReplaced(addedTabId, removedTabId) {
+   await waitForReady();
+   freshTabs.delete(removedTabId);
+   let changed = false;
+   for (const state of windowState.values()) {
+      const index = state.order.indexOf(removedTabId);
+      if (index !== -1) {
+         state.order[index] = addedTabId;
+         changed = true;
+      }
+      if (state.activeTabId === removedTabId) {
+         state.activeTabId = addedTabId;
+         changed = true;
+      }
+   }
+   if (changed) await persistSessionState();
+}
+
+// Re-read the active tab's strip index. Tabs opened, closed or moved to its left
+// change it without any tab event for the active tab itself.
+async function refreshActiveIndex(state) {
+   const activeId = state.activeTabId;
+   if (activeId === null) return;
+   try {
+      const tab = await chrome.tabs.get(activeId);
+      if (state.activeTabId === activeId) state.activeTabIndex = tab.index;
+   } catch (error) {
+      logIgnorableError(error);
+   }
 }
 
 async function countPinnedTabs(windowId) {
@@ -367,14 +445,15 @@ function getOrCreateWindowState(windowId) {
 }
 
 async function waitForReady() {
-   if (readyPromise) {
-      try {
-         await readyPromise;
-      } catch (error) {
-         console.error('waitForReady failed:', error);
-         // Re-throw to prevent operations during failed state
-         throw error;
-      }
+   const attempt = readyPromise;
+   try {
+      await attempt;
+   } catch (error) {
+      console.error('waitForReady failed:', error);
+      // Try the startup again (once per failure) instead of running on defaults;
+      // if that fails too, the error is thrown so nothing runs on empty state.
+      if (readyPromise === attempt) readyPromise = bootstrap();
+      await readyPromise;
    }
 }
 
@@ -438,7 +517,6 @@ async function handleNavigationCommitted(details) {
    await waitForReady();
    
    if (details.frameId !== 0) return;
-   if (!settingsCache.preventDuplicates) return;
    
    const { tabId, url, transitionType, transitionQualifiers } = details;
    
@@ -448,8 +526,16 @@ async function handleNavigationCommitted(details) {
       return;
    }
 
+   // Only the first web page loaded in a newly opened tab is checked. Later
+   // navigations (link clicks, form submits, back/forward) happen in a tab the
+   // user is working in and must not close it.
+   const isFreshTab = freshTabs.delete(tabId);
+   if (!settingsCache.preventDuplicates) return;
+   if (!isFreshTab) return;
+
    if (transitionType === 'reload') return;
    if (transitionQualifiers && transitionQualifiers.includes('from_address_bar')) return;
+   if (transitionQualifiers && transitionQualifiers.includes('forward_back')) return;
    if (duplicateCheckInProgress.has(tabId)) return;
 
    const normalizedUrl = normalizeUrl(url);
@@ -478,7 +564,14 @@ async function handleNavigationCommitted(details) {
       if (existingTab) {
          console.log('[sTabControl] Duplicate detected. Mode:', settingsCache.duplicateMode);
          
-         switch (settingsCache.duplicateMode) {
+         // Never close a pinned tab; keep it and close the new one instead.
+         const mode = settingsCache.duplicateMode === 'close_old' && existingTab.pinned
+            ? 'close_new'
+            : settingsCache.duplicateMode;
+         // A duplicate opened in the background must not pull focus away.
+         const takeFocus = currentTab.active;
+
+         switch (mode) {
             case 'close_old': {
                // Smoothest: Keep current, remove old
                await removeDuplicateTab(existingTab.id);
@@ -487,9 +580,11 @@ async function handleNavigationCommitted(details) {
             case 'close_new': {
                // Data Preservation: Focus old, remove new
                await removeDuplicateTab(currentTab.id);
-               await activateTab(existingTab.id);
-               if (existingTab.windowId !== currentTab.windowId) {
-                  await chrome.windows.update(existingTab.windowId, { focused: true });
+               if (takeFocus) {
+                  await activateTab(existingTab.id);
+                  if (existingTab.windowId !== currentTab.windowId) {
+                     await chrome.windows.update(existingTab.windowId, { focused: true });
+                  }
                }
                 break;
              }
@@ -508,10 +603,12 @@ async function handleNavigationCommitted(details) {
                await removeDuplicateTab(currentTab.id);
 
                // Focus the existing tab (it's now at the new position)
-               await activateTab(existingTab.id);
-               if (existingTab.windowId !== targetWindowId) {
-                await chrome.windows.update(targetWindowId, { focused: true });
-                }
+               if (takeFocus) {
+                  await activateTab(existingTab.id);
+                  if (existingTab.windowId !== targetWindowId) {
+                     await chrome.windows.update(targetWindowId, { focused: true });
+                  }
+               }
                 
                 break;
              }
