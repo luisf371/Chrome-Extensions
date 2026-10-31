@@ -89,7 +89,7 @@ These tests use Node built-ins with synthetic requests and browser boundaries. T
 
 Streaming requests make up to three attempts (waits of 1 s, then 2 s, or a provider Retry-After of up to 10 s) on network drops, overloads, and other transient errors; bad requests, invalid keys, and context-length errors fail immediately. A request times out after 120 seconds without provider progress and is not retried.
 
-The options connection test validates a complete non-streaming provider response within 10 seconds; it does not certify streaming. Source retrieval has a shared 15-second deadline and falls back to local page content when available.
+The options connection test validates a complete non-streaming provider response within 30 seconds; it does not certify streaming. Source retrieval has a shared 15-second deadline and falls back to local page content when available.
 
 ## License
 
