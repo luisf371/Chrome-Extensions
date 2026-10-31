@@ -14,7 +14,7 @@ const delta = content => ({ choices: [{ delta: { content }, finish_reason: null 
 const ended = content => sse(delta(content)) + sse('[DONE]');
 
 function worker(overrides = {}) {
-  const messages = [], fetches = [], timers = new Map(), sessionData = {};
+  const messages = [], fetches = [], timers = new Map(), sessionData = {}, badges = [];
   let timerId = 0, now = 0;
   const settings = { apiUrl: 'https://example.invalid/chat/completions', apiKey: 'synthetic-key', apiProvider: 'openai', model: 'test', ...overrides.settings };
   const area = data => ({ get: async () => ({ ...data }), set: async values => Object.assign(data, values), remove: async keys => { for (const key of [keys].flat()) delete data[key]; } });
@@ -24,7 +24,7 @@ function worker(overrides = {}) {
     tabs: { onRemoved: event(), onUpdated: event(), sendMessage(tab, message, options, callback) { messages.push(JSON.parse(JSON.stringify({ tab, ...message }))); (callback || options)(overrides.uiReply?.(message) || { success: true }); } },
     scripting: { executeScript: overrides.executeScript || (async () => [{ result: 'source text', documentId: 'doc-7' }]) },
     contextMenus: { onClicked: event(), removeAll: async () => {}, create() {} },
-    action: { onClicked: event() }, i18n: { getMessage: () => '' }
+    action: { onClicked: event(), setBadgeText: details => badges.push(details), setBadgeBackgroundColor() {} }, i18n: { getMessage: () => '' }
   };
   const context = vm.createContext({ chrome, self: { addEventListener() {} }, console: { log() {}, warn() {}, error() {} }, URL, AbortController, DOMException, TextDecoder, TextEncoder, crypto: { randomUUID },
     setTimeout(fn, ms) { const id = ++timerId; timers.set(id, { fn, ms, due: now + ms }); return id; }, clearTimeout(id) { timers.delete(id); },
@@ -34,7 +34,7 @@ function worker(overrides = {}) {
   vm.runInContext(fs.readFileSync(path.join(sourceRoot, 'background.js'), 'utf8'), context);
   const run = code => vm.runInContext(code, context);
   run('tabIdMap.set(1, 7)');
-  return { context, chrome, messages, fetches, timers, sessionData, run,
+  return { context, chrome, messages, fetches, timers, sessionData, badges, run,
     call: (text = 'source text', opts = {}) => context.makeApiCall(text, 1, opts.prompt || null, null, { operationId: opts.operationId || 'operation-1' }),
     fire(ms) { for (const [id, timer] of [...timers]) if (ms === undefined || timer.ms === ms) { timers.delete(id); timer.fn(); } },
     advance(ms) { now += ms; for (const [id, timer] of [...timers]) if (timer.due <= now) { timers.delete(id); timer.fn(); } }
@@ -577,6 +577,9 @@ test('mid-stream errors retry unless a deterministic 4xx or a non-error finish',
     [sse({ error: { message: 'no code' } }), true],
     [sse({ type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }), true],
     [sse({ error: { code: 400, message: 'bad request' } }), false],
+    [sse({ error: { code: 'context_length_exceeded', type: 'invalid_request_error', message: 'too long' }, choices: [{ delta: {}, finish_reason: 'error' }] }), false],
+    [sse({ type: 'error', error: { type: 'authentication_error', message: 'bad key' } }), false],
+    [sse({ error: { status: 'INVALID_ARGUMENT', message: 'bad arg' } }), false],
     [sse({ choices: [{ delta: {}, finish_reason: 'error' }] }), true],
     [sse({ choices: [{ delta: {}, finish_reason: 'tool_calls' }] }), false]
   ]) {
@@ -630,7 +633,6 @@ test('provider boundary merges same-role turns; Anthropic sends its browser opt-
   const a = worker({ settings: { apiProvider: 'anthropic' }, fetch: async () => new Response(sse({ type: 'message_stop' })) });
   await a.call();
   assert.equal(a.fetches[0].headers['anthropic-dangerous-direct-browser-access'], 'true');
-  assert.equal(JSON.parse(a.fetches[0].body).max_tokens, 8192);
 });
 
 test('JSON bodies on stream requests surface provider text; invalid UTF-8 is replaced', async () => {
@@ -654,6 +656,77 @@ test('Azure hosts normalize to the permitted endpoint and diagnostics omit URL s
   assert.equal(w.context.buildRequestDiagnostics({ fetchUrl: 'https://user:pw@example.invalid/v1/chat?key=secret#frag' }).fetchUrl, 'https://example.invalid/v1/chat');
   w.run("beginOperation(1, 7, 'diag'); handleJsonLine(JSON.stringify({ error: { code: 'server_error' } }), 1, OpenAIAdapter)");
   assert.equal(w.run('streamStates.get(1).recentEvents.at(-1).code'), 'server_error');
+});
+
+test('Anthropic requests carry the browser-access header and a larger output limit', async () => {
+  const w = worker({ settings: { apiProvider: 'anthropic', apiUrl: 'https://api.anthropic.com/v1/messages', model: 'claude-sonnet-4-6' } });
+  await settles(w.call());
+  assert.equal(w.fetches[0].headers['anthropic-dangerous-direct-browser-access'], 'true');
+  assert.equal(JSON.parse(w.fetches[0].body).max_tokens, 16000);
+});
+
+test('Gemini model ids are normalised and encoded in the request URL', async () => {
+  for (const [model, expected] of [['models/gemini-2.5-flash', 'gemini-2.5-flash'], [' gemini-x?y/z ', 'gemini-x%3Fy%2Fz']]) {
+    const w = worker({ settings: { apiProvider: 'gemini', apiUrl: 'https://generativelanguage.googleapis.com', model } });
+    await settles(w.call());
+    assert.equal(w.fetches[0].url, `https://generativelanguage.googleapis.com/v1beta/models/${expected}:streamGenerateContent?alt=sse`);
+  }
+});
+
+test('YouTube Shorts use the transcript extractor and look-alike URLs do not', async () => {
+  const picked = async url => {
+    const scripts = [];
+    const w = worker({ executeScript: async params => { scripts.push(params); return [{ result: 'text', documentId: 'doc-7' }]; } });
+    await w.context.handleIconClick({ id: 7, url });
+    return scripts.find(params => params.func && params.args)?.func.toString() || '';
+  };
+  assert.match(await picked('https://www.youtube.com/shorts/abcdefghijk'), /extractYouTubeCaptions/);
+  assert.match(await picked('https://www.youtube.com/watch?v=abcdefghijk'), /extractYouTubeCaptions/);
+  assert.match(await picked('https://example.com/page?next=youtube.com/watch'), /getPageContent/);
+  assert.match(await picked('https://notyoutube.com/watch?v=abcdefghijk'), /getPageContent/);
+});
+
+test('clicking the icon on a restricted page shows a badge instead of doing nothing', async () => {
+  const w = worker();
+  for (const url of ['https://chromewebstore.google.com/detail/x', 'about:blank', 'view-source:https://example.com', 'chrome://settings']) {
+    await w.context.handleIconClick({ id: 7, url });
+  }
+  assert.equal(w.badges.filter(b => b.text === '!').length, 4);
+  assert.equal(w.messages.length, 0);
+  // A page the extension cannot inject into also flashes the badge.
+  const blocked = worker({ executeScript: async () => { throw new Error('Cannot access contents of the page'); } });
+  await blocked.context.handleIconClick({ id: 7, url: 'https://example.com/file.pdf' });
+  assert.equal(blocked.badges.filter(b => b.text === '!').length, 1);
+});
+
+test('a second click on the same tab while a summary is running does not start another', async () => {
+  const gate = deferred();
+  const w = worker({ fetch: async () => { await gate.promise; return new Response(ended('answer')); } });
+  const first = w.context.handleIconClick({ id: 7, url: 'https://example.com/a' }, 'source');
+  for (let i = 0; i < 5; i++) await tick();
+  await w.context.handleIconClick({ id: 7, url: 'https://example.com/a' }, 'source');
+  assert.equal(w.messages.filter(m => m.action === 'createFloatingWindow').length, 1);
+  gate.resolve();
+  await settles(first);
+  await w.context.handleIconClick({ id: 7, url: 'https://example.com/a' }, 'source');
+  assert.equal(w.messages.filter(m => m.action === 'createFloatingWindow').length, 2);
+});
+
+test('a stream that ends without any text is reported instead of looking complete', async () => {
+  const w = worker({ fetch: async () => new Response(sse('[DONE]')) });
+  await settles(w.call());
+  assert.equal(w.messages.filter(m => m.action === 'streamEnd').length, 0);
+  assert.match(w.messages.find(m => m.action === 'appendToFloatingWindow' && !m.isDelta)?.content || '', /^\[Error\].*without returning any text/);
+  assert.equal(w.messages.filter(m => m.action === 'chatUnlock').length, 1);
+});
+
+test('mid-stream "network error" is treated as a connectivity failure but request-construction errors are not', () => {
+  const w = worker();
+  const isNetwork = message => w.context.isNetworkError(Object.assign(new TypeError(message), {}));
+  assert.equal(isNetwork('network error'), true);
+  assert.equal(isNetwork('Failed to fetch'), true);
+  assert.equal(isNetwork('NetworkError when attempting to fetch resource.'), true);
+  assert.equal(isNetwork("Failed to execute 'fetch' on 'Window': Failed to read the 'headers' property: String contains non ISO-8859-1 code point."), false);
 });
 
 (async () => {

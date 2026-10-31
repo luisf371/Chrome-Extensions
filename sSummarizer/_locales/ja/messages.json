@@ -425,5 +425,21 @@
   "menuSummarizeSelection": {
     "message": "選択範囲を要約",
     "description": "Label for the summarize selection context menu item"
+  },
+  "labelOpenrouterDisableReasoning": {
+    "message": "OpenRouter の推論 (thinking) を無効にする",
+    "description": "OpenRouter reasoning toggle label"
+  },
+  "helpOpenrouterDisableReasoning": {
+    "message": "OpenRouter へのリクエストに `reasoning: { effort: \"none\" }` を付けて送信します。推論モデルが止まる、応答の途中で終了する、またはシンプルな回答にしたい場合に便利です。",
+    "description": "OpenRouter reasoning toggle help text"
+  },
+  "tooltipSetDefault": {
+    "message": "デフォルトに設定: ツールバーのアイコンをクリックしたときに実行されます。",
+    "description": "Tooltip for the inactive default-command star button"
+  },
+  "tooltipIsDefault": {
+    "message": "デフォルトのコマンド: ツールバーのアイコンをクリックしたときに実行されます。クリックして解除します。",
+    "description": "Tooltip for the active default-command star button"
   }
 }

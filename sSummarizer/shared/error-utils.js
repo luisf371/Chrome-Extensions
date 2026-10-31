@@ -192,7 +192,7 @@ function isNetworkError(error) {
   const name = error.name || '';
   const message = error.message || '';
   // Chrome reports a mid-body drop as "network error" (with a space).
-  return name === 'TypeError' && /failed to fetch|network ?error|load failed|fetch/i.test(message);
+  return name === 'TypeError' && /failed to fetch|fetch failed|network\s?error|load failed/i.test(message);
 }
 
 // Explain a transport-level failure — the "endpoint disconnect" case the user

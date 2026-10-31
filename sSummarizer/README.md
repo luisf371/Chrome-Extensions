@@ -1,7 +1,7 @@
 ![Project Banner](./images/ss-banner.png)
 <!-- Main project branding banner -->
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg) ![Language: JavaScript](https://img.shields.io/badge/Language-JavaScript-F7DF1E.svg) ![Version: 1.5](https://img.shields.io/badge/Version-1.5-green.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg) ![Language: JavaScript](https://img.shields.io/badge/Language-JavaScript-F7DF1E.svg) ![Version: 1.5](https://img.shields.io/badge/Version-1.9-green.svg)
 
 🌍 **Supported Languages:** English, Spanish, French, Japanese, Portuguese (Brazil), Chinese (Simplified)
 
@@ -17,12 +17,12 @@ sSummarizer is a lightweight, browser-native extension that runs entirely on you
 
 ## Key Features
 
-*   **Multi-Platform Support**: Summarize web pages, news articles, YouTube videos, and Reddit threads.
-*   **AI Provider Choice**: Connect directly to your favorite AI models like OpenAI, Claude, Gemini, OpenRouter, or Perplexity.
+*   **Multi-Platform Support**: Summarize web pages, news articles, YouTube videos and Shorts, and Reddit threads.
+*   **AI Provider Choice**: Connect directly to OpenAI, Azure OpenAI, Anthropic Claude, Google Gemini, Groq, OpenRouter, Perplexity, or GLM.
 *   **Custom Slash Commands**: Create and save personalized shortcuts like `/tldr` or `/faq` that customize how the AI responds.
 *   **Quick Slash Selection**: Choose from your saved commands to instantly generate the summary in your preferred style.
 *   **Interactive Chat**:  Keep the conversation going by asking follow-up questions!
-*   **Streaming Support**: Watch the summary write itself in real-time
+*   **Streaming Support**: Watch the summary write itself in real-time. Dropped or overloaded streams retry automatically and continue where they stopped.
 *   **Context Menu**: Highlight any text on a page, right-click, and easily summarize just that specific part.
 
 ## Quick Start
@@ -47,7 +47,7 @@ chrome://extensions/
 A: It stands for simple. No bloat, no tracking, no ads—just a lightweight tool that does one thing well.
 
 **Q: Do I need my own API key?**
-A: Yes. We don't markup AI costs or act as a middleman. Grab a key from OpenAI, Anthropic, OpenRouter, or Gemini and you're set. Many providers offer free tiers.
+A: Yes. We don't markup AI costs or act as a middleman. Grab a key from any supported provider and you're set. Many providers offer free tiers.
 
 **Q: Does it work on YouTube?**
 A: Yes! It automatically pulls the transcript from the current video and summarizes based on your prompt.
@@ -68,6 +68,7 @@ sSummarizer minimally requests only the following browser permissions to functio
 *   **scripting**: To inject our content extractor for complex sites like YouTube/Reddit
 *   **storage**: To save your API keys and custom slash commands locally on your device
 *   **contextMenus**: To add "Summarize selection" to your right-click menu
+*   **Host access to the supported provider APIs** (OpenAI, Azure OpenAI, Anthropic, Gemini, Groq, OpenRouter, Perplexity, Z.ai): To send requests straight from your browser to the provider you choose
 
 ## Privacy
 
@@ -86,7 +87,9 @@ node sSummarizer/tests/scraper.test.cjs
 
 These tests use Node built-ins with synthetic requests and browser boundaries. They need no packages, API keys, provider calls, or Chrome profile. The scoped GitHub Actions workflow also checks every runtime JavaScript file and parses the manifest and all six locale JSON files.
 
-The options connection test validates a complete non-streaming provider response within 10 seconds; it does not certify streaming. Source retrieval has a shared 15-second deadline and falls back to local page content when available.
+Streaming requests make up to three attempts (waits of 1 s, then 2 s, or a provider Retry-After of up to 10 s) on network drops, overloads, and other transient errors; bad requests, invalid keys, and context-length errors fail immediately. A request times out after 120 seconds without provider progress and is not retried.
+
+The options connection test validates a complete non-streaming provider response within 30 seconds; it does not certify streaming. Source retrieval has a shared 15-second deadline and falls back to local page content when available.
 
 ## License
 

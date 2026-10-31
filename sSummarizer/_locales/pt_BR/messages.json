@@ -425,5 +425,21 @@
   "menuSummarizeSelection": {
     "message": "Resumir seleção",
     "description": "Label for the summarize selection context menu item"
+  },
+  "labelOpenrouterDisableReasoning": {
+    "message": "Desativar o raciocínio / thinking do OpenRouter",
+    "description": "OpenRouter reasoning toggle label"
+  },
+  "helpOpenrouterDisableReasoning": {
+    "message": "Envia `reasoning: { effort: \"none\" }` nas solicitações ao OpenRouter. Útil quando modelos de raciocínio travam, param no meio da resposta ou você quer respostas diretas.",
+    "description": "OpenRouter reasoning toggle help text"
+  },
+  "tooltipSetDefault": {
+    "message": "Definir como padrão: é executado ao clicar no ícone da barra de ferramentas.",
+    "description": "Tooltip for the inactive default-command star button"
+  },
+  "tooltipIsDefault": {
+    "message": "Comando padrão: é executado ao clicar no ícone da barra de ferramentas. Clique para remover.",
+    "description": "Tooltip for the active default-command star button"
   }
 }

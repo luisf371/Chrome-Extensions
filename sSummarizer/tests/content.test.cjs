@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../content.js'), 'utf8');
 const plain = value => JSON.parse(JSON.stringify(value));
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
-function harness({ storage, sendError, sendResponse = { success: true } } = {}) {
+function harness({ storage, sendError, sendResponse = { success: true }, commands = [{ command: 'outline', prompt: 'Make an outline' }] } = {}) {
   const nodes = new Map();
   class Element {
     constructor() {
@@ -70,7 +70,7 @@ function harness({ storage, sendError, sendResponse = { success: true } } = {}) 
     document: { body: new Element(), createElement: () => new Element() },
     chrome: { runtime, i18n: { getMessage: () => '' }, storage: { local: {
       get(keys, callback) {
-        if (callback) callback({ slashCommands: [{ command: 'outline', prompt: 'Make an outline' }] });
+        if (callback) callback({ slashCommands: commands });
         else return storage || Promise.resolve({});
       }, set() {}
     } } },
@@ -307,4 +307,59 @@ test('reasoning deltas retain signed attempt boundaries on disconnect and author
     assert.deepEqual(h.sent[0].messages[1], expected, `${ending} keeps exact reasoning without duplication`);
     assert.equal(h.sent[0].messages.filter(message => message.role === 'assistant').length, 1);
   }
+});
+
+function markdownConverter() {
+  const start = source.indexOf('  function convertMarkdownToHtml(');
+  const end = source.indexOf('  /**\n   * Show loading indicator');
+  const context = vm.createContext({});
+  vm.runInContext(`${source.slice(start, end)}; this.convert = convertMarkdownToHtml;`, context);
+  return context.convert;
+}
+
+test('a code fence directly after a text line renders as a code block', () => {
+  const html = markdownConverter()('Example:\n```js\nconst a = 1;\n```\nDone.');
+  assert.match(html, /<p>Example:<\/p>/);
+  assert.match(html, /<pre><code>const a = 1;<\/code><\/pre>/);
+  assert.match(html, /<p>Done\.<\/p>/);
+  assert.doesNotMatch(html, /``/);
+});
+
+test('numbered items separated by blank lines stay in one list, and a split list keeps its number', () => {
+  const convert = markdownConverter();
+  const loose = convert('1. First\n\n2. Second\n\n3. Third');
+  assert.equal((loose.match(/<ol/g) || []).length, 1);
+  assert.equal((loose.match(/<li>/g) || []).length, 3);
+  assert.match(convert('3. Third'), /<ol start="3">/);
+  assert.doesNotMatch(convert('1. First'), /start=/);
+  // A list followed by a plain paragraph still ends at the blank line.
+  const ended = convert('- a\n\n- b\n\nAfter');
+  assert.equal((ended.match(/<ul>/g) || []).length, 1);
+  assert.match(ended, /<\/ul>\n<p>After<\/p>/);
+});
+
+test('Enter that confirms an IME candidate does not submit', async () => {
+  const h = harness();
+  await h.mount();
+  h.finish();
+  const input = h.node('chat-input');
+  input.value = 'にほん';
+  input.fire('keydown', { key: 'Enter', isComposing: true });
+  input.fire('keydown', { key: 'Enter', keyCode: 229 });
+  assert.equal(h.sent.length, 0);
+  input.fire('keydown', { key: 'Enter' });
+  assert.equal(h.sent.length, 1);
+});
+
+test('typing a command that is a prefix of another does not lock it early', async () => {
+  const h = harness({ commands: [{ command: 'tl', prompt: 'Short' }, { command: 'tldr', prompt: 'Shorter' }] });
+  await h.mount();
+  h.finish();
+  const input = h.node('chat-input');
+  input.value = '/tl';
+  input.fire('input');
+  assert.notEqual(input.readOnly, true, '/tl stays editable while /tldr is possible');
+  input.value = '/tldr';
+  input.fire('input');
+  assert.equal(input.readOnly, true, '/tldr locks on its exact match');
 });

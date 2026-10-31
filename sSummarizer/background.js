@@ -299,7 +299,7 @@ const AnthropicAdapter = {
       model: model?.trim() || 'claude-sonnet-4-6',
       system: systemPrompt || undefined,
       messages: filteredMessages,
-      max_tokens: 8192,
+      max_tokens: 16000,
       stream: true
     };
   },
@@ -535,6 +535,13 @@ function getPartialAssistantMessage(uniqueId) {
 function isRetryableStatus(status) {
   return !(status >= 400 && status < 500) || [408, 409, 429].includes(status);
 }
+
+// String error codes/types/statuses (OpenAI, Anthropic, Gemini) that no resend can fix.
+const FINAL_STREAM_ERROR_CODES = new Set([
+  'invalid_request_error', 'authentication_error', 'permission_error', 'not_found_error', 'request_too_large',
+  'context_length_exceeded', 'invalid_api_key', 'model_not_found', 'insufficient_quota',
+  'invalid_argument', 'unauthenticated', 'permission_denied', 'not_found', 'failed_precondition'
+]);
 
 function applyResumeOverlapDedupe(uniqueId, chunk, flush = false) {
   const deduper = streamStates.get(uniqueId)?.resumeDeduper;
@@ -801,9 +808,62 @@ chrome.action.onClicked.addListener((tab) => {
   });
 });
 
+// Tabs that already have a summary starting or streaming, so a double click does not
+// open a second window and pay for a second request.
+const busyTabs = new Set();
+
+// Pages the extension cannot inject into (internal pages, the Web Store, the PDF viewer).
+function isRestrictedUrl(url) {
+  if (/^(chrome|chrome-extension|chrome-untrusted|chrome-search|moz-extension|edge|about|view-source|devtools):/i.test(url)) return true;
+  try {
+    const { hostname, pathname } = new URL(url);
+    return hostname === 'chromewebstore.google.com' ||
+      (hostname === 'chrome.google.com' && pathname.startsWith('/webstore'));
+  } catch {
+    return false;
+  }
+}
+
+// Show a short "!" on the toolbar icon so a click that cannot work is not silent.
+function flashUnavailableBadge(tabId) {
+  try {
+    chrome.action.setBadgeBackgroundColor({ color: '#d93025', tabId });
+    chrome.action.setBadgeText({ text: '!', tabId });
+    setTimeout(() => {
+      try { chrome.action.setBadgeText({ text: '', tabId }); } catch {}
+    }, 4000);
+  } catch {}
+}
+
+// Returns { videoId } for a YouTube watch or Shorts page, otherwise null.
+function parseYouTubeVideoUrl(url) {
+  try {
+    const { hostname, pathname, searchParams } = new URL(url);
+    if (!/^(?:www\.|m\.|music\.)?youtube\.com$/i.test(hostname)) return null;
+    if (pathname === '/watch') return { videoId: searchParams.get('v') || '' };
+    const shorts = pathname.match(/^\/shorts\/([^/]+)/);
+    return shorts ? { videoId: shorts[1] } : null;
+  } catch {
+    return null;
+  }
+}
+
 async function handleIconClick(tab, directTextContent = null, customPrompt = null, commandName = null) {
-  if (!tab || !Number.isInteger(tab.id) || !tab.url ||
-      /^(chrome|chrome-extension|moz-extension):/.test(tab.url)) return;
+  if (!tab || !Number.isInteger(tab.id) || !tab.url) return;
+  if (isRestrictedUrl(tab.url)) {
+    flashUnavailableBadge(tab.id);
+    return;
+  }
+  if (busyTabs.has(tab.id)) return;
+  busyTabs.add(tab.id);
+  try {
+    await runIconClick(tab, directTextContent, customPrompt, commandName);
+  } finally {
+    busyTabs.delete(tab.id);
+  }
+}
+
+async function runIconClick(tab, directTextContent, customPrompt, commandName) {
   const uniqueId = Date.now() + Math.floor(Math.random() * 1000);
   const operation = beginOperation(uniqueId, tab.id);
   tabIdMap.set(uniqueId, tab.id);
@@ -825,8 +885,9 @@ async function handleIconClick(tab, directTextContent = null, customPrompt = nul
       return;
     }
     let extractorFn, errorContext;
-    if (tab.url.includes('youtube.com/watch')) {
-      if (!tab.url.match(/[?&]v=([^&]+)/)?.[1]) throw new Error('Could not extract video ID from the URL.');
+    const youTube = parseYouTubeVideoUrl(tab.url);
+    if (youTube) {
+      if (!youTube.videoId) throw new Error('Could not extract video ID from the URL.');
       extractorFn = (operationId) => extractYouTubeCaptions(operationId);
       errorContext = 'YouTube video';
     } else if (tab.url.match(/reddit\.com\/r\/.*\/comments\//)) {
@@ -851,7 +912,11 @@ async function handleIconClick(tab, directTextContent = null, customPrompt = nul
   } catch (error) {
     if (!operation.cancelled && ownsOperation(operation)) {
       if (operation.uiReady) await handleApiError(uniqueId, error.message, operation);
-      else { console.log('[Background] Failed to initialize UI:', error.message); removeSession(uniqueId); }
+      else {
+        console.log('[Background] Failed to initialize UI:', error.message);
+        removeSession(uniqueId);
+        flashUnavailableBadge(tab.id);
+      }
     }
   } finally {
     await operation.recoveryPromise;
@@ -940,8 +1005,10 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
       const label = commandName ? `/${commandName}` : customUserPrompt.split('\n')[0].substring(0, 50);
       await sendOperationMessage(operation, { action: 'appendToFloatingWindow', content: `\n**YOU:** ${label}${commandName ? '' : '...'}\n\n---\n` });
     }
+    // Accept ids copied from ListModels ("models/gemini-...") and keep odd characters out of the URL path.
+    const geminiModel = (model || '').trim().replace(/^models\//, '') || 'gemini-flash-latest';
     const fetchUrl = providerKind === 'gemini'
-      ? `https://generativelanguage.googleapis.com/v1beta/models/${model?.trim() || 'gemini-flash-latest'}:streamGenerateContent?alt=sse`
+      ? `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(geminiModel)}:streamGenerateContent?alt=sse`
       : resolvedApiUrl;
     // Every retry is rebuilt from this base so continuations never duplicate earlier output.
     const baseMessages = messages;
@@ -1001,7 +1068,8 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
           const message = result?.errorMessage || state.errorMessage;
           if (message) {
             failure = { kind: 'stream', code: result?.errorCode ?? state.finishReason ?? null, message,
-              retryable: Boolean(result?.retryable) || state.finishReason === 'error' };
+              // An explicit error event decides; a bare finish_reason "error" stays retryable.
+              retryable: result?.retryable ?? state.finishReason === 'error' };
           } else if (!state.sawTerminal) {
             failure = { kind: 'eof', retryable: true, info: true,
               message: 'Stream interrupted before the provider sent a completion marker. You can ask a follow-up to continue.' };
@@ -1021,8 +1089,12 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
       if (operation.cancelled || !ownsOperation(operation)) return;
       flushResumeOverlap(uniqueId);
       if (!failure) {
-        operation.notified = true;
         const fullResponse = responseAccumulators.get(uniqueId) || '';
+        if (!fullResponse.trim()) {
+          await handleApiError(uniqueId, 'The provider finished without returning any text. Try again, or ask a follow-up.', operation);
+          break;
+        }
+        operation.notified = true;
         await sendOperationMessage(operation, {
           action: 'streamEnd', fullResponse, originalContext: operation.originalContext,
           assistantMessage: getAssistantMessagePayload(uniqueId, fullResponse), finishReason: state.finishReason || null, outcome: 'complete'
@@ -1147,10 +1219,12 @@ function handleJsonLine(jsonLine, uniqueId, adapter) {
         providerKind: state.requestDiagnostics?.providerKind
       });
       appendStreamDiagnostic(uniqueId, { type: 'error', code });
-      // Mid-stream errors are upstream failures; providers use arbitrary string codes, so only
-      // a numeric/digit-string deterministic 4xx is final.
+      // Mid-stream errors are usually upstream failures; only a numeric/digit-string deterministic
+      // 4xx or a known request/auth/quota code is final (a resend fails the same way).
       const status = /^\d+$/.test(String(code)) ? Number(code) : null;
-      return { errorMessage: state.errorMessage, errorCode: code, retryable: isRetryableStatus(status) };
+      const final = [data.error.code, data.error.type, data.error.status]
+        .some(value => FINAL_STREAM_ERROR_CODES.has(String(value).toLowerCase()));
+      return { errorMessage: state.errorMessage, errorCode: code, retryable: !final && isRetryableStatus(status) };
     }
     const rawContent = adapter.parseStreamChunk(data);
     if (rawContent != null && typeof rawContent !== 'string') throw new Error('Expected a text delta');
