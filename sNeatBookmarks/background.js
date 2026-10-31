@@ -33,16 +33,23 @@ if (chrome.omnibox) {
         return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&apos;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     };
 
+    // text and value are plain (not escaped); the returned text is XML-encoded
     const matcher = (text, value) => {
         let matched = false;
-        const escaped = value.replace(/([-.*+?^${}()|[\]/\\])/g, '\\$1');
+        const escaped = value.trim().replace(/([-.*+?^${}()|[\]/\\])/g, '\\$1');
+        if (!escaped) return { text: xmlEncode(text), matched: false };
         const exp = new RegExp(escaped.replace(/\s+/g, '|'), 'ig');
-        const matchedText = text.replace(exp, (m) => {
+        let result = '';
+        let last = 0;
+        text.replace(exp, (m, offset) => {
             matched = true;
-            return '<match>' + m + '</match>';
+            result += xmlEncode(text.slice(last, offset)) + '<match>' + xmlEncode(m) + '</match>';
+            last = offset + m.length;
+            return m;
         });
+        result += xmlEncode(text.slice(last));
         return {
-            text: matchedText,
+            text: result,
             matched: matched
         };
     };
@@ -54,20 +61,22 @@ if (chrome.omnibox) {
         }
         omniboxValue = value;
         try {
-            let results = await chrome.bookmarks.search(value);
+            // folders have no url, only suggest real bookmarks
+            let results = (await chrome.bookmarks.search(value)).filter((r) => r.url);
             if (!results.length) {
                 resetSuggest();
                 return;
             }
-            const v = value.replace(/([-.*+?^${}()|[\]/\\])/g, '\\$1');
-            const vPattern = new RegExp('^' + v.replace(/\s+/g, '.*'), 'i');
+            const v = value.toLowerCase();
+            const escaped = value.replace(/([-.*+?^${}()|[\]/\\])/g, '\\$1');
+            const vPattern = new RegExp('^' + escaped.replace(/\s+/g, '.*'), 'i');
             
             if (results.length > 1) {
                 results.sort((a, b) => {
                     const aTitle = a.title;
                     const bTitle = b.title;
-                    let aIndexTitle = aTitle.toLowerCase().indexOf(v.toLowerCase());
-                    let bIndexTitle = bTitle.toLowerCase().indexOf(v.toLowerCase());
+                    let aIndexTitle = aTitle.toLowerCase().indexOf(v);
+                    let bIndexTitle = bTitle.toLowerCase().indexOf(v);
                     
                     if (aIndexTitle >= 0 || bIndexTitle >= 0) {
                         if (aIndexTitle < 0) aIndexTitle = Infinity;
@@ -85,18 +94,18 @@ if (chrome.omnibox) {
             }
             
             firstResult = results.shift();
-            if (firstResult) firstResult._query = value;
-            const firstTitle = matcher(xmlEncode(firstResult.title), v);
+            firstResult._query = value;
+            const firstTitle = matcher(firstResult.title, value);
             let firstURL = { text: xmlEncode(firstResult.url) };
-            if (!firstTitle.matched) firstURL = matcher(firstURL.text, v);
+            if (!firstTitle.matched) firstURL = matcher(firstResult.url, value);
             setSuggest(firstTitle.text + ' <dim>-</dim> <url>' + firstURL.text + '</url>');
 
             const suggestions = [];
             for (const result of results) {
-                const title = matcher(xmlEncode(result.title), v);
+                const title = matcher(result.title, value);
                 const URL = result.url;
                 let url = { text: xmlEncode(URL) };
-                if (!title.matched) url = matcher(url.text, v);
+                if (!title.matched) url = matcher(URL, value);
                 suggestions.push({
                     content: URL,
                     description: title.text + ' <dim>-</dim> <url>' + url.text + '</url>'
@@ -108,25 +117,33 @@ if (chrome.omnibox) {
         }
     });
 
-    chrome.omnibox.onInputEntered.addListener((text) => {
+    chrome.omnibox.onInputEntered.addListener((text, disposition) => {
         if (!text || !firstResult) {
             resetSuggest();
             return;
         }
         const url = (text == omniboxValue && firstResult._query === text) ? firstResult.url : text;
+        if (disposition === 'newForegroundTab' || disposition === 'newBackgroundTab') {
+            chrome.tabs.create({ url: url, active: disposition === 'newForegroundTab' }).catch((error) => {
+                reportError(error.message, 'background.js', 'onInputEntered');
+            });
+            return;
+        }
         chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
             if (tabs && tabs.length > 0) {
-                chrome.tabs.update(tabs[0].id, {
+                return chrome.tabs.update(tabs[0].id, {
                     url: url,
                     active: true
                 });
             }
+        }).catch((error) => {
+            reportError(error.message, 'background.js', 'onInputEntered');
         });
     });
 }
 
 // Restore custom icon from storage
-chrome.storage.local.get('customIcon').then((result) => {
+const restoreIcon = () => chrome.storage.local.get('customIcon').then((result) => {
     if (result.customIcon) {
         const customIcon = result.customIcon;
         // Check if OffscreenCanvas is available (Service Worker)
@@ -144,3 +161,7 @@ chrome.storage.local.get('customIcon').then((result) => {
         }
     }
 });
+restoreIcon();
+// The icon is not kept across browser restarts or updates, so set it again
+chrome.runtime.onStartup.addListener(restoreIcon);
+chrome.runtime.onInstalled.addListener(restoreIcon);

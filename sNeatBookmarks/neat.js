@@ -80,13 +80,18 @@
     const httpsPattern = /^https?:\/\//i;
 
     // Adaptive bookmark tooltips
+    // javascript: bookmarks get href="#", so their real URL is kept in data-url
+    const getBookmarkURL = function(a){
+        return a.dataset.url || a.href;
+    };
+
     const adaptBookmarkTooltips = function(){
         const bookmarks = document.querySelectorAll('li.child a');
         for (let i = 0, l = bookmarks.length; i < l; i++){
             const bookmark = bookmarks[i];
             if (bookmark.classList.contains('titled')){
                 if (bookmark.scrollWidth <= bookmark.offsetWidth){
-                    bookmark.title = bookmark.href;
+                    bookmark.title = getBookmarkURL(bookmark);
                     bookmark.classList.remove('titled');
                 }
             } else if (bookmark.scrollWidth > bookmark.offsetWidth){
@@ -112,8 +117,10 @@
         }
         tooltipURL = Utils.htmlspecialchars(tooltipURL);
         const name = Utils.htmlspecialchars(title) || (httpsPattern.test(url) ? Utils.htmlspecialchars(url.replace(httpsPattern, '')) : _m('noTitle'));
-        const href = (/^javascript:/i.test(url)) ? '#' : u;
-        return '<a href="' + href + '"' + ' title="' + tooltipURL + '" tabindex="0" ' + extras + '>' + 
+        const isScript = /^javascript:/i.test(url);
+        const href = isScript ? '#' : u;
+        const dataURL = isScript ? ' data-url="' + u + '"' : '';
+        return '<a href="' + href + '"' + dataURL + ' title="' + tooltipURL + '" tabindex="0" ' + extras + '>' + 
             '<img src="' + favicon + '" width="16" height="16" alt=""><i>' + name + '</i></a>';
     };
 
@@ -156,12 +163,12 @@
                                 Utils.inject(ul, $('neat-tree-item-' + _id));
                                 div.remove();
                             }).catch(console.error);
-                        })(_id);
+                        })(id);
                     }
                 }
             } else {
                 html += '<li class="child"' + idHTML + ' role="treeitem" data-parentid="' + parentID + '">' + 
-                    generateBookmarkHTML(title, url, 'style="padding-inline-start: ' + paddingStart + 'px"');
+                    generateBookmarkHTML(d.title, url, 'style="padding-inline-start: ' + paddingStart + 'px"');
             }
             html += '</li>';
         }
@@ -189,7 +196,8 @@
                     $tree.style.overflow = oriOverflow;
                 }, 1);
                 setTimeout(function(){
-                    setSetting('focusID', null);
+                    // only forget the remembered item if the user has not focused another one since
+                    if (settings.focusID === focusID) setSetting('focusID', null);
                 }, 4000);
             }
         }
@@ -224,7 +232,7 @@
         const el = e.target;
         const tagName = el.tagName;
         if (tagName != 'SPAN') return;
-        if (e.shiftKey || e.ctrlKey) return;
+        if (e.shiftKey || e.ctrlKey || e.metaKey) return;
         const parent = el.parentNode;
         parent.classList.toggle('open');
         const expanded = parent.classList.contains('open');
@@ -272,13 +280,14 @@
 
         chrome.tabs.query({active: true, currentWindow: true}).then(function(tabs){
              const tab = tabs[0];
-             chrome.bookmarks.create({
+             if (!tab) return;
+             return chrome.bookmarks.create({
                  parentId: folderId,
                  title: tab.title,
                  url: tab.url
              }).then(function(createdNode) {
-                 // Update UI if folder is open
-                 if (li && li.classList.contains('open')) {
+                 // Update UI if the folder's list is loaded (it may be collapsed)
+                 if (li) {
                      const ul = li.querySelector('ul');
                      if (ul) {
                          const level = parseInt(ul.dataset.level);
@@ -298,7 +307,7 @@
                      btn.textContent = '+';
                  }, 1500);
              });
-        });
+        }).catch(console.error);
     });
     
     // Force middle clicks to trigger the focus event
@@ -330,6 +339,10 @@
         prevValue = value;
         searchMode = true;
         chrome.bookmarks.search(value).then(function(results){
+            // a newer query (or a cleared box) has replaced this one
+            if (value !== prevValue) return;
+            // folders have no url, only show real bookmarks
+            results = results.filter(function(r){ return r.url; });
             const v = value.toLowerCase();
             let vPattern = new RegExp('^' + Utils.escapeRegExp(value).replace(/\s+/g, '.*'), 'i');
             if (results.length > 1){
@@ -361,6 +374,7 @@
             html += '</ul>';
             $tree.style.display = 'none';
             $results.innerHTML = html;
+            $results.dataset.query = value;
             $results.style.display = 'block';
 
             // Group result items by parent folder so each folder's name is
@@ -403,6 +417,8 @@
                 if (firstFocusable) firstFocusable.focus();
             }
         } else if (code === 'Enter' && searchInput.value.length){ // enter
+            // results must belong to what is typed now, not to an earlier query
+            if (!searchMode || $results.dataset.query !== searchInput.value.trim()) return;
             const item = $results.querySelector('ul>li:first-child a');
             if (!item) return;
             item.focus();
@@ -490,10 +506,12 @@
             $('confirm-dialog-text').innerHTML = Utils.widont(opts.dialog);
             $('confirm-dialog-button-1').innerHTML = opts.button1;
             $('confirm-dialog-button-2').innerHTML = opts.button2;
-            if (opts.fn1) ConfirmDialog.fn1 = opts.fn1;
-            if (opts.fn2) ConfirmDialog.fn2 = opts.fn2;
-            $('confirm-dialog-button-' + (opts.focusButton || 1)).focus();
+            // never reuse the callbacks of an earlier dialog
+            ConfirmDialog.fn1 = opts.fn1 || function(){};
+            ConfirmDialog.fn2 = opts.fn2 || function(){};
+            // show first: a hidden dialog can not take focus
             document.body.classList.add('needConfirm');
+            $('confirm-dialog-button-' + (opts.focusButton || 1)).focus();
         },
         close: function(){
             document.body.classList.remove('needConfirm');
@@ -503,24 +521,30 @@
     };
 
     // Edit dialog event listener
-    $('edit-dialog').addEventListener('submit', function(){
+    $('edit-dialog').addEventListener('submit', function(e){
+        e.preventDefault();
         EditDialog.close();
-        return false;
     }, false);
+    $('edit-dialog-url').addEventListener('input', function(){
+        this.setCustomValidity('');
+    });
 
     // Edit dialog
     const EditDialog = window.EditDialog = {
         open: function(opts){
             if (!opts) return;
             $('edit-dialog-text').innerHTML = Utils.widont(opts.dialog);
-            if (opts.fn) EditDialog.fn = opts.fn;
+            EditDialog.fn = opts.fn || function(){};
+            EditDialog.cancelFn = opts.cancel || function(){};
             const type = opts.type || 'bookmark';
             const name = $('edit-dialog-name');
+            body.classList.add('needEdit'); // show first: a hidden dialog can not take focus
             name.value = opts.name;
             name.focus();
             name.select();
             name.scrollLeft = 0; // very delicate, show first few words instead of last
             const url = $('edit-dialog-url');
+            url.setCustomValidity('');
             if (type == 'bookmark'){
                 url.style.display = '';
                 url.disabled = false;
@@ -530,13 +554,22 @@
                 url.disabled = true;
                 url.value = '';
             }
-            body.classList.add('needEdit');
+            // the input may clean up the value it was given, so compare against what it holds
+            EditDialog.originalUrl = url.value;
         },
         close: function(){
             const urlInput = $('edit-dialog-url');
             let url = urlInput.value;
-            
+
             if (/^(javascript|data):/i.test(url)) {
+                if (url !== EditDialog.originalUrl) {
+                    // not allowed: keep the dialog open instead of silently dropping the new URL
+                    urlInput.setCustomValidity(' ');
+                    urlInput.focus();
+                    return;
+                }
+                // an untouched bookmarklet: an empty url leaves its address as it is,
+                // so renaming it still works
                 url = '';
             }
 
@@ -545,10 +578,23 @@
                 if (!urlInput.validity.valid) url = ''; 
                 else url = urlInput.value;
             }
-            EditDialog.fn($('edit-dialog-name').value, url);
+            const fn = EditDialog.fn;
+            EditDialog.fn = function(){};
+            EditDialog.cancelFn = function(){};
+            fn($('edit-dialog-name').value, url);
             body.classList.remove('needEdit');
         },
-        fn: function(){}
+        // close without saving
+        cancel: function(){
+            const cancelFn = EditDialog.cancelFn;
+            EditDialog.fn = function(){};
+            EditDialog.cancelFn = function(){};
+            body.classList.remove('needEdit');
+            cancelFn();
+        },
+        fn: function(){},
+        cancelFn: function(){},
+        originalUrl: ''
     };
 
     // Bookmark handling
@@ -594,7 +640,11 @@
             chrome.windows.create({
                 url: url,
                 incognito: incognito
-            });
+            }).catch(actions.showError);
+        },
+
+        showError: function(){
+            AlertDialog.open('<strong>' + _m('errorOccured') + '</strong>');
         },
 
         openBookmarks: function(urls, selected){
@@ -626,10 +676,13 @@
         openBookmarksNewWindow: function(urls, incognito){
             const urlsLen = urls.length;
             const open = function(){
+                // one URL Chrome refuses (javascript:) would fail the whole window
+                const openable = urls.filter(function(u){ return !/^javascript:/i.test(u); });
+                if (!openable.length) return;
                 chrome.windows.create({
-                    url: urls,
+                    url: openable,
                     incognito: incognito
-                });
+                }).catch(actions.showError);
             };
             if (!dontConfirmOpenFolder && urlsLen > openBookmarksLimit){
                 const dialog = incognito ? _m('confirmOpenBookmarksNewIncognitoWindow', ''+urlsLen) : _m('confirmOpenBookmarksNewWindow', ''+urlsLen);
@@ -657,6 +710,10 @@
                     type: type,
                     name: node.title,
                     url: url,
+                    cancel: function(){
+                        const li = $((searchMode ? 'results-item-' : 'neat-tree-item-') + id);
+                        if (li) li.firstElementChild.focus();
+                    },
                     fn: function(name, url){
                         chrome.bookmarks.update(id, {
                             title: name,
@@ -709,7 +766,7 @@
             const item = li.querySelector('span');
             if (bookmarkCount || folderCount){
                 let dialog = '';
-                const folderName = '<cite>' + Utils.htmlspecialchars(item.textContent.trim()) + '</cite>';
+                const folderName = '<cite>' + Utils.htmlspecialchars(item.querySelector('i').textContent.trim()) + '</cite>';
                 if (bookmarkCount && folderCount){
                     dialog = _m('confirmDeleteFolderSubfoldersBookmarks', [folderName, folderCount, bookmarkCount]);
                 } else if (bookmarkCount){
@@ -756,7 +813,7 @@
         const ctrlMeta = (e.ctrlKey || e.metaKey);
         const shift = e.shiftKey;
         if (el.tagName == 'A'){
-            const url = el.href;
+            const url = getBookmarkURL(el);
             if (ctrlMeta){ // ctrl/meta click
                 actions.openBookmarkNewTab(url, middleClickBgTab ? shift : !shift);
             } else { // click
@@ -836,7 +893,8 @@
     let currentContext = null;
     let macCloseContextMenu = false;
     body.addEventListener('contextmenu', function(e){
-        e.preventDefault();
+        // keep the native Cut/Copy/Paste menu in text fields
+        if (!/^(input|textarea)$/i.test(e.target.tagName)) e.preventDefault();
         clearMenu();
         if (os == 'mac'){
             macCloseContextMenu = false;
@@ -894,10 +952,11 @@
 
     const bookmarkContextHandler = function(e){
         e.stopPropagation();
+        e.preventDefault(); // body's handler never sees this event, so hide the native menu here
         if (!currentContext) return;
         const el = e.target;
         if (!el.classList.contains('command')) return;
-        const url = currentContext.href;
+        const url = getBookmarkURL(currentContext);
         switch (el.id){
             case 'bookmark-new-tab':
                 actions.openBookmarkNewTab(url);
@@ -931,6 +990,25 @@
         e.stopPropagation();
     });
 
+    // Counts everything inside the folder, not only its direct children
+    const deleteFolder = function(id){
+        chrome.bookmarks.getSubTree(id).then(function(nodes){
+            let bookmarkCount = 0, folderCount = 0;
+            const count = function(node){
+                (node.children || []).forEach(function(child){
+                    if (typeof child.url == 'undefined'){
+                        folderCount++;
+                        count(child);
+                    } else {
+                        bookmarkCount++;
+                    }
+                });
+            };
+            if (nodes.length) count(nodes[0]);
+            actions.deleteBookmarks(id, bookmarkCount, folderCount);
+        });
+    };
+
     const folderContextHandler = function(e){
         if (!currentContext) return;
         const el = e.target;
@@ -960,7 +1038,7 @@
                     actions.editBookmarkFolder(id);
                     break;
                 case 'folder-delete':
-                    actions.deleteBookmarks(id, urlsLen, children.length-urlsLen);
+                    deleteFolder(id);
                     break;
             }
         });
@@ -978,9 +1056,19 @@
     // Keyboard navigation
     let keyBuffer = '';
     let keyBufferTimer;
+    // The parent's row may not exist (search results) or be hidden (tree under search)
+    const focusParentRow = function(parentID){
+        if (searchMode) return;
+        const parentLi = $('neat-tree-item-' + parentID);
+        if (parentLi) parentLi.querySelector('span').focus();
+    };
     const treeKeyDown = function(e){
         let item = document.activeElement;
-        if (!/^(a|span)$/i.test(item.tagName)) item = $tree.querySelector('.focus') || $tree.querySelector('li:first-child>span');
+        if (item.classList.contains('add-bookmark-btn')){
+            // Enter/Space press the button itself, other keys move from its folder row
+            if (e.code === 'Enter' || e.code === 'Space') return;
+            item = item.parentNode;
+        } else if (!/^(a|span)$/i.test(item.tagName)) item = $tree.querySelector('.focus') || $tree.querySelector('li:first-child>span');
         let li = item.parentNode;
         let code = e.code;
         const metaKey = e.metaKey;
@@ -998,13 +1086,12 @@
                     if (nextLi){
                         nextLi.querySelector('a, span').focus();
                     } else {
-                        let lastLi = null;
                         do {
                             li = li.parentNode.parentNode;
-                            if (li) nextLi = li.nextElementSibling;
-                            if (nextLi) lastLi = nextLi.querySelector('a, span');
-                            if (lastLi) lastLi.focus(); // down on the last item in tree
-                        } while (li && !nextLi);
+                            if (!li || li.tagName != 'LI') break; // reached the top of the list
+                            nextLi = li.nextElementSibling;
+                            if (nextLi) nextLi.querySelector('a, span').focus(); // down on the last item in a folder
+                        } while (!nextLi);
                     }
                 }
                 break;
@@ -1040,7 +1127,7 @@
                 } else if (rtl){
                     const parentID = li.dataset.parentid;
                     if (parentID == '0') return;
-                    $('neat-tree-item-' + parentID).querySelector('span').focus();
+                    focusParentRow(parentID);
                 }
                 break;
             case 'ArrowLeft': // left (right for RTL)
@@ -1055,7 +1142,7 @@
                 } else if (!rtl){
                     const parentID = li.dataset.parentid;
                     if (parentID == '0') return;
-                    $('neat-tree-item-' + parentID).querySelector('span').focus();
+                    focusParentRow(parentID);
                 }
                 break;
             case 'Space': // space
@@ -1129,6 +1216,7 @@
                 break;
             case 'F2': // F2, not for Mac
                 if (os == 'mac') break;
+                if (li.dataset.parentid == '0') break; // root folders can not be renamed
                 var id = li.id.replace(/(neat\-tree|results)\-item\-/, '');
                 actions.editBookmarkFolder(id);
                 break;
@@ -1183,6 +1271,7 @@
 
     const treeKeyUp = function(e){
         let item = document.activeElement;
+        if (item.classList.contains('add-bookmark-btn')) return;
         if (!/^(a|span)$/i.test(item.tagName)) item = $tree.querySelector('.focus') || $tree.querySelector('li:first-child>span');
         const li = item.parentNode;
         switch (e.code){
@@ -1190,14 +1279,10 @@
                 if (os != 'mac') break; // somehow delete button on mac gives backspace
             case 'Delete': // delete
                 e.preventDefault();
+                if (li.dataset.parentid == '0') break; // root folders can not be deleted
                 const id = li.id.replace(/(neat\-tree|results)\-item\-/, '');
                 if (li.classList.contains('parent')){
-                    chrome.bookmarks.getChildren(id).then(function(children){
-                        const urlsLen = Utils.clean(Array.from(children).map(function(c){
-                            return c.url;
-                        })).length;
-                        actions.deleteBookmarks(id, urlsLen, children.length-urlsLen);
-                    });
+                    deleteFolder(id);
                 } else {
                     actions.deleteBookmark(id);
                 }
@@ -1299,12 +1384,12 @@
             e.preventDefault();
             draggedOut = false;
             draggedBookmark = el;
-            if (settings.zoom) zoomLevel = (Utils.toInt(settings.zoom) / 100);
+            zoomLevel = settings.zoom ? (Utils.toInt(settings.zoom) / 100) : 1;
             bookmarkClone.innerHTML = el.innerHTML;
             el.focus();
         }
     });
-    let scrollTree, scrollTreeInterval = 100, scrollTreeSpot = 10;
+    let scrollTree, scrollTreeInterval = 100, scrollTreeSpot = 10, scrollTreeStep = 24;
     const stopScrollTree = function(){
         clearInterval(scrollTree);
         scrollTree = null;
@@ -1338,14 +1423,14 @@
                 if (treeScrollTop == 0){
                     stopScrollTree();
                 } else if (!scrollTree) scrollTree = setInterval(function(){
-                    $tree.scrollByLines(-1);
+                    $tree.scrollTop -= scrollTreeStep;
                     dropOverlay.style.left = '-999px';
                 }, scrollTreeInterval);
             } else if (clientY >= treeBottom - scrollTreeSpot){
                 if (treeScrollTop == (treeScrollHeight - treeOffsetHeight)){
                     stopScrollTree();
                 } else if (!scrollTree) scrollTree = setInterval(function(){
-                    $tree.scrollByLines(1);
+                    $tree.scrollTop += scrollTreeStep;
                     dropOverlay.style.left = '-999px';
                 }, scrollTreeInterval);
             } else {
@@ -1407,6 +1492,19 @@
             }
         }
     });
+    // Refresh the data a moved row (and everything below it) keeps about its place in the tree
+    const relevel = function(li, level, parentID){
+        li.dataset.parentid = parentID;
+        li.firstElementChild.style.paddingInlineStart = (14 * level) + 'px';
+        const ul = li.querySelector(':scope>ul');
+        if (ul){
+            ul.dataset.level = level + 1;
+            const id = li.id.replace('neat-tree-item-', '');
+            Array.from(ul.children).forEach(function(child){
+                relevel(child, level + 1, id);
+            });
+        }
+    };
     const onDrop = function(){
         draggedBookmark = null;
         bookmarkClone.style.left = '-999px';
@@ -1418,7 +1516,11 @@
         if (!draggedBookmark) return;
         stopScrollTree();
         if (!canDrop){
-            if (draggedOut) noOpenBookmark = true;
+            if (draggedOut){
+                // swallow the click that follows the release; if none reaches the tree, forget it
+                noOpenBookmark = true;
+                setTimeout(function(){ noOpenBookmark = false; }, 100);
+            }
             draggedOut = false;
             onDrop();
             return;
@@ -1449,10 +1551,10 @@
                         index: moveBottom ? ++index : index
                     }).then(function(){
                         Utils.inject(draggedBookmarkParent, elParent, moveBottom ? 'after' : 'before');
-                        draggedBookmark.style.paddingInlineStart = el.style.paddingInlineStart || el.style.webkitPaddingStart;
+                        relevel(draggedBookmarkParent, parseInt(elParent.parentNode.dataset.level), parentId);
                         draggedBookmark.focus();
                         onDrop();
-                    });
+                    }).catch(onDrop); // a refused move must not leave the drag active
                 }
             });
         } else if (el.tagName == 'SPAN'){
@@ -1479,10 +1581,10 @@
                         index: moveBottom ? ++index : index
                     }).then(function(){
                         Utils.inject(draggedBookmarkParent, elParent, moveBottom ? 'after' : 'before');
-                        draggedBookmark.style.paddingInlineStart = el.style.paddingInlineStart || el.style.webkitPaddingStart;
+                        relevel(draggedBookmarkParent, parseInt(elParent.parentNode.dataset.level), parentId);
                         draggedBookmark.focus();
                         onDrop();
-                    });
+                    }).catch(onDrop);
                 });
             } else {
                 chrome.bookmarks.move(draggedID, {
@@ -1490,7 +1592,7 @@
                 }).then(function(){
                     const ul = elParent.querySelector('ul');
                     const level = parseInt(elParent.parentNode.dataset.level) + 1;
-                    draggedBookmark.style.paddingInlineStart = (14 * level) + 'px';
+                    relevel(draggedBookmarkParent, level, id);
                     if (ul){
                         Utils.inject(draggedBookmarkParent, ul);
                     } else {
@@ -1498,7 +1600,7 @@
                     }
                     el.focus();
                     onDrop();
-                });
+                }).catch(onDrop);
             }
         } else {
             onDrop();
@@ -1536,7 +1638,7 @@
     // Closing dialogs on escape
     const closeDialogs = function(){
             if (body.classList.contains('needConfirm')) { ConfirmDialog.fn2(); ConfirmDialog.close(); }
-            if (body.classList.contains('needEdit')) EditDialog.close();
+            if (body.classList.contains('needEdit')) EditDialog.cancel();
             if (body.classList.contains('needAlert')) AlertDialog.close();
     };
     document.addEventListener('keydown', function(e){
@@ -1579,6 +1681,7 @@
     document.addEventListener('wheel', function(e){
         if (!e.metaKey && !e.ctrlKey) return;
         e.preventDefault();
+        if (!e.deltaY) return; // sideways scroll: zoom(0) would reset the zoom
         // deltaY is usually positive for scrolling down, negative for scrolling up
         // zoom expects positive for zoom in (scrolling up)
         zoom(-e.deltaY);

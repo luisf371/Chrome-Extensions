@@ -277,7 +277,11 @@ img { filter: sepia(100%) contrast(1.2) !important; opacity: 0.9 !important; }
         const zoom = $('zoom-input');
         zoom.value = settings.zoom || 100;
         zoom.addEventListener('change', function() {
-            const val = Utils.toInt(zoom.value);
+            // the popup only has styles for 90 to 150 in steps of 10
+            let val = Utils.toInt(zoom.value);
+            if (isNaN(val)) val = 100;
+            val = Math.min(150, Math.max(90, Math.round(val / 10) * 10));
+            zoom.value = val;
             if (val == 100) {
                 setSetting('zoom', null);
             } else {
@@ -326,13 +330,13 @@ img { filter: sepia(100%) contrast(1.2) !important; opacity: 0.9 !important; }
         const canvas = document.createElement('canvas');
         canvas.width = canvas.height = 19;
         const ctx = canvas.getContext('2d');
-        let dontLoad = true;
+        // true only while a file picked by the user is loading into the preview;
+        // the placeholder and the saved icon also fire load and must be ignored
+        let userPicked = false;
         
         customIconPreview.onload = function() {
-            if (dontLoad) {
-                dontLoad = false;
-                return;
-            }
+            if (!userPicked) return;
+            userPicked = false;
             ctx.clearRect(0, 0, 19, 19);
             ctx.drawImage(customIconPreview, 0, 0, 19, 19);
             const imageData = ctx.getImageData(0, 0, 19, 19);
@@ -345,10 +349,7 @@ img { filter: sepia(100%) contrast(1.2) !important; opacity: 0.9 !important; }
         };
 
         customIconPreview.onerror = function() {
-            // The placeholder image failing to load must still clear the guard,
-            // otherwise the user's first uploaded icon is swallowed by the
-            // initial-load skip above.
-            dontLoad = false;
+            userPicked = false;
         };
 
         if (settings.customIcon) {
@@ -367,6 +368,7 @@ img { filter: sepia(100%) contrast(1.2) !important; opacity: 0.9 !important; }
                 if (/image\/[a-z]+/i.test(file.type)) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
+                        userPicked = true;
                         customIconPreview.src = e.target.result;
                     };
                     reader.readAsDataURL(files[0]);
@@ -377,10 +379,10 @@ img { filter: sepia(100%) contrast(1.2) !important; opacity: 0.9 !important; }
         });
         
         // Reset Button
-        $('reset-button').addEventListener('click', function() {
+        $('reset-button').addEventListener('click', async function() {
             if (confirm(_m('resetText', [_m('extName')]) + '\n\nAre you sure?')) {
-                chrome.storage.local.clear();
-                chrome.action.setIcon({ path: 'icons/icon.png' });
+                await chrome.storage.local.clear();
+                await chrome.action.setIcon({ path: 'icons/icon.png' }).catch(console.error);
                 location.reload();
             }
         });

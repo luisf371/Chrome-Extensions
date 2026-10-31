@@ -184,9 +184,11 @@ body.linux input{
 #tree ul ul{
 	height: 0;
 	overflow: hidden;
+	visibility: hidden; /* keep the items of a collapsed folder out of the Tab order */
 }
 #tree .open>ul{
 	height: auto;
+	visibility: inherit;
 }
 @keyframes blueFade {
 	0% {
@@ -330,14 +332,16 @@ body.linux input{
 	left: 0;
 	right: 0;
 	opacity: 0;
+	visibility: hidden; /* a closed dialog must not be reachable with Tab */
 	background-color: #fff;
 	padding: 1em;
 	border-bottom: 1px solid #e0e0e0;
 	box-shadow: 0 0 100px rgba(0,0,0,.1);
 }
 .transitional .dialog{
-	transition-property: opacity, top;
-	transition-duration: .3s;
+	transition-property: opacity, top, visibility;
+	transition-duration: .3s, .3s, 0s;
+	transition-delay: 0s, 0s, .3s;
 }
 .dialog-text{
 	padding: 0;
@@ -387,6 +391,8 @@ body.linux input{
 .needEdit #edit-dialog{
 	top: 0;
 	opacity: 1;
+	visibility: visible;
+	transition-delay: 0s;
 }
 
 /* Add Bookmark Button Styles */
