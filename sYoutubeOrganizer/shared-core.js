@@ -95,7 +95,8 @@
     const trimmed = handle.trim();
     if (!trimmed) return null;
     if (trimmed.startsWith('@')) {
-      return /^@[A-Za-z0-9._-]+$/.test(trimmed) ? trimmed : null;
+      // Handles may contain letters and digits from any script.
+      return /^@[\p{L}\p{N}\p{M}._-]+$/u.test(trimmed) ? trimmed : null;
     }
     return /^[A-Za-z0-9._-]{10,}$/.test(trimmed) ? trimmed : null;
   }
@@ -230,6 +231,9 @@
         name: typeof channel?.name === 'string' && channel.name.trim()
           ? channel.name.trim().slice(0, 100)
           : (previous?.name ?? null),
+        ...(typeof channel?.subscribed === 'boolean'
+          ? { subscribed: channel.subscribed }
+          : (typeof previous?.subscribed === 'boolean' ? { subscribed: previous.subscribed } : {})),
         updatedAt: now
       };
     }
@@ -463,6 +467,17 @@
     }
 
     const now = getNow(deps);
+    // normalizeImportedData fills in a null parent and a handle-as-name when
+    // the file has none. Merge must not treat those fillers as real values,
+    // so note which entries the file actually described.
+    const filesWithParent = new Set();
+    for (const [rawId, rawPlaylist] of Object.entries(input?.playlists || {})) {
+      const id = normalizeImportedPlaylistId(rawId);
+      if (id && isPlainObject(rawPlaylist) && rawPlaylist.parentId !== undefined) filesWithParent.add(id);
+    }
+    const namedChannels = new Set(
+      Object.keys(input?.channels || {}).map(normalizeStoredHandle).filter(Boolean)
+    );
     // Null-prototype merges so reserved-name ids can only ever be own keys.
     const mergedPlaylists = Object.assign(Object.create(null), state.playlists);
     const mergedChannels = Object.assign(Object.create(null), state.channels);
@@ -478,7 +493,10 @@
           ...mergedPlaylists[playlistId],
           name: playlist.name,
           color: playlist.color,
-          parentId: playlist.parentId,
+          // An older export without parent links must not un-nest subgroups.
+          parentId: filesWithParent.has(playlistId)
+            ? playlist.parentId
+            : mergedPlaylists[playlistId].parentId,
           updatedAt: now
         };
         continue;
@@ -499,7 +517,11 @@
         ? {
             ...existing,
             channelId: channel.channelId || existing.channelId || '',
-            name: channel.name || existing.name || handle,
+            name: (namedChannels.has(handle) && channel.name) || existing.name || handle,
+            // Live-observed state wins over the file.
+            ...(typeof existing.subscribed === 'boolean' || typeof channel.subscribed !== 'boolean'
+              ? {}
+              : { subscribed: channel.subscribed }),
             updatedAt: now
           }
         : { ...channel, name: channel.name || handle };
@@ -537,7 +559,12 @@
       const pathname = url.pathname.replace(/\/+$/, '');
       const handleMatch = pathname.match(/^\/@([^/?]+)/);
       if (handleMatch) {
-        return { handle: '@' + handleMatch[1], displayName: handleMatch[1] };
+        // URL pathnames are percent-encoded for non-ASCII handles.
+        let rawHandle = handleMatch[1];
+        try {
+          rawHandle = decodeURIComponent(rawHandle);
+        } catch {}
+        return { handle: '@' + rawHandle, displayName: rawHandle };
       }
 
       const channelMatch = pathname.match(/^\/channel\/([^/?]+)/);
@@ -549,7 +576,7 @@
     }
 
     if (value.startsWith('@')) {
-      if (/\s/.test(value) || !/^@[A-Za-z0-9._-]+$/.test(value)) {
+      if (/\s/.test(value) || !/^@[\p{L}\p{N}\p{M}._-]+$/u.test(value)) {
         return { error: 'Enter a valid YouTube @handle' };
       }
       return { handle: value, displayName: value.slice(1) };

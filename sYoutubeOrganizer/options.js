@@ -59,19 +59,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   attachListeners();
 });
 
+// Set when a storage change arrived mid-edit; render() reloads once the edit ends.
+let externalChangePending = false;
+
 // Listen for external data changes
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local') return;
+  const keys = ['playlists', 'channels', 'channelPlaylists', 'settings'];
+  if (!keys.some(k => k in changes)) return;
   // Don't rebuild the list mid-edit: render() recreates the edit input from
   // stored values, discarding the user's typed text and stealing focus.
   // An open subgroups popup holds a name input too, so wait it out as well.
-  if (editingPlaylistId !== null || rowPopup?.kind === 'subgroups') return;
-  const keys = ['playlists', 'channels', 'channelPlaylists', 'settings'];
-  if (keys.some(k => k in changes)) {
-    loadData().then(() => render()).catch((error) => {
-      showToast(error.message || 'Could not refresh data', 'error');
-    });
+  if (editingPlaylistId !== null || rowPopup?.kind === 'subgroups') {
+    externalChangePending = true;
+    return;
   }
+  loadData().then(() => render()).catch((error) => {
+    showToast(error.message || 'Could not refresh data', 'error');
+  });
 });
 
 // --- Data ---
@@ -107,6 +112,14 @@ function normalizeRuntimeError(error) {
 function isRetryableRuntimeError(type, error) {
   if (!RETRYABLE_MESSAGE_TYPES.has(type) || !chrome.runtime?.id) return false;
   const message = error?.message || '';
+  // A closed port can mean the worker already applied the change before it
+  // died, so resending a create would make a duplicate playlist.
+  if (type === 'CREATE_PLAYLIST') {
+    return (
+      /receiving end does not exist/i.test(message) ||
+      /could not establish connection/i.test(message)
+    );
+  }
   return (
     /receiving end does not exist/i.test(message) ||
     /message port closed/i.test(message) ||
@@ -224,6 +237,13 @@ function render() {
   if (!data) return;
   renderPlaylistList();
   renderDetail();
+  // The edit/popup that blocked a refresh is over: pick up what was missed.
+  if (externalChangePending && editingPlaylistId === null && rowPopup?.kind !== 'subgroups') {
+    externalChangePending = false;
+    loadData().then(() => render()).catch((error) => {
+      showToast(error.message || 'Could not refresh data', 'error');
+    });
+  }
 }
 
 function editRowHTML(pl, isSub) {
@@ -1098,7 +1118,8 @@ function setupInlineAdd(btnId, rowId, commitFn) {
   textInput.addEventListener('blur', () => {
     // Allow clicking the "+" button or color picker without discarding
     setTimeout(() => {
-      if (!row.contains(document.activeElement)) {
+      // The + button sits outside the row; a click held on it has focus.
+      if (!row.contains(document.activeElement) && document.activeElement !== btn) {
         hide();
       }
     }, 120);
@@ -1144,10 +1165,11 @@ async function addChannelManually() {
 
   try {
     // Register channel
+    // Only name a channel that is new; a known one keeps its stored name.
     await sendRuntimeMessage({
       type: 'REGISTER_CHANNEL',
       handle,
-      name: displayName
+      ...(data?.channels?.[handle] ? {} : { name: displayName })
     });
 
     // Assign to current playlist
@@ -1178,9 +1200,18 @@ function parseManualChannelInput(rawValue) {
 function exportPlaylists() {
   if (!data) return;
 
+  // Leave out channels that were only visited: keep subscribed or assigned ones.
+  const assigned = data.channelPlaylists || {};
+  const exportedChannels = {};
+  for (const [handle, channel] of Object.entries(data.channels || {})) {
+    if (channel?.subscribed === true || (assigned[handle] || []).length > 0) {
+      exportedChannels[handle] = channel;
+    }
+  }
+
   const exportData = {
     playlists: data.playlists || {},
-    channels: data.channels || {},
+    channels: exportedChannels,
     channelPlaylists: data.channelPlaylists || {},
     exportedAt: new Date().toISOString()
   };
@@ -1209,9 +1240,14 @@ async function importPlaylists(e) {
       return;
     }
 
-    const mode = confirm(
-      'Replace all existing data?\n\nOK = Replace everything\nCancel = Merge with existing'
-    ) ? 'replace' : 'merge';
+    let mode = 'replace';
+    if (!confirm('Replace all existing data?\n\nOK = Replace everything\nCancel = Choose another option')) {
+      // Cancel/Esc must never run an import on its own: merging needs its own OK.
+      if (!confirm('Merge the file with your existing data instead?\n\nOK = Merge\nCancel = Do not import')) {
+        return;
+      }
+      mode = 'merge';
+    }
 
     const result = await sendRuntimeMessage({
       type: 'IMPORT_DATA',

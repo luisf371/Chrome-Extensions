@@ -697,10 +697,13 @@
     const sections = browse.querySelectorAll('ytd-rich-section-renderer');
     for (const section of sections) {
       const text = getSectionHeadingText(section);
-      if (!text) continue;
-      if (text.includes('shorts')) {
+      // YouTube marks its Shorts shelf with an attribute, which works in any
+      // UI language; the English heading text is only a fallback.
+      const isShortsSection = Boolean(section.querySelector('ytd-rich-shelf-renderer[is-shorts]'))
+        || Boolean(text && text.includes('shorts'));
+      if (isShortsSection) {
         section.style.display = state.data.settings.hideShorts ? 'none' : '';
-      } else if (text.includes('most relevant')) {
+      } else if (text && text.includes('most relevant')) {
         section.style.display = state.data.settings.hideMostRelevant ? 'none' : '';
       }
     }
@@ -1413,7 +1416,13 @@
     const handleLink = card.querySelector('a[href*="/@"]');
     if (handleLink) {
       const match = handleLink.getAttribute('href').match(/\/@([^/?#]+)/);
-      if (match) return '@' + match[1];
+      if (match) {
+        try {
+          return '@' + decodeURIComponent(match[1]);
+        } catch {
+          return '@' + match[1];
+        }
+      }
     }
     const channelLink = card.querySelector('a[href*="/channel/"]');
     if (channelLink) {
@@ -1432,34 +1441,42 @@
     let lastUnresolvedCount = initialSnapshot.unresolvedCount;
     let cooldownUntil = 0;
 
+    const checkFeed = () => {
+      if (state.currentPage !== 'subscriptions') return;
+      if (!getSubscriptionsGrid()) return;
+
+      if (!state.filterHost?.isConnected && !injectFilterBar()) return;
+
+      applySectionVisibility();
+
+      if (!hasActiveSubscriptionsFilter()) return;
+
+      const now = Date.now();
+      if (now < cooldownUntil) {
+        // Re-arm instead of dropping: cards added during the cooldown may
+        // not trigger another mutation.
+        clearTimeout(state.feedObserverDebounceTimer);
+        state.feedObserverDebounceTimer = setTimeout(checkFeed, cooldownUntil - now);
+        return;
+      }
+
+      const currentSnapshot = getSubscriptionsFilterSnapshot();
+      if (
+        currentSnapshot.count !== lastFilteredCount
+        || currentSnapshot.firstCard !== lastFirstCard
+        || currentSnapshot.unresolvedCount !== lastUnresolvedCount
+      ) {
+        const filterResult = applyFilter();
+        lastFilteredCount = filterResult.count;
+        lastFirstCard = filterResult.firstCard;
+        lastUnresolvedCount = filterResult.unresolvedCount;
+        cooldownUntil = Date.now() + 500;
+      }
+    };
+
     state.feedObserver = new MutationObserver(() => {
       clearTimeout(state.feedObserverDebounceTimer);
-      state.feedObserverDebounceTimer = setTimeout(() => {
-        if (state.currentPage !== 'subscriptions') return;
-        if (!getSubscriptionsGrid()) return;
-
-        if (!state.filterHost?.isConnected && !injectFilterBar()) return;
-
-        applySectionVisibility();
-
-        if (!hasActiveSubscriptionsFilter()) return;
-
-        const now = Date.now();
-        if (now < cooldownUntil) return;
-
-        const currentSnapshot = getSubscriptionsFilterSnapshot();
-        if (
-          currentSnapshot.count !== lastFilteredCount
-          || currentSnapshot.firstCard !== lastFirstCard
-          || currentSnapshot.unresolvedCount !== lastUnresolvedCount
-        ) {
-          const filterResult = applyFilter();
-          lastFilteredCount = filterResult.count;
-          lastFirstCard = filterResult.firstCard;
-          lastUnresolvedCount = filterResult.unresolvedCount;
-          cooldownUntil = Date.now() + 500;
-        }
-      }, 150);
+      state.feedObserverDebounceTimer = setTimeout(checkFeed, 150);
     });
 
     state.feedObserver.observe(browse, { childList: true, subtree: true });

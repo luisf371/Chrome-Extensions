@@ -159,7 +159,9 @@ test('watch page ignores a stale notification control after unsubscribe', () => 
     isConnected: true,
     matches: () => false,
     querySelectorAll: (selector) => {
-      if (selector.includes('ytd-subscription-notification-toggle-button-renderer-next')) {
+      // Both removed notification tags (with and without "-next") must stay
+      // out of the subscribed signals; any selector naming one gets the stale bell.
+      if (selector.includes('ytd-subscription-notification-toggle-button-renderer')) {
         return [staleNotification];
       }
       if (selector.includes('ytd-subscribe-button-renderer:not([subscribed]) #subscribe-button-shape button')) {

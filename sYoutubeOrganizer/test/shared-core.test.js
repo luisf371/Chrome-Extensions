@@ -616,3 +616,84 @@ test('merge does not let a missing imported channel name clobber a stored name',
   }, { now: () => 9 });
   assert.equal(replaceState.channels['@Creator'].name, '@Creator');
 });
+
+test('merging a file without parent links keeps existing subgroups nested', () => {
+  const state = createState({
+    playlists: {
+      a: { id: 'a', name: 'A', color: '#111111', parentId: null, order: 0, createdAt: 5, updatedAt: 5 },
+      a1: { id: 'a1', name: 'A1', color: '#222222', parentId: 'a', order: 1, createdAt: 5, updatedAt: 5 },
+      a2: { id: 'a2', name: 'A2', color: '#333333', parentId: 'a', order: 2, createdAt: 5, updatedAt: 5 }
+    }
+  });
+
+  core.applyImportDataMutation(state, {
+    playlists: {
+      a: { name: 'A', color: '#111111', order: 0 },
+      a1: { name: 'A1 renamed', color: '#222222', order: 1 }
+    },
+    channels: {},
+    channelPlaylists: {},
+    mode: 'merge'
+  }, { now: () => 9 });
+
+  assert.equal(state.playlists.a1.parentId, 'a');
+  assert.equal(state.playlists.a1.name, 'A1 renamed');
+  assert.equal(state.playlists.a2.parentId, 'a');
+
+  // An explicit null still moves a subgroup to the top level.
+  core.applyImportDataMutation(state, {
+    playlists: { a1: { name: 'A1', color: '#222222', order: 1, parentId: null } },
+    channels: {},
+    channelPlaylists: {},
+    mode: 'merge'
+  }, { now: () => 10 });
+  assert.equal(state.playlists.a1.parentId, null);
+});
+
+test('merge keeps a stored channel name when the file only lists an assignment', () => {
+  const state = createState({
+    playlists: { p: { id: 'p', name: 'P', color: '#111111', parentId: null, order: 0, createdAt: 5, updatedAt: 5 } },
+    channels: { '@Creator': { handle: '@Creator', channelId: '', name: 'Real Name', updatedAt: 5 } }
+  });
+
+  core.applyImportDataMutation(state, {
+    playlists: { p: { name: 'P', color: '#111111', order: 0 } },
+    channels: {},
+    channelPlaylists: { '@Creator': ['p'] },
+    mode: 'merge'
+  }, { now: () => 9 });
+
+  assert.equal(state.channels['@Creator'].name, 'Real Name');
+});
+
+test('import carries the subscribed flag and keeps live state on merge', () => {
+  const file = {
+    playlists: { p: { name: 'P', color: '#111111', order: 0 } },
+    channels: {
+      '@Sub': { name: 'Sub', subscribed: true },
+      '@Live': { name: 'Live', subscribed: true }
+    },
+    channelPlaylists: {}
+  };
+
+  const replaceState = createState();
+  core.applyImportDataMutation(replaceState, { ...file, mode: 'replace' }, { now: () => 9 });
+  assert.equal(replaceState.channels['@Sub'].subscribed, true);
+
+  const mergeState = createState({
+    channels: { '@Live': { handle: '@Live', channelId: '', name: 'Live', subscribed: false, updatedAt: 5 } }
+  });
+  core.applyImportDataMutation(mergeState, { ...file, mode: 'merge' }, { now: () => 9 });
+  assert.equal(mergeState.channels['@Sub'].subscribed, true);
+  assert.equal(mergeState.channels['@Live'].subscribed, false);
+});
+
+test('handles with non-ASCII letters are valid stored handles', () => {
+  assert.equal(core.normalizeStoredHandle('@テスト'), '@テスト');
+  assert.equal(core.normalizeStoredHandle('@se%C3%B1or'), null);
+  assert.deepEqual(
+    core.parseManualChannelInput('https://www.youtube.com/@%E3%83%86%E3%82%B9%E3%83%88'),
+    { handle: '@テスト', displayName: 'テスト' }
+  );
+  assert.equal(core.parseManualChannelInput('@señor').handle, '@señor');
+});

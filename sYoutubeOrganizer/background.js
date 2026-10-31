@@ -20,6 +20,11 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   }
 });
 
+// The toolbar button has no popup, so open the options page instead.
+chrome.action.onClicked.addListener(() => {
+  chrome.runtime.openOptionsPage();
+});
+
 // --- Storage helpers ---
 
 async function getAllData() {
@@ -54,14 +59,23 @@ async function setStoredState(state) {
 function enqueueMutation(label, handler) {
   const queuedWrite = mutationQueue
     .catch(() => {})
-    .then(() => withTimeout((async () => {
-      const state = await getAllData();
-      const result = await handler(state) || {};
-      if (result.changed) {
-        await setStoredState(state);
-      }
-      return { state, result };
-    })(), label));
+    .then(() => {
+      // The timeout cannot cancel a stalled mutation. Once it has fired the
+      // caller is told it failed and the queue moves on, so a late write
+      // from the old mutation must not land on top of newer state.
+      let timedOut = false;
+      return withTimeout((async () => {
+        const state = await getAllData();
+        const result = await handler(state) || {};
+        if (result.changed && !timedOut) {
+          await setStoredState(state);
+        }
+        return { state, result };
+      })(), label).catch((error) => {
+        timedOut = true;
+        throw error;
+      });
+    });
 
   mutationQueue = queuedWrite.catch(() => {});
 
