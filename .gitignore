@@ -57,6 +57,14 @@ package-lock.json
 yarn.lock
 Pipfile.lock
 
+# === Showcase capture ===
+!showcase/package-lock.json
+showcase/drafts/
+showcase/.profiles/
+showcase/auth/
+showcase/
+brand/
+
 # === IDEs ===
 .idea/
 *.sublime-project

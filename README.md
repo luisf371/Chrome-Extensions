@@ -1,6 +1,18 @@
-# tekky's Chrome Extensions
+<p align="center">
+  <img src="./brand/tekky/tekky-logo-dark.png" alt="Tekky" width="720">
+</p>
 
-Welcome to the collection of tekky's Chrome extensions. This repository centralizes various utilities and tools built as browser extensions.
+<p align="center">Useful browser extensions built and collected by Tekky.</p>
+
+## Featured extensions
+
+<a href="./sYoutubeOrganizer">
+  <img src="./brand/extensions/syoutubeplaylist/marquee.png" alt="sYoutubePlaylist — organize and filter YouTube subscriptions" width="100%">
+</a>
+
+<a href="./sSummarizer">
+  <img src="./brand/extensions/ssummarizer/marquee.png" alt="sSummarizer — summarize pages and ask follow-up questions in context" width="100%">
+</a>
 
 ## 📂 Repository Directory
 
@@ -14,3 +26,4 @@ Welcome to the collection of tekky's Chrome extensions. This repository centrali
 | [**sSummarizer**](./sSummarizer) | Extension | Content summarization tool |
 | [**sTabControl**](./sTabControl) | Extension | Tab management utility |
 | [**sUndoClose**](./sUndoClose) | Extension | Undo closed tabs helper |
+| [**sYoutubePlaylist**](./sYoutubeOrganizer) | Extension | YouTube subscription playlist organizer |

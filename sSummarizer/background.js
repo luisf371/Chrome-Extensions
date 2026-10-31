@@ -24,9 +24,9 @@ let streamStates = new Map();
 
 // Configuration constants
 const CONFIG = {
-  REQUEST_TIMEOUT: 30000, // Maximum wait for headers or further stream progress
+  REQUEST_TIMEOUT: 120000, // Maximum wait without provider progress (headers or body bytes)
   CONTEXT_MENU_ID: "summarize-selection",
-  OPENROUTER_RETRY_BACKOFF_MS: 1500
+  MAX_RETRIES: 2
 };
 
 // DEFAULT_AZURE_API_VERSION, normalizeAzureResourceName, buildAzureApiUrl
@@ -285,7 +285,9 @@ const AnthropicAdapter = {
     return {
       'Content-Type': 'application/json',
       'x-api-key': apiKey.trim(),
-      'anthropic-version': '2023-06-01'
+      'anthropic-version': '2023-06-01',
+      // Extension requests carry a chrome-extension:// Origin; Anthropic requires this opt-in for them.
+      'anthropic-dangerous-direct-browser-access': 'true'
     };
   },
 
@@ -297,7 +299,7 @@ const AnthropicAdapter = {
       model: model?.trim() || 'claude-sonnet-4-6',
       system: systemPrompt || undefined,
       messages: filteredMessages,
-      max_tokens: 4096,
+      max_tokens: 8192,
       stream: true
     };
   },
@@ -481,11 +483,13 @@ function summarizeMessageForDiagnostics(message) {
 }
 
 function buildRequestDiagnostics({ uniqueId, providerKind, model, fetchUrl, requestBody, messages, openrouterDisableReasoning, isFollowUp, retryAttempt }) {
+  // Saved custom URLs may carry credentials or tokens; log only the endpoint shape.
+  const { origin, pathname } = new URL(fetchUrl);
   return {
     uniqueId,
     providerKind,
     model: model?.trim() || null,
-    fetchUrl,
+    fetchUrl: origin + pathname,
     isFollowUp,
     retryAttempt,
     openrouterDisableReasoning: Boolean(openrouterDisableReasoning),
@@ -510,8 +514,8 @@ function appendStreamDiagnostic(uniqueId, entry) {
   }
 }
 
-function logOpenRouterDiagnostics(label, details) {
-  console.log(`[OpenRouter Diagnostics] ${label}`, details);
+function logDiagnostics(label, details) {
+  console.log(`[sSummarizer Diagnostics] ${label}`, details);
 }
 
 function cloneReasoningDetails(reasoningDetails) {
@@ -527,15 +531,9 @@ function getPartialAssistantMessage(uniqueId) {
   return getAssistantMessagePayload(uniqueId, fullResponse);
 }
 
-function shouldRetryProviderOverload(errorResult, providerKind, retryAttempt, uniqueId) {
-  const accumulatedResponse = responseAccumulators.get(uniqueId) || '';
-  return (
-    providerKind === 'openrouter' &&
-    retryAttempt < 1 &&
-    errorResult?.errorCode === 503 &&
-    errorResult?.errorMetadata?.error_type === 'provider_overloaded' &&
-    accumulatedResponse.trim().length > 0
-  );
+// Transient unless a deterministic client error; null/string codes count as transient.
+function isRetryableStatus(status) {
+  return !(status >= 400 && status < 500) || [408, 409, 429].includes(status);
 }
 
 function applyResumeOverlapDedupe(uniqueId, chunk, flush = false) {
@@ -905,11 +903,7 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
       operation.originalContext = customUserPrompt ? `${customUserPrompt}\n\n---\n\n${content}` : content;
       messages = [{ role: 'user', content }];
     } else if (validFollowUpMessages(inputData)) {
-      // Forward only supported conversation fields across the authenticated boundary.
-      messages = inputData.map(({ role, content, reasoning, reasoning_details }) => ({
-        role, content, ...(reasoning ? { reasoning } : {}),
-        ...(reasoning_details ? { reasoning_details: cloneReasoningDetails(reasoning_details) } : {})
-      }));
+      messages = inputData;
     } else {
       throw new Error('Invalid text content or conversation history');
     }
@@ -947,72 +941,86 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
       await sendOperationMessage(operation, { action: 'appendToFloatingWindow', content: `\n**YOU:** ${label}${commandName ? '' : '...'}\n\n---\n` });
     }
     const fetchUrl = providerKind === 'gemini'
-      ? `https://generativelanguage.googleapis.com/v1beta/models/${model?.trim() || 'gemini-pro'}:streamGenerateContent?alt=sse`
+      ? `https://generativelanguage.googleapis.com/v1beta/models/${model?.trim() || 'gemini-flash-latest'}:streamGenerateContent?alt=sse`
       : resolvedApiUrl;
-    for (let retryAttempt = 0; retryAttempt <= 1; retryAttempt++) {
+    // Every retry is rebuilt from this base so continuations never duplicate earlier output.
+    const baseMessages = messages;
+    for (let attempt = 0; ; attempt++) {
       assertOperation(operation);
       const state = streamStates.get(uniqueId);
-      const requestBody = adapter.transformRequest(messages, model, effectiveSystemPrompt);
+      // Provider boundary: drop local-only metadata (partial reasoning poisons follow-ups) and
+      // merge same-role turns (strict providers reject [user, user] after a failed answer).
+      const providerMessages = messages.reduce((out, { role, content }) => {
+        const last = out.at(-1);
+        if (last?.role === role) last.content += `\n\n${content}`;
+        else out.push({ role, content });
+        return out;
+      }, []);
+      const requestBody = adapter.transformRequest(providerMessages, model, effectiveSystemPrompt);
       if (providerKind === 'openrouter' && openrouterDisableReasoning) requestBody.reasoning = { effort: 'none' };
-      state.requestDiagnostics = buildRequestDiagnostics({ uniqueId, providerKind, model, fetchUrl, requestBody, messages, openrouterDisableReasoning, isFollowUp: Array.isArray(inputData), retryAttempt });
-      if (providerKind === 'openrouter') logOpenRouterDiagnostics('request-start', state.requestDiagnostics);
+      state.requestDiagnostics = buildRequestDiagnostics({ uniqueId, providerKind, model, fetchUrl, requestBody, messages: providerMessages, openrouterDisableReasoning, isFollowUp: Array.isArray(inputData), retryAttempt: attempt });
+      logDiagnostics('request-start', state.requestDiagnostics);
+      let failure = null, result = null;
       resetRequestTimeout(operation);
-      const response = await awaitOperation(operation, fetch(fetchUrl, {
-        method: 'POST', headers: adapter.buildHeaders(apiKey), body: JSON.stringify(requestBody), signal: operation.controller.signal
-      }));
-      assertOperation(operation);
-      if (!response.ok) {
-        let errorText = '';
-        try { errorText = await awaitOperation(operation, response.text()); } catch (error) {
-          if (operation.cancelled || !ownsOperation(operation)) throw error;
-        }
-        const httpError = new Error(`HTTP ${response.status}`);
-        httpError.userMessage = formatHttpError({ status: response.status, statusText: response.statusText, body: errorText, providerKind, retryAfter: response.headers.get('retry-after') });
-        throw httpError;
-      }
-      if (!response.body) throw new Error('Response body is not available for streaming');
-      const reader = response.body.getReader();
-      operation.reader = reader;
-      const decoder = new TextDecoder('utf-8', { fatal: true });
-      let buffer = '', result = null;
-      while (!state.sawTerminal) {
-        const { done, value } = await awaitOperation(operation, reader.read());
+      try {
+        const response = await awaitOperation(operation, fetch(fetchUrl, {
+          method: 'POST', headers: adapter.buildHeaders(apiKey), body: JSON.stringify(requestBody), signal: operation.controller.signal
+        }));
         assertOperation(operation);
-        if (value?.byteLength) {
-          resetRequestTimeout(operation);
-          buffer += decoder.decode(value, { stream: true });
+        resetRequestTimeout(operation); // Response headers are provider progress too.
+        const contentType = response.headers.get('content-type') || '';
+        if (!response.ok) {
+          let errorText = '';
+          try { errorText = await awaitOperation(operation, response.text()); } catch (error) {
+            if (operation.cancelled || !ownsOperation(operation)) throw error;
+          }
+          const retryAfter = response.headers.get('retry-after');
+          failure = { kind: 'http', status: response.status, retryAfter, retryable: isRetryableStatus(response.status),
+            message: formatHttpError({ status: response.status, statusText: response.statusText, body: errorText, providerKind, retryAfter }) };
+        } else if (/application\/json/i.test(contentType) && !/event-stream/i.test(contentType)) {
+          // A JSON body on a stream request is a provider error or ignored `stream`; surface its text.
+          const detail = extractProviderErrorDetail(await awaitOperation(operation, response.text()));
+          failure = { kind: 'non-streaming', message: `The provider returned a non-streaming response.${detail.message ? ` Provider said: ${detail.message}` : ''}` };
+        } else {
+          if (!response.body) throw new Error('Response body is not available for streaming');
+          const reader = operation.reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          while (!state.sawTerminal) {
+            const { done, value } = await awaitOperation(operation, reader.read());
+            assertOperation(operation);
+            if (value?.byteLength) {
+              resetRequestTimeout(operation);
+              buffer += decoder.decode(value, { stream: true });
+            }
+            if (done) buffer += decoder.decode();
+            result = processBuffer(buffer, uniqueId, adapter);
+            buffer = result.buffer;
+            if (result.errorMessage || result.shouldStop || done) break;
+          }
+          const message = result?.errorMessage || state.errorMessage;
+          if (message) {
+            failure = { kind: 'stream', code: result?.errorCode ?? state.finishReason ?? null, message,
+              retryable: Boolean(result?.retryable) || state.finishReason === 'error' };
+          } else if (!state.sawTerminal) {
+            failure = { kind: 'eof', retryable: true, info: true,
+              message: 'Stream interrupted before the provider sent a completion marker. You can ask a follow-up to continue.' };
+          }
         }
-        if (done) buffer += decoder.decode();
-        result = processBuffer(buffer, uniqueId, adapter);
-        buffer = result.buffer;
-        if (result.errorMessage || result.shouldStop || done) break;
+      } catch (error) {
+        if (operation.cancelled || operation.timedOut || !ownsOperation(operation) || !isNetworkError(error)) throw error;
+        failure = { kind: 'network', retryable: true, message: formatNetworkError(error, { providerKind, apiUrl: resolvedApiUrl }) };
+      } finally {
+        clearTimeout(operation.timeoutId);
+        if (operation.reader) {
+          void operation.reader.cancel().catch(() => {});
+          try { operation.reader.releaseLock(); } catch {}
+          operation.reader = null;
+        }
       }
-      clearTimeout(operation.timeoutId);
-      void reader.cancel().catch(() => {});
-      try { reader.releaseLock(); } catch {}
-      operation.reader = null;
-      assertOperation(operation);
+      if (operation.cancelled || !ownsOperation(operation)) return;
       flushResumeOverlap(uniqueId);
-      if (result?.errorMessage && shouldRetryProviderOverload(result, providerKind, retryAttempt, uniqueId)) {
-        const partial = getPartialAssistantMessage(uniqueId);
-        messages = [...messages, partial, { role: 'user', content: buildContinuationRetryPrompt() }];
-        // Keep one operation and the same effective system/slash prompt throughout backoff.
-        streamStates.set(uniqueId, createStreamState({
-          reasoning: state.reasoning, reasoning_details: cloneReasoningDetails(state.reasoning_details),
-          reasoningDetailsStart: state.reasoning_details.length,
-          // ponytail: dedupe checks only the last 4096 characters; use a prefix table for larger overlaps.
-          resumeDeduper: { active: true, existingText: partial.content.slice(-4096), pending: '' }
-        }));
-        await awaitOperation(operation, new Promise(resolve => {
-          operation.backoffId = setTimeout(resolve, CONFIG.OPENROUTER_RETRY_BACKOFF_MS);
-        }));
-        continue;
-      }
-      if (result?.errorMessage || state.errorMessage) {
-        await handleApiError(uniqueId, result?.errorMessage || state.errorMessage, operation);
-      } else if (!state.sawTerminal) {
-        await sendUiRecoveryMessages(operation, '[Info] Stream interrupted before the provider sent a completion marker. You can ask a follow-up to continue.');
-      } else {
+      if (!failure) {
         operation.notified = true;
         const fullResponse = responseAccumulators.get(uniqueId) || '';
         await sendOperationMessage(operation, {
@@ -1020,18 +1028,39 @@ async function makeApiCall(inputData, uniqueId, customUserPrompt = null, command
           assistantMessage: getAssistantMessagePayload(uniqueId, fullResponse), finishReason: state.finishReason || null, outcome: 'complete'
         });
         await sendOperationMessage(operation, { action: 'hideLoading' });
+        break;
       }
-      break;
+      // Numeric Retry-After up to 10 s is honored; longer means give up. Dates/missing use 1 s, 2 s.
+      const retryAfter = failure.retryAfter == null ? NaN : Number(failure.retryAfter);
+      const willRetry = Boolean(failure.retryable) && !operation.timedOut && attempt < CONFIG.MAX_RETRIES && !(retryAfter > 10);
+      const delay = retryAfter >= 0 && retryAfter <= 10 ? retryAfter * 1000 : 1000 * 2 ** attempt;
+      logDiagnostics('attempt-failed', { ...state.requestDiagnostics,
+        failure: { kind: failure.kind, status: failure.status ?? null, code: failure.code ?? null, retryable: Boolean(failure.retryable), message: failure.message },
+        willRetry, delay: willRetry ? delay : null, recentEvents: [...state.recentEvents] });
+      if (!willRetry) {
+        await sendUiRecoveryMessages(operation, `${failure.info ? '[Info]' : '[Error]'} ${failure.message}`);
+        break;
+      }
+      const partialContent = responseAccumulators.get(uniqueId) || '';
+      const resumed = partialContent.trim().length > 0;
+      messages = resumed
+        ? [...baseMessages, { role: 'assistant', content: partialContent }, { role: 'user', content: buildContinuationRetryPrompt() }]
+        : baseMessages;
+      // Keep one operation and the same effective system/slash prompt throughout backoff.
+      streamStates.set(uniqueId, createStreamState({
+        reasoning: state.reasoning, reasoning_details: cloneReasoningDetails(state.reasoning_details),
+        reasoningDetailsStart: state.reasoning_details.length,
+        // ponytail: dedupe checks only the last 4096 characters; use a prefix table for larger overlaps.
+        resumeDeduper: resumed ? { active: true, existingText: partialContent.slice(-4096), pending: '' } : null
+      }));
+      await awaitOperation(operation, new Promise(resolve => { operation.backoffId = setTimeout(resolve, delay); }));
     }
   } catch (error) {
     if (!ownsOperation(operation) || operation.cancelled || operation.consumerGone) return;
-    let message = error.userMessage;
-    if (!message && operation.timedOut) {
-      message = `The request timed out after ${Math.round(CONFIG.REQUEST_TIMEOUT / 1000)} seconds without provider progress. You can ask a follow-up to continue.`;
-    } else if (!message && isNetworkError(error)) {
-      message = formatNetworkError(error, { providerKind, apiUrl: resolvedApiUrl });
-    }
-    await handleApiError(uniqueId, message || error.message || 'The provider request failed.', operation);
+    const message = operation.timedOut
+      ? `The request timed out after ${Math.round(CONFIG.REQUEST_TIMEOUT / 1000)} seconds without provider progress. You can ask a follow-up to continue.`
+      : error.message || 'The provider request failed.';
+    await handleApiError(uniqueId, message, operation);
   } finally {
     await operation.recoveryPromise;
     finishOperation(operation);
@@ -1109,14 +1138,19 @@ function handleJsonLine(jsonLine, uniqueId, adapter) {
     const data = JSON.parse(jsonLine);
     if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Expected a provider event object');
     if (data.error) {
+      const code = data.error.code ?? data.error.type ?? null;
       state.outcome = 'failed';
       state.sawTerminal = true;
       state.errorMessage = formatStreamError({
         message: data.error.message || 'The provider returned a stream error.',
-        code: data.error.code || data.error.type,
+        code,
         providerKind: state.requestDiagnostics?.providerKind
       });
-      return { errorMessage: state.errorMessage, errorCode: data.error.code || null, errorMetadata: data.error.metadata || null };
+      appendStreamDiagnostic(uniqueId, { type: 'error', code });
+      // Mid-stream errors are upstream failures; providers use arbitrary string codes, so only
+      // a numeric/digit-string deterministic 4xx is final.
+      const status = /^\d+$/.test(String(code)) ? Number(code) : null;
+      return { errorMessage: state.errorMessage, errorCode: code, retryable: isRetryableStatus(status) };
     }
     const rawContent = adapter.parseStreamChunk(data);
     if (rawContent != null && typeof rawContent !== 'string') throw new Error('Expected a text delta');

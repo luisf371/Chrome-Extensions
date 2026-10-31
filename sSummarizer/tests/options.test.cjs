@@ -51,7 +51,7 @@ test('probe validates actual provider results and describes only the non-streami
     assert.equal(app.statusDiv.dataset.type, 'success', apiProvider);
     assert.match(app.statusDiv.textContent, /non.streaming/i);
     assert.equal(app.button.disabled, false);
-    assert.equal([...app.timers.values()].filter(t => t.ms === 10000).length, 0);
+    assert.equal([...app.timers.values()].filter(t => t.ms === 30000).length, 0);
   }
 });
 
@@ -82,8 +82,8 @@ test('probe deadline covers success and error bodies while preserving HTTP statu
     const pending = app.click();
     await tick();
     assert.equal(app.button.disabled, true, 'headers alone cannot complete the probe');
-    assert.equal([...app.timers.values()].some(t => t.ms === 10000), true, 'body read retains deadline');
-    app.fire(10000);
+    assert.equal([...app.timers.values()].some(t => t.ms === 30000), true, 'body read retains deadline');
+    app.fire(30000);
     await pending;
     assert.equal(signal.aborted, true);
     assert.equal(app.button.disabled, false);
@@ -95,7 +95,7 @@ test('probe deadline covers success and error bodies while preserving HTTP statu
 test('network failures clear the probe timer', async () => {
   const app = options(async () => { throw new TypeError('Failed to fetch'); });
   await app.click();
-  assert.equal([...app.timers.values()].some(t => t.ms === 10000), false);
+  assert.equal([...app.timers.values()].some(t => t.ms === 30000), false);
   assert.equal(app.button.disabled, false);
 });
 
@@ -106,11 +106,17 @@ test('direct OpenAI reasoning probes use a supported budget without changing oth
     assert.equal(Object.hasOwn(body, 'max_tokens'), false, model);
     assert.ok(body.max_completion_tokens >= 1024, 'budget must leave room for reasoning');
   }
-  for (const apiProvider of ['openrouter', 'azure', 'groq', 'perplexity', 'glm', 'anthropic']) {
+  for (const apiProvider of ['azure', 'groq', 'perplexity', 'glm', 'anthropic']) {
     const body = JSON.parse(app.context.buildTestConnectionRequest({ apiProvider, apiUrl: 'https://example.invalid', model: 'o3' }).fetchOptions.body);
     assert.equal(body.max_tokens, 20, apiProvider);
     assert.equal(Object.hasOwn(body, 'max_completion_tokens'), false);
   }
+  const openrouter = disable => JSON.parse(app.context.buildTestConnectionRequest({ apiProvider: 'openrouter', apiUrl: 'https://example.invalid', model: 'o3', openrouterDisableReasoning: disable }).fetchOptions.body);
+  assert.equal(openrouter(false).max_tokens, 1024, 'reasoning needs room before visible text');
+  assert.equal(openrouter(true).max_tokens, 20);
+  assert.deepEqual(openrouter(true).reasoning, { effort: 'none' });
+  const anthropic = app.context.buildTestConnectionRequest({ apiProvider: 'anthropic', apiUrl: 'https://api.anthropic.com/v1/messages', apiKey: 'k', model: 'claude' });
+  assert.equal(anthropic.fetchOptions.headers['anthropic-dangerous-direct-browser-access'], 'true');
 });
 
 test('replaced info and success timers cannot hide a persistent error', () => {

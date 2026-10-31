@@ -6,6 +6,7 @@ const { randomUUID } = require('node:crypto');
 
 const sourceRoot = path.resolve(__dirname, '..');
 const tick = () => new Promise(resolve => setImmediate(resolve));
+const drain = async () => { for (let i = 0; i < 10; i++) await tick(); };
 const event = () => ({ listeners: [], addListener(fn) { this.listeners.push(fn); } });
 const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; };
 const sse = data => `data: ${typeof data === 'string' ? data : JSON.stringify(data)}\n\n`;
@@ -116,7 +117,8 @@ test('malformed recognized SSE cannot become success after DONE', async () => {
 
 test('interrupted source and partial reasoning survive authoritative recovery', async () => {
   const data = { choices: [{ delta: { content: 'partial', reasoning: 'thinking' } }] };
-  const w = worker({ fetch: async () => new Response(sse(data)) });
+  // A protocol error is final; a bare EOF would now be retried.
+  const w = worker({ fetch: async () => new Response(sse(data) + sse('{invalid')) });
   await w.call('original source', { prompt: 'Summarize task' });
   const start = w.messages.find(m => m.action === 'streamStart');
   const recovery = w.messages.find(m => m.action === 'chatUnlock');
@@ -219,7 +221,7 @@ test('Stop preserves partial reasoning and cannot clean a newer operation', asyn
   assert.equal(w.timers.size, 0);
 });
 
-test('one overload continuation keeps slash/system context and merged reasoning', async () => {
+test('one overload continuation keeps slash/system context and sends no reasoning metadata', async () => {
   const overloaded = sse({ error: { code: 503, message: 'busy', metadata: { error_type: 'provider_overloaded' } } });
   const firstText = sse({ choices: [{ delta: { content: 'The quick brown fox', reasoning_details: [{ type: 'reasoning.summary', summary: 'First ', index: 0 }] } }] }) +
     sse({ choices: [{ delta: { reasoning_details: [{ type: 'reasoning.summary', summary: 'thought.', index: 0 }] } }] }) + overloaded;
@@ -227,13 +229,13 @@ test('one overload continuation keeps slash/system context and merged reasoning'
   const w = worker({ settings: { apiProvider: 'openrouter', systemPrompt: 'Base rules' }, fetch: async (url, init, count) => new Response(count === 1 ? firstText : secondText) });
   const pending = w.call('source', { prompt: 'Slash task' });
   await tick();
-  w.fire(1500);
+  w.fire(1000);
   await settles(pending);
   assert.equal(w.fetches.length, 2);
   const retry = JSON.parse(w.fetches[1].body);
   assert.equal(retry.messages[0].content, 'Base rules\n\nSlash task');
   assert.equal(retry.messages[1].content, 'source');
-  assert.equal(retry.messages[2].reasoning_details[0].summary, 'First thought.');
+  assert.deepEqual(Object.keys(retry.messages[2]), ['role', 'content']);
   assert.equal(w.messages.find(m => m.action === 'streamEnd')?.fullResponse, 'The quick brown fox jumps');
   assert.equal(w.messages.filter(m => m.action === 'streamStart').length, 1);
   assert.equal(w.timers.size, 0);
@@ -381,7 +383,7 @@ test('healthy long streams renew the idle deadline on actual body progress', asy
   assert.equal(w.timers.size, 0);
 });
 
-test('normal provider outcomes complete and overload retry remains limited to one', async () => {
+test('normal provider outcomes complete and retries stop after two', async () => {
   for (const [provider, text] of [
     ['openai', sse({ choices: [{ delta: { content: 'answer' }, finish_reason: 'stop' }] })],
     ['glm', sse({ choices: [{ delta: { content: 'answer' }, finish_reason: 'stop' }] })],
@@ -394,10 +396,12 @@ test('normal provider outcomes complete and overload retry remains limited to on
   }
   const w = worker({ settings: { apiProvider: 'openrouter' }, fetch: async () => new Response(sse(delta('partial')) + sse({ error: { code: 503, message: 'busy', metadata: { error_type: 'provider_overloaded' } } })) });
   const pending = w.call();
-  await tick();
-  w.fire(1500);
+  await drain();
+  w.fire(1000);
+  await drain();
+  w.fire(2000);
   await settles(pending);
-  assert.equal(w.fetches.length, 2);
+  assert.equal(w.fetches.length, 3);
   assert.equal(w.messages.filter(m => m.action === 'chatUnlock').length, 1);
 });
 
@@ -407,7 +411,7 @@ test('retry terminal flush keeps an uncertain nonduplicate prefix', async () => 
     : ended('brown')) });
   const pending = w.call();
   await tick();
-  w.fire(1500);
+  w.fire(1000);
   await settles(pending);
   assert.equal(w.messages.find(m => m.action === 'streamEnd')?.fullResponse, 'The quick brown foxbrown');
 });
@@ -427,7 +431,7 @@ test('reasoning signature fragments merge without crossing ids or formats', asyn
   assert.ok(w.messages.some(m => m.isDelta && m.content === '' && m.reasoningDelta?.reasoning_details), 'metadata must reach UI before terminal');
 });
 
-test('retries preserve signed reasoning block boundaries in subsequent follow-ups', async () => {
+test('retries keep signed reasoning blocks locally but never replay them to providers', async () => {
   for (const id of [null, 'reused-id']) {
     const common = { type: 'reasoning.text', id, format: 'claude', index: 0 };
     const first = [
@@ -446,7 +450,7 @@ test('retries preserve signed reasoning block boundaries in subsequent follow-up
       : count === 2 ? encode(second) + ended(' More answer.') : ended('Follow-up answer.')) });
     const pending = w.call();
     await tick();
-    w.fire(1500);
+    w.fire(1000);
     await settles(pending);
     const assistant = w.messages.find(m => m.action === 'streamEnd').assistantMessage;
     const expected = [
@@ -454,9 +458,9 @@ test('retries preserve signed reasoning block boundaries in subsequent follow-up
       { ...common, text: 'Second thought.', signature: 'second-signature' }, ...second.slice(-2)
     ];
     assert.deepEqual(assistant.reasoning_details, expected, 'different attempts are different signed blocks');
-    assert.deepEqual(JSON.parse(w.fetches[1].body).messages[2].reasoning_details, expected.slice(0, 1), 'retry replays the first block unchanged');
+    assert.deepEqual(Object.keys(JSON.parse(w.fetches[1].body).messages[2]), ['role', 'content'], 'retry sends no partial reasoning');
     await w.call([{ role: 'user', content: 'source text' }, assistant, { role: 'user', content: 'Continue' }], { operationId: 'follow-up' });
-    assert.deepEqual(JSON.parse(w.fetches[2].body).messages[2].reasoning_details, expected, 'later follow-ups replay each block unchanged');
+    assert.deepEqual(Object.keys(JSON.parse(w.fetches[2].body).messages[2]), ['role', 'content'], 'follow-ups send no reasoning');
   }
 });
 
@@ -528,9 +532,128 @@ test('long retries bound overlap work while preserving the full conversation', a
   } });
   const pending = w.call();
   await tick();
-  w.fire(1500);
+  w.fire(1000);
   await settles(pending);
   assert.equal(w.messages.find(m => m.action === 'streamEnd')?.fullResponse, original + ' jumps');
+});
+
+test('headers and body bytes renew the progress deadline; a timeout is final', async () => {
+  const headers = deferred();
+  const w = worker({ fetch: async (url, init) => { await headers.promise; return streamResponse('', { open: true, signal: init.signal }).response; } });
+  const pending = w.call();
+  await tick();
+  w.advance(110000);
+  headers.resolve();
+  await drain();
+  w.advance(110000);
+  assert.equal(w.fetches[0].signal.aborted, false, 'headers renew the deadline');
+  w.advance(10000);
+  await settles(pending);
+  assert.match(w.messages.find(m => m.content?.startsWith('[Error]'))?.content || '', /timed out after 120 seconds/);
+  assert.equal(w.fetches.length, 1, 'timeouts are not retried');
+});
+
+test('transient HTTP statuses retry and honor a short Retry-After', async () => {
+  for (const [status, retries, retryAfter, wait = 1000] of [
+    [409, true], [429, true, '2', 2000], [500, true], [529, true], [503, true, 'Wed, 21 Oct 2026 07:28:00 GMT'],
+    [400, false], [401, false], [429, false, '30']
+  ]) {
+    const w = worker({ fetch: async (url, init, count) => count === 1
+      ? new Response('{"error":{"message":"busy"}}', { status, headers: retryAfter ? { 'retry-after': retryAfter } : {} })
+      : new Response(ended('ok')) });
+    const pending = w.call();
+    await drain();
+    w.fire(wait);
+    await settles(pending);
+    assert.equal(w.fetches.length, retries ? 2 : 1, `${status} ${retryAfter || ''}`);
+    assert.equal(w.messages.filter(m => m.action === 'streamEnd').length, retries ? 1 : 0);
+  }
+});
+
+test('mid-stream errors retry unless a deterministic 4xx or a non-error finish', async () => {
+  for (const [text, retries] of [
+    [sse({ error: { code: 'server_error', message: 'Provider disconnected' }, choices: [{ delta: { content: '' }, finish_reason: 'error' }] }), true],
+    [sse({ error: { code: '429', message: 'slow down' } }), true],
+    [sse({ error: { message: 'no code' } }), true],
+    [sse({ type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } }), true],
+    [sse({ error: { code: 400, message: 'bad request' } }), false],
+    [sse({ choices: [{ delta: {}, finish_reason: 'error' }] }), true],
+    [sse({ choices: [{ delta: {}, finish_reason: 'tool_calls' }] }), false]
+  ]) {
+    const w = worker({ settings: { apiProvider: 'openrouter' }, fetch: async (url, init, count) => new Response(count === 1 ? text : ended('ok')) });
+    const pending = w.call();
+    await drain();
+    w.fire(1000);
+    await settles(pending);
+    assert.equal(w.fetches.length, retries ? 2 : 1, text);
+    if (retries) assert.equal(w.fetches[1].body, w.fetches[0].body, 'nothing streamed yet: identical resend');
+  }
+});
+
+test('three attempts rebuild the continuation from base history without duplication', async () => {
+  const fail = sse({ error: { code: 'server_error' } });
+  const w = worker({ fetch: async (url, init, count) => new Response(count === 1 ? sse(delta('Alpha ')) + fail : count === 2 ? sse(delta('Beta ')) + fail : ended('Gamma')) });
+  const pending = w.call();
+  await drain();
+  w.fire(1000);
+  await drain();
+  w.fire(2000);
+  await settles(pending);
+  const third = JSON.parse(w.fetches[2].body).messages;
+  assert.deepEqual(third.map(m => m.role), ['system', 'user', 'assistant', 'user']);
+  assert.equal(third[2].content, 'Alpha Beta ');
+  assert.equal(w.messages.find(m => m.action === 'streamEnd')?.fullResponse, 'Alpha Beta Gamma');
+  assert.equal(w.timers.size, 0);
+});
+
+test('network failures before or during the body resend the identical request', async () => {
+  for (const fail of [
+    () => { throw new TypeError('Failed to fetch'); },
+    () => new Response(new ReadableStream({ start(c) { c.error(new TypeError('network error')); } }))
+  ]) {
+    const w = worker({ fetch: async (url, init, count) => count === 1 ? fail() : new Response(ended('ok')) });
+    const pending = w.call();
+    await drain();
+    w.fire(1000);
+    await settles(pending);
+    assert.equal(w.fetches.length, 2);
+    assert.equal(w.fetches[1].body, w.fetches[0].body);
+    assert.equal(w.messages.find(m => m.action === 'streamEnd')?.fullResponse, 'ok');
+    assert.equal(w.context.isNetworkError(new Error('network error')), false, 'only fetch TypeErrors count');
+  }
+});
+
+test('provider boundary merges same-role turns; Anthropic sends its browser opt-in', async () => {
+  const w = worker();
+  await w.call([{ role: 'user', content: 'page' }, { role: 'user', content: 'question' }], { operationId: 'follow-up' });
+  assert.deepEqual(JSON.parse(w.fetches[0].body).messages.slice(1), [{ role: 'user', content: 'page\n\nquestion' }]);
+  const a = worker({ settings: { apiProvider: 'anthropic' }, fetch: async () => new Response(sse({ type: 'message_stop' })) });
+  await a.call();
+  assert.equal(a.fetches[0].headers['anthropic-dangerous-direct-browser-access'], 'true');
+  assert.equal(JSON.parse(a.fetches[0].body).max_tokens, 8192);
+});
+
+test('JSON bodies on stream requests surface provider text; invalid UTF-8 is replaced', async () => {
+  const w = worker({ fetch: async () => Response.json({ error: { message: 'model is warming up', code: 503 } }) });
+  await w.call();
+  assert.equal(w.fetches.length, 1);
+  assert.match(w.messages.find(m => m.content?.startsWith('[Error]'))?.content || '', /non-streaming[\s\S]*warming up/);
+  const bytes = Buffer.concat([Buffer.from('data: {"choices":[{"delta":{"content":"a'), Buffer.from([0xff]), Buffer.from('b"}}]}\n\ndata: [DONE]\n\n')]);
+  const u = worker({ fetch: async () => new Response(bytes) });
+  await u.call();
+  assert.equal(u.messages.find(m => m.action === 'streamEnd')?.fullResponse, 'a�b');
+});
+
+test('Azure hosts normalize to the permitted endpoint and diagnostics omit URL secrets', () => {
+  const w = worker();
+  for (const resource of ['myres', 'https://myres.openai.azure.com/', 'myres.cognitiveservices.azure.com', 'https://myres.services.ai.azure.com/models?x=1']) {
+    assert.equal(w.context.buildAzureApiUrl({ azureResource: resource, azureDeployment: 'gpt 5' }),
+      'https://myres.openai.azure.com/openai/deployments/gpt%205/chat/completions?api-version=2025-04-01-preview', resource);
+  }
+  assert.match(w.context.buildAzureApiUrl({ azureResource: 'myres', azureDeployment: 'd', azureApiVersion: '2024-10-21' }), /api-version=2024-10-21$/);
+  assert.equal(w.context.buildRequestDiagnostics({ fetchUrl: 'https://user:pw@example.invalid/v1/chat?key=secret#frag' }).fetchUrl, 'https://example.invalid/v1/chat');
+  w.run("beginOperation(1, 7, 'diag'); handleJsonLine(JSON.stringify({ error: { code: 'server_error' } }), 1, OpenAIAdapter)");
+  assert.equal(w.run('streamStates.get(1).recentEvents.at(-1).code'), 'server_error');
 });
 
 (async () => {

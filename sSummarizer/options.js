@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
     },
     azure: {
       label: 'Azure OpenAI',
-      url: 'https://{resource}.openai.azure.com/openai/deployments/{deployment}/chat/completions?api-version=2024-02-15-preview',
+      url: 'https://{resource}.openai.azure.com/openai/deployments/{deployment}/chat/completions?api-version=2025-04-01-preview',
       placeholder: 'https://your-resource.openai.azure.com/...',
       enforceSuffix: '',
       modelHint: '{deployment-name}'
@@ -138,14 +138,14 @@ document.addEventListener('DOMContentLoaded', function () {
       url: 'https://api.groq.com/openai/v1/chat/completions',
       placeholder: 'https://api.groq.com/openai/v1/chat',
       enforceSuffix: '/completions',
-      modelHint: 'mixtral-8x7b-32768'
+      modelHint: 'openai/gpt-oss-120b'
     },
     perplexity: {
       label: 'Perplexity',
       url: 'https://api.perplexity.ai/chat/completions',
       placeholder: 'https://api.perplexity.ai/chat',
       enforceSuffix: '/completions',
-      modelHint: 'llama-3.1-sonar-small-128k-chat'
+      modelHint: 'sonar'
     },
     glm: {
       label: 'GLM (Coding Plan)',
@@ -163,10 +163,10 @@ document.addEventListener('DOMContentLoaded', function () {
     },
     gemini: {
       label: 'Google Gemini',
-      url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
+      url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
       placeholder: 'https://generativelanguage.googleapis.com/...',
       enforceSuffix: '',
-      modelHint: 'gemini-1.5-pro'
+      modelHint: 'gemini-flash-latest'
     },
     openrouter: {
       label: 'OpenRouter',
@@ -232,7 +232,8 @@ document.addEventListener('DOMContentLoaded', function () {
           headers: {
             'Content-Type': 'application/json',
             'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01'
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
           },
           body: JSON.stringify({
             model: trimmedModel || 'claude-sonnet-4-6',
@@ -246,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (providerKind === 'gemini') {
       const fetchUrl = provider === 'gemini'
-        ? `https://generativelanguage.googleapis.com/v1beta/models/${trimmedModel || 'gemini-pro'}:generateContent`
+        ? `https://generativelanguage.googleapis.com/v1beta/models/${trimmedModel || 'gemini-flash-latest'}:generateContent`
         : resolvedApiUrl;
 
       const headers = provider === 'gemini'
@@ -273,7 +274,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const body = {
       ...(providerKind === 'openai' && /^(?:o\d(?:-|$)|gpt-5(?:[.-]|$))/i.test(trimmedModel || '')
         ? { max_completion_tokens: 1024 } // Reasoning and visible output share this budget.
-        : { max_tokens: 20 }),
+        // OpenRouter reasoning models can spend a tiny budget before any visible text.
+        : { max_tokens: providerKind === 'openrouter' && !openrouterDisableReasoning ? 1024 : 20 }),
       stream: false,
       messages: [{ role: 'user', content: userMessage }]
     };
@@ -876,7 +878,7 @@ document.addEventListener('DOMContentLoaded', function () {
       showStatus('Testing API connection...', 'info');
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       const providerKind = (currentValues.apiProvider || 'openai').toLowerCase();
       let response;
       try {
@@ -908,7 +910,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (response && !response.ok) {
           errorMessage = formatHttpError({ status: response.status, statusText: response.statusText, body: '', providerKind, retryAfter: response.headers.get('retry-after') });
         } else if (error.name === 'AbortError') {
-          errorMessage = 'Connection timed out after 10 seconds. The endpoint may be slow, unreachable, or disconnected — verify the API URL.';
+          errorMessage = 'Connection timed out after 30 seconds. The endpoint may be slow, unreachable, or disconnected — verify the API URL.';
         } else if (isNetworkError(error)) {
           errorMessage = formatNetworkError(error, {
             providerKind: (currentValues.apiProvider || 'openai').toLowerCase(),

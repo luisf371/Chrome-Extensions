@@ -94,7 +94,7 @@
                 </div>
                 <div class="form-group">
                   <label for="azure-api-version">Azure API Version</label>
-                  <input type="text" id="azure-api-version" name="azure-api-version" placeholder="2024-02-15-preview"
+                  <input type="text" id="azure-api-version" name="azure-api-version" placeholder="2025-04-01-preview"
                     autocomplete="off">
                   <small class="help-text">Optional. Leave blank to use the extension default API version.</small>
                 </div>
@@ -109,7 +109,7 @@
                 <div class="form-group form-group-toggle">
                   <div class="toggle-header">
                     <label for="openrouter-disable-reasoning" data-i18n="labelOpenrouterDisableReasoning">Disable OpenRouter reasoning / thinking</label>
-                    <small class="help-text inline-help" data-i18n="helpOpenrouterDisableReasoning">Sends `reasoning: { effort: "none" }` with OpenRouter requests. Helpful when reasoning models stall, stop mid-stream, or you want plain-answer behavior.</small>
+                    <small class="help-text inline-help" data-i18n="helpOpenrouterDisableReasoning">Sends `reasoning: { effort: "none" }` with OpenRouter requests. Helpful when reasoning models stall or you want plain-answer behavior. Models that require reasoning reject this setting; turn it off or pick another model if requests fail.</small>
                   </div>
                   <div class="toggle-switch">
                     <input type="checkbox" id="openrouter-disable-reasoning" name="openrouter-disable-reasoning">

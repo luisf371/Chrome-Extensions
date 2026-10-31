@@ -88,7 +88,7 @@
     "description": "OpenRouter reasoning toggle label"
   },
   "helpOpenrouterDisableReasoning": {
-    "message": "Sends `reasoning: { effort: \"none\" }` with OpenRouter requests. Helpful when reasoning models stall, stop mid-stream, or you want plain-answer behavior.",
+    "message": "Sends `reasoning: { effort: \"none\" }` with OpenRouter requests. Helpful when reasoning models stall or you want plain-answer behavior. Models that require reasoning reject this setting; turn it off or pick another model if requests fail.",
     "description": "OpenRouter reasoning toggle help text"
   },
   "providerGlm": {

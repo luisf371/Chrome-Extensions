@@ -3,14 +3,16 @@
 // and options.js (via <script> tag in options.html).
 // IMPORTANT: Keep this file free of browser-context-specific APIs so it runs in both contexts.
 
-const DEFAULT_AZURE_API_VERSION = '2024-02-15-preview';
+const DEFAULT_AZURE_API_VERSION = '2025-04-01-preview';
 
+// Accepts a bare name or any endpoint host Azure/Foundry shows; URLs are always rebuilt on
+// {name}.openai.azure.com, which every resource exposes and host_permissions covers.
 function normalizeAzureResourceName(resource) {
   const raw = (resource || '').trim();
   if (!raw) return '';
   return raw
     .replace(/^https?:\/\//i, '')
-    .replace(/\.openai\.azure\.com.*$/i, '')
+    .replace(/\.(?:openai|cognitiveservices|services\.ai)\.azure\.com.*$/i, '')
     .replace(/\/.*$/, '')
     .trim();
 }
