@@ -58,10 +58,6 @@ yarn.lock
 Pipfile.lock
 
 # === Showcase capture ===
-!showcase/package-lock.json
-showcase/drafts/
-showcase/.profiles/
-showcase/auth/
 showcase/
 brand/
 

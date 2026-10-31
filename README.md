@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./brand/tekky/tekky-logo-dark.png" alt="Tekky" width="720">
+  <img src="./.github/assets/tekky-logo-dark.png" alt="Tekky" width="720">
 </p>
 
 <p align="center">Useful browser extensions built and collected by Tekky.</p>
@@ -7,11 +7,11 @@
 ## Featured extensions
 
 <a href="./sYoutubeOrganizer">
-  <img src="./brand/extensions/syoutubeplaylist/marquee.png" alt="sYoutubePlaylist — organize and filter YouTube subscriptions" width="100%">
+  <img src="./sYoutubeOrganizer/images/marquee.png" alt="sYoutubePlaylist — organize and filter YouTube subscriptions" width="100%">
 </a>
 
 <a href="./sSummarizer">
-  <img src="./brand/extensions/ssummarizer/marquee.png" alt="sSummarizer — summarize pages and ask follow-up questions in context" width="100%">
+  <img src="./sSummarizer/images/ss-marquee.png" alt="sSummarizer — summarize pages and ask follow-up questions in context" width="100%">
 </a>
 
 ## 📂 Repository Directory
