@@ -47,12 +47,10 @@ const commands = {
   },
   lasttab: async () => {
     const sessions = await chrome.sessions.getRecentlyClosed({ maxResults: 1 });
-    if (sessions.length > 0 && sessions[0].tab) {
-      const url = sessions[0].tab.url;
-      // Basic validation: prevent reopening chrome:// or javascript: URLs directly if problematic, 
-      // though chrome.tabs.create usually handles them safely or errors out.
-      // We'll proceed but this is the place to add logic if needed.
-      await chrome.tabs.create({ url: url });
+    if (sessions.length > 0) {
+      // restore() reopens the most recent tab or window with its back/forward
+      // history and needs no "tabs" permission (unlike reading tab.url).
+      await chrome.sessions.restore();
       return "tab opened";
     }
     return "no recently closed tab found";
