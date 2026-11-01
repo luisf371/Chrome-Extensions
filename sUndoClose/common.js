@@ -1,5 +1,7 @@
 export const TABLIST_PREFIX = 'TabList-';
 export const CLOSEDTAB_PREFIX = 'ClosedTab-';
+// URLs worth recording as restorable tabs (no g flag: used with .test()).
+export const RESTORABLE_URL = /^(http:|https:|chrome-extension:|file:)/;
 const SETTINGS_CACHE_KEY = 'settings_cache';
 const SETTINGS_VERSION_KEY = 'settings_version';
 
@@ -216,9 +218,8 @@ export async function createTabsWindow(ids) {
 }
 
 export async function addNewTab(tab) {
-	const re = /^(http:|https:|chrome-extension:|file:)/;
 	// Never write Incognito tabs to disk.
-	if (!tab.incognito && re.test(tab.url)) {
+	if (!tab.incognito && RESTORABLE_URL.test(tab.url)) {
 		await navigator.locks.request('sUndoClose_data', async (lock) => {
 			if (await chkNewTab(tab)) {
 				let insertThis = { url: tab.url, title: tab.title };
@@ -280,9 +281,6 @@ export async function removeClosedTabInternal(id) {
 	let closedTabIndex = data.ClosedTabIndex || [];
 
 	await removeStorage([CLOSEDTAB_PREFIX + id]);
-    
-    // Sync Index
-    await removeFromSearchIndex([id]);
 
 	const index = closedTabIndex.indexOf(id);
 	if (index > -1) {
@@ -317,9 +315,6 @@ export async function removeClosedTabBatch(ids) {
 		
 		let keysToRemove = ids.map(id => CLOSEDTAB_PREFIX + id);
 		await removeStorage(keysToRemove);
-        
-        // Sync Index
-        await removeFromSearchIndex(ids);
 
 		let newIndex = closedTabIndex.filter(id => !ids.includes(id));
 		
@@ -365,7 +360,6 @@ export async function resetData() {
 		"settings": settings,
 		"TabListIndex": [],
 		"ClosedTabIndex": [],
-        "SearchIndex": [],
         "restoreCountAllTime": restoreCountAllTime,
         "installDate": installDate
 	});
@@ -373,56 +367,6 @@ export async function resetData() {
 	await regExistingTabs();
 	await setBadge();
 }
-
-// ... (Rest of existing functions)
-
-export async function updateSearchIndex(id, title, url) {
-    // Note: Called inside lock usually
-    let data = await getStorage(['SearchIndex']);
-    let index = data.SearchIndex || [];
-    // We add new items to the END (matching ClosedTabIndex)
-    // Minimal data for search
-    index.push({ id: id, t: title, u: url });
-    await setStorage({ SearchIndex: index });
-}
-
-export async function removeFromSearchIndex(ids) {
-    if (!ids || ids.length === 0) return;
-    let data = await getStorage(['SearchIndex']);
-    let index = data.SearchIndex || [];
-    
-    const idSet = new Set(Array.isArray(ids) ? ids : [ids]);
-
-    let newIndex = index.filter(item => !idSet.has(item.id));
-    
-    if (newIndex.length !== index.length) {
-        await setStorage({ SearchIndex: newIndex });
-    }
-}
-
-export async function rebuildSearchIndex() {
-    let data = await getStorage(['ClosedTabIndex']);
-    const closedTabIndex = data.ClosedTabIndex || [];
-    
-    if (closedTabIndex.length === 0) {
-        await setStorage({ SearchIndex: [] });
-        return;
-    }
-    
-    const keys = closedTabIndex.map(id => CLOSEDTAB_PREFIX + id);
-    const tabsData = await getStorage(keys);
-    
-    const newIndex = [];
-    for (const id of closedTabIndex) {
-        const entry = tabsData[CLOSEDTAB_PREFIX + id];
-        if (entry) {
-            newIndex.push({ id: id, t: entry.title, u: entry.url });
-        }
-    }
-    
-    await setStorage({ SearchIndex: newIndex });
-}
-
 
 // Debounce timer for updateIcon to prevent race conditions
 let updateIconTimer = null;
@@ -496,10 +440,8 @@ export async function regExistingTabs() {
         let updates = {};
         let changed = false;
         
-        const re = /^(http:|https:|chrome-extension:|file:)/;
-        
         for (const tab of tabs) {
-             if (!tab.incognito && re.test(tab.url)) {
+             if (!tab.incognito && RESTORABLE_URL.test(tab.url)) {
                  const listKey = TABLIST_PREFIX + tab.id;
                  let insertThis = { url: tab.url, title: tab.title };
                  

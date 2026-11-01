@@ -8,8 +8,10 @@ import {
     createTabsWindow,
     resetData, 
     multiFind, 
-    multiReplace, 
-    stripVowelAccent 
+    multiReplace,
+    stripVowelAccent,
+    TABLIST_PREFIX,
+    CLOSEDTAB_PREFIX
 } from './common.js';
 
 let settings = {};
@@ -63,8 +65,6 @@ function applyPopupStyle(styleValue) {
     body.classList.add(className);
 }
 
-// Replaced encodeHtml with the version in common.js (assumed present)
-
 async function setup(){
 
 	content = document.getElementById("content");
@@ -112,9 +112,8 @@ async function setup(){
 
 async function populate(){
 	
-	let data = await getStorage(['ClosedTabIndex', 'SearchIndex']);
+	let data = await getStorage(['ClosedTabIndex']);
 	let closedTabIndex = data.ClosedTabIndex || [];
-    let searchIndex = data.SearchIndex;
 
 	// Clear existing content safely
     while (content.firstChild) {
@@ -138,93 +137,38 @@ async function populate(){
 		currentTime = Date.now(); 
 
         // Pagination Logic: Slice the ID list FIRST
-        const startIndex = pageNo * disp_per_pg;
-        
         const totalItems = closedTabIndex.length;
         const pageStart = totalItems - 1 - (pageNo * disp_per_pg);
         let pageEnd = pageStart - disp_per_pg + 1;
         if (pageEnd < 0) pageEnd = 0;
         
-        let keysToFetch = [];
+        // Search scans every entry; otherwise fetch only the current page (newest first).
         let itemsToProcess = [];
-
         if (filterStrings != null) {
-            // OPTIMIZED SEARCH
-            if (searchIndex) {
-                 for(let i = searchIndex.length - 1; i >= 0; i--){
-                    const item = searchIndex[i];
-                    // Adapt for multiFind
-                    if (multiFind({ title: item.t, url: item.u }, filterStrings, settings)) {
-                        itemsToProcess.push(item.id);
-                        keysToFetch.push("ClosedTab-" + item.id);
-                        if(itemsToProcess.length >= 1000) break; // Hard limit
-                    }
-                 }
-            } else {
-                // Fallback: Fetch all
-                keysToFetch = closedTabIndex.map(id => "ClosedTab-" + id);
-            }
+            itemsToProcess = closedTabIndex.slice().reverse();
         } else {
-            // Fetch only current page
             for(let i = pageStart; i >= pageEnd; i--){
-                keysToFetch.push("ClosedTab-" + closedTabIndex[i]);
                 itemsToProcess.push(closedTabIndex[i]);
             }
         }
-		
-		let closedTabsMap = await getStorage(keysToFetch);
+
+		let closedTabsMap = await getStorage(itemsToProcess.map(id => CLOSEDTAB_PREFIX + id));
 
         // Check for missing items (only in the fetched set)
-		let missingIds = [];
-        const checkList = (filterStrings != null && !searchIndex) ? closedTabIndex : itemsToProcess;
-        
-		for(let id of checkList){
-			if(!closedTabsMap["ClosedTab-"+id]){
-				missingIds.push(id);
-			}
-		}
+		let missingIds = itemsToProcess.filter(id => !closedTabsMap[CLOSEDTAB_PREFIX + id]);
 
 		if(missingIds.length > 0){
 			await removeClosedTabBatch(missingIds);
-			closedTabIndex = closedTabIndex.filter(id => !missingIds.includes(id));
-            await populate(); 
+            await populate();
             return;
 		}
 
 		let j = 0;
-        
-        if (filterStrings != null) {
-             if (searchIndex) {
-                 // Render from our pre-calculated list
-                 for(let id of itemsToProcess){
-                     let key = "ClosedTab-" + id;
-                     let closedTab = closedTabsMap[key];
-                     if(closedTab) {
-                         createEntry(id, closedTab);
-                         j++;
-                     }
-                 }
-             } else {
-                 // Fallback Legacy Loop
-                 for(let i = closedTabIndex.length - 1; i>=0; i--){
-                    let key = "ClosedTab-"+closedTabIndex[i];
-                    let closedTab = closedTabsMap[key];
-                    if (closedTab && multiFind(closedTab, filterStrings, settings)){
-                        createEntry(closedTabIndex[i], closedTab);
-                        j++;
-                    }
-                 }
-             }
-        } else {
-            // Paged logic
-            for(let i = 0; i < itemsToProcess.length; i++){
-                let id = itemsToProcess[i];
-                let key = "ClosedTab-"+id;
-                let closedTab = closedTabsMap[key];
-                if (closedTab){
-                    createEntry(id, closedTab);
-                    j++;
-                }
+        for (const id of itemsToProcess) {
+            const closedTab = closedTabsMap[CLOSEDTAB_PREFIX + id];
+            if (filterStrings == null || multiFind(closedTab, filterStrings, settings)) {
+                createEntry(id, closedTab);
+                j++;
             }
         }
 
@@ -421,33 +365,14 @@ function reset(){
 
 async function deleteFoundTabs(){
 	if (filterStrings == null) return;
-	let data = await getStorage(['ClosedTabIndex', 'SearchIndex']);
+	let data = await getStorage(['ClosedTabIndex']);
     let closedTabIndex = data.ClosedTabIndex || [];
-    let searchIndex = data.SearchIndex;
-    let idsToRemove = [];
+    let closedTabsMap = await getStorage(closedTabIndex.map(id => CLOSEDTAB_PREFIX + id));
+    let idsToRemove = closedTabIndex.filter(id => {
+        const closedTab = closedTabsMap[CLOSEDTAB_PREFIX + id];
+        return closedTab && multiFind(closedTab, filterStrings, settings);
+    });
 
-    if (searchIndex) {
-         for(let i = searchIndex.length - 1; i >= 0; i--){
-            const item = searchIndex[i];
-            if (multiFind({ title: item.t, url: item.u }, filterStrings, settings)) {
-                idsToRemove.push(item.id);
-            }
-         }
-    } else {
-        // Fallback
-        let keys = closedTabIndex.map(id => "ClosedTab-" + id);
-        let closedTabsMap = await getStorage(keys);
-        
-        for(let i = closedTabIndex.length - 1; i>=0; i--){
-            let closedTab = closedTabsMap["ClosedTab-"+closedTabIndex[i]];
-            if (closedTab){
-                if (multiFind(closedTab, filterStrings, settings)){
-                    idsToRemove.push(closedTabIndex[i]);
-                }
-            }
-        }
-    }
-    
 	if (idsToRemove.length > 0) {
 		await removeClosedTabBatch(idsToRemove);
 	}
@@ -499,7 +424,7 @@ function cleanInvalidTabs(){
 			}
 
 			if(invalidTabIds.length > 0){
-				let keysToRemove = invalidTabIds.map(id => "TabList-" + id);
+				let keysToRemove = invalidTabIds.map(id => TABLIST_PREFIX + id);
 				await removeStorage(keysToRemove);
 				
 				await setStorage({ TabListIndex: newTabListIndex });

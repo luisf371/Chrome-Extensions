@@ -4,7 +4,7 @@
  * Auto-save with toast notification
  */
 
-import { getStorage, setStorage, removeStorage, setBadge, updateIcon, getSessionStorage, removeFromSearchIndex, CLOSEDTAB_PREFIX } from './common.js';
+import { getStorage, setStorage, removeStorage, setBadge, updateIcon, getSessionStorage, CLOSEDTAB_PREFIX } from './common.js';
 
 async function initStats() {
   const [localData, sessionData] = await Promise.all([
@@ -204,23 +204,8 @@ async function trimTabs(tablimit) {
       return;
     }
     
-    let keysToRemove = [];
-    let idsToRemove = [];
-    for (let i = 0; i < noToDelete; i++) {
-      if (closedTabIndex.length > 0) {
-        const id = closedTabIndex[0];
-        keysToRemove.push(CLOSEDTAB_PREFIX + id);
-        idsToRemove.push(id);
-        closedTabIndex.shift();
-      } else {
-        break;
-      }
-    }
-    
-    if (keysToRemove.length > 0) {
-      await removeStorage(keysToRemove);
-      await removeFromSearchIndex(idsToRemove);
-    }
+    const keysToRemove = closedTabIndex.splice(0, noToDelete).map(id => CLOSEDTAB_PREFIX + id);
+    await removeStorage(keysToRemove);
     await setStorage({ ClosedTabIndex: closedTabIndex });
   });
 }
@@ -280,10 +265,10 @@ function initButtons() {
       const msg = chrome.i18n.getMessage('opt_resetbtn_popupMsg') || 'Clear all history?';
       if (confirm(msg)) {
         await navigator.locks.request('sUndoClose_data', async (lock) => {
-          await setStorage({ ClosedTabIndex: [], SearchIndex: [] });
+          await setStorage({ ClosedTabIndex: [] });
           // Remove all ClosedTab-* entries
           let data = await getStorage(null);
-          let keysToRemove = Object.keys(data).filter(k => k.startsWith('ClosedTab-'));
+          let keysToRemove = Object.keys(data).filter(k => k.startsWith(CLOSEDTAB_PREFIX));
           if (keysToRemove.length > 0) {
             await removeStorage(keysToRemove);
           }
