@@ -1,13 +1,13 @@
 /**
- * Reddit New Comments Highlighter - Content Script
+ * sRedditHighlighter - Content Script
  * Unified support for Old Reddit and New Reddit (Shreddit)
  */
 
 (function() {
   'use strict';
 
-  const PROCESSED_ATTR = 'data-rnch-processed';
-  const HIGHLIGHT_CLASS = 'rnch-new-comment';
+  const PROCESSED_ATTR = 'data-srh-processed';
+  const HIGHLIGHT_CLASS = 'srh-new-comment';
 
   // Mirrors background.js DEFAULT_SETTINGS; used as a fallback when the
   // service worker is mid-restart and a GET_SETTINGS message rejects.
@@ -29,11 +29,10 @@
   let threadData = null;
   let newCommentCount = 0;
   let observer = null;
-  let currentHighlightIndex = -1;
+  let focusedElement = null;
   let highlightedElements = [];
   let initialized = false;
-  let threadPersisted = false;
-  let threadLoadFailed = false;
+  let firstInit = true;
   let initGeneration = 0;
   let appliedColor = null;
 
@@ -94,19 +93,19 @@
   }
 
   function injectHighlightStyles() {
-    const existingStyle = document.getElementById('rnch-styles');
+    const existingStyle = document.getElementById('srh-styles');
     if (existingStyle) existingStyle.remove();
 
     const color = getHighlightColor();
     appliedColor = color;
     const style = document.createElement('style');
-    style.id = 'rnch-styles';
+    style.id = 'srh-styles';
     style.textContent = `
       .${HIGHLIGHT_CLASS} {
         background-color: ${color} !important;
         transition: background-color 0.3s ease;
       }
-      .${HIGHLIGHT_CLASS}.rnch-focused {
+      .${HIGHLIGHT_CLASS}.srh-focused {
         outline: 2px solid #0079d3;
         outline-offset: 2px;
       }
@@ -166,15 +165,12 @@
   // discovered out of order (e.g. a collapsed mid-thread branch is expanded
   // after initial load and its replies are appended later).
   function sortHighlightedElements() {
-    const focused = highlightedElements[currentHighlightIndex];
     highlightedElements.sort((a, b) => {
       const pos = a.compareDocumentPosition(b);
       if (pos & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
       if (pos & Node.DOCUMENT_POSITION_PRECEDING) return 1;
       return 0;
     });
-    // Keep the focus index on the same element after the re-sort.
-    if (focused) currentHighlightIndex = highlightedElements.indexOf(focused);
   }
 
   // After SPA navigation the previous thread's comments can still be in the DOM
@@ -230,41 +226,62 @@
     }
   }
 
+  // Focuses the next (step 1) or previous (step -1) new comment, wrapping at
+  // either end. Comments removed by a re-render (sort change) or hidden inside a
+  // collapsed thread are skipped, since scrolling to them does nothing.
+  function goToNewComment(step) {
+    const items = highlightedElements.filter(el => el.isConnected && el.getClientRects().length > 0);
+    if (items.length === 0) return false;
+
+    let index = items.indexOf(focusedElement);
+    if (index === -1) {
+      // Nothing focused yet: start from where the reader has scrolled to.
+      const firstBelow = items.findIndex(el => el.getBoundingClientRect().top >= 0);
+      if (step > 0) index = firstBelow === -1 ? 0 : firstBelow;
+      else index = (firstBelow === -1 ? items.length : firstBelow) - 1;
+      if (index < 0) index = items.length - 1;
+    } else {
+      index = (index + step + items.length) % items.length;
+    }
+
+    if (focusedElement) focusedElement.classList.remove('srh-focused');
+    focusedElement = items[index];
+    focusedElement.classList.add('srh-focused');
+    focusedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return true;
+  }
+
+  function handleMessage(message) {
+    if (message?.type === 'NEXT_NEW_COMMENT') goToNewComment(1);
+  }
+
   // --- Per-thread listeners (named so they can be removed on teardown) -------
 
   function handleKeydown(e) {
-    // Leave shortcuts such as Ctrl+P / Cmd+K alone.
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    // Leave shortcuts such as Ctrl+P / Cmd+K / Shift+W alone.
+    if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
     // e.target is retargeted to the host element for fields inside shadow DOM;
     // composedPath()[0] is the real element.
     const origin = e.composedPath()[0] || e.target;
     if (origin.isContentEditable || (origin.matches && origin.matches('input, textarea, select, [contenteditable]'))) return;
     if (e.target.matches('input, textarea, select, [contenteditable]')) return;
-    if (highlightedElements.length === 0) return;
 
-    let newIndex = currentHighlightIndex;
+    // w/q are unbound in Reddit Enhancement Suite. Its window capture listener
+    // is registered at document_start, so it always runs before this one: on
+    // n (its Comment Navigator toggle) it moves focus into a <select>, and every
+    // later key press then goes to that field instead.
+    // toLowerCase() so Caps Lock does not disable the keys.
+    const key = e.key.toLowerCase();
+    let step;
+    if (key === 'w') step = 1;
+    else if (key === 'q') step = -1;
+    else return;
 
-    if (e.key === 'j' || e.key === 'n') {
-      newIndex = Math.min(currentHighlightIndex + 1, highlightedElements.length - 1);
-    } else if (e.key === 'k' || e.key === 'p') {
-      newIndex = Math.max(currentHighlightIndex - 1, 0);
-    } else {
-      return;
-    }
-
+    if (!goToNewComment(step)) return;
+    // Capture phase on window: stops the page's own handlers (and any that
+    // were registered after this one) from also acting on the key press.
     e.preventDefault();
-
-    if (currentHighlightIndex >= 0 && highlightedElements[currentHighlightIndex]) {
-      highlightedElements[currentHighlightIndex].classList.remove('rnch-focused');
-    }
-
-    currentHighlightIndex = newIndex;
-    const target = highlightedElements[currentHighlightIndex];
-
-    if (target) {
-      target.classList.add('rnch-focused');
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    e.stopImmediatePropagation();
   }
 
   const colorSchemeMedia = window.matchMedia('(prefers-color-scheme: dark)');
@@ -274,7 +291,7 @@
   }
 
   function setupKeyboardNavigation() {
-    document.addEventListener('keydown', handleKeydown);
+    window.addEventListener('keydown', handleKeydown, true);
   }
 
   function setupMutationObserver(version) {
@@ -302,23 +319,16 @@
 
   // --- Persistence / lifecycle ----------------------------------------------
 
-  // Persist the last-visit boundary on page-LEAVE rather than at page-open, so
-  // comments that lazy-load below the fold after init are still newer than the
-  // stored boundary on the user's *next* visit (background.js stamps a fresh
-  // lastVisit = Date.now() on save). Guarded so it runs at most once per thread.
-  // The flag is cleared again when the page becomes visible, so reading that
-  // happens after a tab switch is recorded on the next hide / leave.
-  function persistThreadData() {
-    if (!threadId || threadPersisted) return;
-    // If the previous visit could not be loaded, saving now would overwrite the
-    // stored boundary with the current time.
-    if (threadLoadFailed) return;
-    threadPersisted = true;
+  // Each visit (page load, refresh or SPA navigation into the thread) saves its
+  // start time as the checkpoint the next visit compares against. Leaving or
+  // switching tabs saves nothing, so a refresh always shows what was posted
+  // since the previous load.
+  function saveCheckpoint(visitStart) {
     try {
       chrome.runtime.sendMessage({
         type: 'SAVE_THREAD_DATA',
         threadId,
-        data: {}
+        data: { lastVisit: visitStart }
       }).catch(() => {});
     } catch (e) {
       // Extension context invalidated.
@@ -334,9 +344,7 @@
       observer.disconnect();
       observer = null;
     }
-    document.removeEventListener('keydown', handleKeydown);
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
-    window.removeEventListener('pagehide', persistThreadData);
+    window.removeEventListener('keydown', handleKeydown, true);
     window.removeEventListener('popstate', handleUrlChange);
     colorSchemeMedia.removeEventListener('change', handleColorSchemeChange);
   }
@@ -350,34 +358,29 @@
   }
 
   function teardown() {
-    // Save the boundary for the thread we are leaving before resetting state.
-    persistThreadData();
-
     if (observer) {
       observer.disconnect();
       observer = null;
     }
-    document.removeEventListener('keydown', handleKeydown);
+    window.removeEventListener('keydown', handleKeydown, true);
 
     // Clear any highlight/focus markers and processed flags so a re-init for a
     // new SPA-loaded thread starts from a clean DOM.
     document.querySelectorAll(`.${HIGHLIGHT_CLASS}`).forEach(el => {
-      el.classList.remove(HIGHLIGHT_CLASS, 'rnch-focused');
+      el.classList.remove(HIGHLIGHT_CLASS, 'srh-focused');
     });
     document.querySelectorAll(`[${PROCESSED_ATTR}]`).forEach(el => {
       el.removeAttribute(PROCESSED_ATTR);
     });
 
-    const style = document.getElementById('rnch-styles');
+    const style = document.getElementById('srh-styles');
     if (style) style.remove();
 
     highlightedElements = [];
-    currentHighlightIndex = -1;
+    focusedElement = null;
     newCommentCount = 0;
     threadData = null;
     threadId = null;
-    threadPersisted = false;
-    threadLoadFailed = false;
     initialized = false;
     // Invalidate any init() still waiting on a message round-trip.
     initGeneration++;
@@ -387,6 +390,12 @@
   async function init() {
     if (initialized) return;
 
+    // On the first run the visit started at navigation start (before the HTML
+    // was fetched), so a reply posted while the page loaded is not skipped.
+    // After an SPA navigation timeOrigin is stale, so use the current time.
+    const visitStart = firstInit ? Math.floor(performance.timeOrigin) : Date.now();
+    firstInit = false;
+
     const version = detectRedditVersion();
     if (version === RedditVersion.UNKNOWN) return;
 
@@ -394,8 +403,6 @@
     if (!id) return;
 
     threadId = id;
-    threadPersisted = false;
-    threadLoadFailed = false;
     initialized = true;
     const generation = initGeneration;
 
@@ -422,14 +429,13 @@
     }
     if (generation !== initGeneration) return;
     threadData = loadedThreadData;
-    threadLoadFailed = loadFailed;
+    // If the previous checkpoint could not be read, saving would overwrite it.
+    if (!loadFailed) saveCheckpoint(visitStart);
 
     injectHighlightStyles();
     highlightComments(version);
     setupMutationObserver(version);
     setupKeyboardNavigation();
-    // NOTE: the last-visit boundary is intentionally persisted on page-leave
-    // (see persistThreadData / pagehide / visibilitychange), not here.
   }
 
   // --- SPA navigation handling ----------------------------------------------
@@ -492,24 +498,11 @@
 
   // --- One-time, page-lifetime listeners (registered once, never duplicated) -
 
-  function handleVisibilityChange() {
-    if (document.visibilityState === 'hidden') {
-      persistThreadData();
-    } else {
-      // Back on the page (tab switch, bfcache restore): record the next hide.
-      threadPersisted = false;
-    }
-  }
-
   function installGlobalListeners() {
     colorSchemeMedia.addEventListener('change', handleColorSchemeChange);
     chrome.storage.onChanged.addListener(handleStorageChanged);
-
-    // Persist the read boundary when the user leaves/hides the page. pagehide
-    // covers tab close / full navigation; visibilitychange->hidden is the
-    // reliable signal on mobile and bfcache cases.
-    window.addEventListener('pagehide', persistThreadData);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Toolbar icon click (background.js).
+    chrome.runtime.onMessage.addListener(handleMessage);
 
     // The time-based theme can flip while the page stays open.
     colorRefreshTimer = setInterval(() => {

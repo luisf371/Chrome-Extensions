@@ -22,7 +22,7 @@
 | [**sExport**](./sExport) | Extension | Data export tool |
 | [**sGesture**](./sGesture) | Extension | Mouse gesture navigation |
 | [**sNeatBookmarks**](./sNeatBookmarks) | Extension | Bookmark organizer |
-| [**sRedditHighlighter**](./sRedditHighlighter) | Extension | Reddit New Comments Highlighter |
+| [**sRedditHighlighter**](./sRedditHighlighter) | Extension | Highlights new Reddit comments since your last visit |
 | [**sSummarizer**](./sSummarizer) | Extension | Content summarization tool |
 | [**sTabControl**](./sTabControl) | Extension | Tab management utility |
 | [**sUndoClose**](./sUndoClose) | Extension | Undo closed tabs helper |

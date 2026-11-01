@@ -1,5 +1,5 @@
 /**
- * Reddit New Comments Highlighter - Service Worker
+ * sRedditHighlighter - Service Worker
  * MV3 Background Script
  */
 
@@ -18,7 +18,7 @@ const DEFAULT_SETTINGS = {
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     await chrome.storage.local.set({ settings: DEFAULT_SETTINGS, threads: {} });
-    console.log('[RNCH] Extension installed, defaults set');
+    console.log('[sRedditHighlighter] Extension installed, defaults set');
   }
 });
 
@@ -77,10 +77,12 @@ function saveThreadData(threadId, data) {
 async function writeThreadData(threadId, data) {
   const { threads = {}, settings = DEFAULT_SETTINGS } = await chrome.storage.local.get(['threads', 'settings']);
   
-  // Add/update the thread
+  // Add/update the thread; the content script sends the visit start, which is
+  // never allowed to lie in the future.
+  const now = Date.now();
   threads[threadId] = {
     ...data,
-    lastVisit: Date.now(),
+    lastVisit: Number.isFinite(data?.lastVisit) ? Math.min(data.lastVisit, now) : now,
   };
   
   // Prune old entries if over limit
@@ -103,6 +105,12 @@ async function writeThreadData(threadId, data) {
   await chrome.storage.local.set({ threads });
   return { success: true };
 }
+
+// Toolbar icon: jump to the next new comment, wrapping back to the first after
+// the last. Rejects harmlessly on tabs without the content script.
+chrome.action.onClicked.addListener((tab) => {
+  if (tab.id) chrome.tabs.sendMessage(tab.id, { type: 'NEXT_NEW_COMMENT' }).catch(() => {});
+});
 
 // Clear badge when tab is closed or navigated away
 chrome.tabs.onRemoved.addListener((tabId) => {

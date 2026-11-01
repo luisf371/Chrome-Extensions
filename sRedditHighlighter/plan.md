@@ -1,4 +1,4 @@
-# Reddit New Comments Highlighter - MV3 Modernization Plan
+# sRedditHighlighter - MV3 Modernization Plan
 
 ## Deep Analysis Summary
 

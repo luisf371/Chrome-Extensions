@@ -4,6 +4,7 @@
 .serena/
 plan_api_ignore/
 internaldocs/
+.agents/
 
 # === OS / System files ===
 .DS_Store

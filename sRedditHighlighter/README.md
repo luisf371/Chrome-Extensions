@@ -5,7 +5,7 @@
 ![Language: JavaScript](https://img.shields.io/badge/Language-JavaScript-F7DF1E.svg)
 ![Version: 4.0.0](https://img.shields.io/badge/Version-4.0.0-green.svg)
 
-Reddit New Comments Highlighter automatically tracks and highlights any new comments added to a thread since your last visit. It works seamlessly across old Reddit, new Reddit, and the standard redesign.
+sRedditHighlighter automatically tracks and highlights any new comments added to a thread since your last visit. It works seamlessly across old Reddit, new Reddit, and the standard redesign.
 
 ## Key Features
 
