@@ -63,7 +63,7 @@ async function getThreadData(threadId) {
 }
 
 // Saves run one at a time: each one reads and rewrites the whole threads map,
-// so overlapping saves (several tabs closing together) would drop each other's
+// so overlapping saves (several tabs loading together) would drop each other's
 // updates.
 let saveQueue = Promise.resolve();
 
