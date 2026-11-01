@@ -1,3 +1,19 @@
+async function switchTab(step) {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tabs.length > 0) {
+    const currentTab = tabs[0];
+    const allTabs = await chrome.tabs.query({ currentWindow: true });
+    if (allTabs.length > 1) {
+      const currentIndex = allTabs.findIndex(tab => tab.id === currentTab.id);
+      const targetIndex = (currentIndex + step + allTabs.length) % allTabs.length;
+      await chrome.tabs.update(allTabs[targetIndex].id, { active: true });
+      return "tab switched";
+    }
+    return "only one tab open";
+  }
+  return "no active tab";
+}
+
 const commands = {
   newtab: async () => {
     await chrome.tabs.create({});
@@ -20,39 +36,12 @@ const commands = {
     }
     return "no active tab to close";
   },
-  colorCode: async () => {
-    const result = await chrome.storage.local.get("colorCode");
-    return result.colorCode;
-  },
-  width: async () => {
-    const result = await chrome.storage.local.get("width");
-    return result.width;
-  },
-  gests: async () => {
-    const items = await chrome.storage.local.get(null);
-    const gests = {};
-    for (const key in items) {
-      if (key === "colorCode" || key === "width") continue;
-      gests[key] = items[key];
-    }
-    return gests;
-  },
-  rocker: async () => {
-    const result = await chrome.storage.local.get("rocker");
-    return result.rocker;
-  },
-  trail: async () => {
-    const result = await chrome.storage.local.get("trail");
-    return result.trail;
-  },
   lasttab: async () => {
     const sessions = await chrome.sessions.getRecentlyClosed({ maxResults: 1 });
-    if (sessions.length > 0 && sessions[0].tab) {
-      const url = sessions[0].tab.url;
-      // Basic validation: prevent reopening chrome:// or javascript: URLs directly if problematic, 
-      // though chrome.tabs.create usually handles them safely or errors out.
-      // We'll proceed but this is the place to add logic if needed.
-      await chrome.tabs.create({ url: url });
+    if (sessions.length > 0) {
+      // restore() reopens the most recent tab or window with its back/forward
+      // history and needs no "tabs" permission (unlike reading tab.url).
+      await chrome.sessions.restore();
       return "tab opened";
     }
     return "no recently closed tab found";
@@ -65,36 +54,8 @@ const commands = {
     }
     return "no tabs to reload";
   },
-  nexttab: async () => {
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tabs.length > 0) {
-      const currentTab = tabs[0];
-      const allTabs = await chrome.tabs.query({ currentWindow: true });
-      if (allTabs.length > 1) {
-        const currentIndex = allTabs.findIndex(tab => tab.id === currentTab.id);
-        const nextIndex = (currentIndex + 1) % allTabs.length;
-        await chrome.tabs.update(allTabs[nextIndex].id, { active: true });
-        return "tab switched";
-      }
-      return "only one tab open";
-    }
-    return "no active tab";
-  },
-  prevtab: async () => {
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tabs.length > 0) {
-      const currentTab = tabs[0];
-      const allTabs = await chrome.tabs.query({ currentWindow: true });
-      if (allTabs.length > 1) {
-        const currentIndex = allTabs.findIndex(tab => tab.id === currentTab.id);
-        const prevIndex = (currentIndex - 1 + allTabs.length) % allTabs.length;
-        await chrome.tabs.update(allTabs[prevIndex].id, { active: true });
-        return "tab switched";
-      }
-      return "only one tab open";
-    }
-    return "no active tab";
-  },
+  nexttab: () => switchTab(1),
+  prevtab: () => switchTab(-1),
   closeback: async () => {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tabs.length > 0) {
@@ -119,15 +80,10 @@ const commands = {
       return "window closed";
     }
     return "no window to close";
-  },
-  ping: async () => {
-    return "pong";
   }
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('Received message:', request.msg);
-  
   const handler = commands[request.msg];
   if (handler) {
     handler(request)

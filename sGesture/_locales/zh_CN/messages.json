@@ -159,16 +159,8 @@
     "message": "重新打开最近关闭的标签页",
     "description": "Reopen last tab action"
   },
-  "btnSave": {
-    "message": "保存配置",
-    "description": "Save button text"
-  },
   "statusSaved": {
     "message": "配置已保存",
     "description": "Save success message"
-  },
-  "statusError": {
-    "message": "保存配置时出错",
-    "description": "Save error message"
   }
 }

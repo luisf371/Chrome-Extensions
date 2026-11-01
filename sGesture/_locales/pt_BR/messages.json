@@ -159,16 +159,8 @@
     "message": "Reabrir última guia fechada",
     "description": "Reopen last tab action"
   },
-  "btnSave": {
-    "message": "Salvar configuração",
-    "description": "Save button text"
-  },
   "statusSaved": {
     "message": "Configuração salva",
     "description": "Save success message"
-  },
-  "statusError": {
-    "message": "Erro ao salvar configuração",
-    "description": "Save error message"
   }
 }

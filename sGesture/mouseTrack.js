@@ -1,8 +1,7 @@
 (function() {
   const state = {
-    rmousedown: false,
+    rmousedown: false, // a right-button gesture started in this frame
     moved: false,
-    lmousedown: false,
     rocker: false,
     trail: false,
     rockerRL: "back",
@@ -118,7 +117,6 @@
     };
 
     if (actions[action]) {
-      console.log(`sGesture: Executing action: ${action}`);
       actions[action]();
     } else {
       console.warn("sGesture: Unknown action:", action);
@@ -131,7 +129,7 @@
       return;
     }
 
-    chrome.runtime.sendMessage(Object.assign({ msg: msg }, extra), (response) => {
+    chrome.runtime.sendMessage(Object.assign({ msg: msg }, extra), () => {
       if (chrome.runtime.lastError) {
         console.error('sGesture: Error in sendChromeMessage:', chrome.runtime.lastError.message);
       }
@@ -154,7 +152,6 @@
         state.trail = result.trail === true;
         state.rockerRL = result.rockerRL || "back";
         state.rockerLR = result.rockerLR || "forward";
-        console.log("sGesture: Options loaded", state);
       });
     } catch (e) {
       console.error("sGesture: Error loading options: ", e);
@@ -162,27 +159,29 @@
   }
 
   function initEventListeners() {
-    document.addEventListener('mousedown', (event) => {
+    // Read the live button state (event.buttons: 1 = left, 2 = right) instead of
+    // tracking it from mouseup: mouseup is never sent after a drag-and-drop or
+    // when the context menu opens on mousedown (Mac/Linux), which left a stale
+    // flag that turned the next plain click into a rocker action. Window capture
+    // also sees events the page stops from propagating.
+    window.addEventListener('mousedown', (event) => {
       // Ignore script-synthesized events: a page could otherwise dispatch fake
       // mouse events to forge a gesture and trigger destructive tab commands
       // (closeall/closetab/reloadall) without any real user interaction.
       if (!event.isTrusted) return;
       if (event.button === 0) { // Left-click
-        state.lmousedown = true;
-        if (state.rmousedown && state.rocker) {
+        if ((event.buttons & 2) && state.rocker) {
           // R->L rocker gesture
           handleAction(state.rockerRL);
           state.rocked = true;
-          console.log("sGesture: Rocker (R->L) detected. state.rocked = true");
           event.preventDefault();
         }
       } else if (event.button === 2) { // Right-click
         state.rmousedown = true;
-        if (state.lmousedown && state.rocker) {
+        if ((event.buttons & 1) && state.rocker) {
           // L->R rocker gesture
           handleAction(state.rockerLR);
           state.rocked = true;
-          console.log("sGesture: Rocker (L->R) detected. state.rocked = true");
           event.preventDefault();
         } else {
           // Start of a normal gesture.
@@ -205,11 +204,12 @@
           state.link = event.target.closest('a') ? event.target.closest('a').href : null;
         }
       }
-    });
+    }, true);
 
-    document.addEventListener('mousemove', (event) => {
+    window.addEventListener('mousemove', (event) => {
       if (!event.isTrusted) return;
-      if (state.rmousedown && !state.lmousedown && !state.skip) { // Right button down (not left), outside editable fields
+      if (!(event.buttons & 2)) state.rmousedown = false; // right button was released without a mouseup
+      if (state.rmousedown && !(event.buttons & 1) && !state.skip) { // Right button down (not left), outside editable fields
         state.ny = event.clientY;
         state.nx = event.clientX;
         const r = Math.sqrt(Math.pow(state.nx - state.mx, 2) + Math.pow(state.ny - state.my, 2));
@@ -236,20 +236,15 @@
           state.my = state.ny;
         }
       }
-    });
+    }, true);
 
-    document.addEventListener('mouseup', (event) => {
+    window.addEventListener('mouseup', (event) => {
       if (!event.isTrusted) return;
-      const wasRocked = state.rocked;
-      console.log(`sGesture: mouseup event.button: ${event.button}, wasRocked: ${wasRocked}, state.rocked: ${state.rocked}`);
-
-      if (event.button === 0) { // Left-click up
-        state.lmousedown = false;
-      } else if (event.button === 2) { // Right-click up
-        state.rmousedown = false;
-        if (state.moved && !state.rocked) {
+      if (event.button === 2) { // Right-click up
+        if (state.rmousedown && state.moved && !state.rocked) {
           exeFunc();
         }
+        state.rmousedown = false;
         if (canvas) {
           canvas.style.display = 'none';
         }
@@ -261,21 +256,22 @@
       }
 
       // Prevent default action if a rocker gesture was performed
-      if (wasRocked) {
+      if (state.rocked) {
         event.preventDefault();
       }
-    });
+    }, true);
 
-    document.addEventListener('contextmenu', (event) => {
-      console.log(`sGesture: contextmenu event. state.rocked: ${state.rocked}, state.moved: ${state.moved}`);
+    window.addEventListener('contextmenu', (event) => {
       if (state.rocked || state.moved) {
         event.preventDefault();
-        event.stopPropagation(); // Add this line
+        event.stopPropagation();
         state.rocked = false; // Reset after preventing context menu
         state.moved = false;  // Reset after preventing context menu
-        return false;
+        return;
       }
-    });
+      // The native menu is opening (on Mac/Linux before mouseup), so the gesture is over.
+      state.rmousedown = false;
+    }, true);
 
     window.addEventListener('resize', () => {
       if (canvas) {

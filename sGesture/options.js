@@ -38,12 +38,8 @@ function initI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     const message = chrome.i18n.getMessage(key);
-    if (message) {
-      if (el.children.length === 0) {
-        el.textContent = message;
-      } else if (el.tagName === 'OPTION') {
-        el.textContent = message;
-      }
+    if (message && el.children.length === 0) {
+      el.textContent = message;
     }
   });
   
@@ -165,7 +161,6 @@ function saveOptions() {
 
   // Save all at once
   chrome.storage.local.set(settings, () => {
-    console.log("Settings saved:", settings);
     const msg = chrome.i18n.getMessage('statusSaved') || 'Saved';
     showToast(msg, 'success');
   });
@@ -196,8 +191,6 @@ function restoreOptions() {
   const settingsToGet = ["colorCode", "width", "rocker", "trail", ...gestures, "rockerRL", "rockerLR"];
   
   chrome.storage.local.get(settingsToGet, (result) => {
-    console.log("Restored options:", result);
-
     // Restore color
     const colorSelect = document.getElementById("color");
     const colorCode = result.colorCode || "FF3300";
@@ -234,8 +227,6 @@ function restoreOptions() {
 // Initialize
 // =====================
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("Options page loaded");
-  
   // Detect popup mode
   if (new URLSearchParams(location.search).has('popup')) {
     document.body.classList.add('popup');
