@@ -109,9 +109,6 @@
    "general": {
       "message": "Paramètres généraux"
    },
-   "ignore": {
-      "message": "Ignorer"
-   },
    "name": {
       "description": "Nom du signet ou du dossier.",
       "message": "Nom"
@@ -178,72 +175,6 @@
    "statusSaved": {
       "message": "Enregistré"
    },
-   "optionsFooterText1": {
-      "description": "Texte de pied de page pour la page Options",
-      "message": "Contactez le développeur à $neatEmail$",
-      "placeholders": {
-         "neatEmail": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText2": {
-      "message": "$extName$ est open source ! $neatGithub$",
-      "placeholders": {
-         "extName": {
-            "content": "$1"
-         },
-         "neatGithub": {
-            "content": "$2"
-         }
-      }
-   },
-   "optionsFooterText3": {
-      "message": "FAQ : $neatFaq$",
-      "placeholders": {
-         "neatFaq": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText4": {
-      "message": "Voir les problèmes ou en signaler un nouveau : $neatIssues$",
-      "placeholders": {
-         "neatIssues": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText5": {
-      "message": "Parcourir les icônes personnalisées : $neatIcons$",
-      "placeholders": {
-         "neatIcons": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText6": {
-      "message": "Aidez à traduire $extName$ sur $neatTranslate$",
-      "placeholders": {
-         "extName": {
-            "content": "$1"
-         },
-         "neatTranslate": {
-            "content": "$2"
-         }
-      }
-   },
-   "optionsFooterText7": {
-      "message": "Basé sur $neatGithub$ par $linkCheeAun$",
-      "placeholders": {
-         "linkCheeAun": {
-            "content": "$2"
-         },
-         "neatGithub": {
-            "content": "$1"
-         }
-      }
-   },
    "parentFolder": {
       "description": "Information du dossier parent affichée dans l'infobulle des signets dans la liste des résultats de recherche.",
       "message": "Dossier parent : \"$folderName$\"",
@@ -253,9 +184,6 @@
             "example": "Barre de favoris"
          }
       }
-   },
-   "reportError": {
-      "message": "Signaler l'erreur"
    },
    "reportedToDeveloper": {
       "description": "Message indiquant qu'une erreur dans l'extension a été signalée au développeur.",

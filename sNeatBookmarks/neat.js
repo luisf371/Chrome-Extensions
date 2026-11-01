@@ -344,7 +344,7 @@
             // folders have no url, only show real bookmarks
             results = results.filter(function(r){ return r.url; });
             const v = value.toLowerCase();
-            let vPattern = new RegExp('^' + Utils.escapeRegExp(value).replace(/\s+/g, '.*'), 'i');
+            const vPattern = new RegExp('^' + Utils.escapeRegExp(value).replace(/\s+/g, '.*'), 'i');
             if (results.length > 1){
                 results.sort(function(a, b){
                     const aTitle = a.title;
@@ -396,9 +396,6 @@
                     });
                 });
             });
-
-            results = null;
-            vPattern = null;
         }).catch(console.error);
     };
     searchInput.addEventListener('input', search);
@@ -530,7 +527,7 @@
     });
 
     // Edit dialog
-    const EditDialog = window.EditDialog = {
+    const EditDialog = {
         open: function(opts){
             if (!opts) return;
             $('edit-dialog-text').innerHTML = Utils.widont(opts.dialog);
@@ -1224,12 +1221,9 @@
                 var id = li.id.replace(/(neat\-tree|results)\-item\-/, '');
                 actions.editBookmarkFolder(id);
                 break;
-            case 'Delete': // delete
-                break; // don't run 'default'
             default:
                 if (e.key.length === 1) {
                     const key = e.key;
-                    if (!key) return;
                     if (key != keyBuffer) keyBuffer += key;
                     clearTimeout(keyBufferTimer);
                     keyBufferTimer = setTimeout(function(){ keyBuffer = ''; }, 500);

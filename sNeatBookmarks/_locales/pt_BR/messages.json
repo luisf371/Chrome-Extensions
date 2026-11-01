@@ -109,9 +109,6 @@
    "general": {
       "message": "Configurações Gerais"
    },
-   "ignore": {
-      "message": "Ignorar"
-   },
    "name": {
       "description": "Nome do favorito ou pasta.",
       "message": "Nome"
@@ -178,72 +175,6 @@
    "statusSaved": {
       "message": "Salvo"
    },
-   "optionsFooterText1": {
-      "description": "Texto de rodapé para a página de Opções",
-      "message": "Entre em contato com o desenvolvedor em $neatEmail$",
-      "placeholders": {
-         "neatEmail": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText2": {
-      "message": "$extName$ é código aberto! $neatGithub$",
-      "placeholders": {
-         "extName": {
-            "content": "$1"
-         },
-         "neatGithub": {
-            "content": "$2"
-         }
-      }
-   },
-   "optionsFooterText3": {
-      "message": "Perguntas frequentes: $neatFaq$",
-      "placeholders": {
-         "neatFaq": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText4": {
-      "message": "Ver problemas ou reportar um novo: $neatIssues$",
-      "placeholders": {
-         "neatIssues": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText5": {
-      "message": "Explorar ícones personalizados: $neatIcons$",
-      "placeholders": {
-         "neatIcons": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText6": {
-      "message": "Ajude a traduzir $extName$ em $neatTranslate$",
-      "placeholders": {
-         "extName": {
-            "content": "$1"
-         },
-         "neatTranslate": {
-            "content": "$2"
-         }
-      }
-   },
-   "optionsFooterText7": {
-      "message": "Baseado em $neatGithub$ por $linkCheeAun$",
-      "placeholders": {
-         "linkCheeAun": {
-            "content": "$2"
-         },
-         "neatGithub": {
-            "content": "$1"
-         }
-      }
-   },
    "parentFolder": {
       "description": "Informação da pasta pai exibida na dica de ferramenta dos favoritos na lista de resultados de pesquisa.",
       "message": "Pasta pai: \"$folderName$\"",
@@ -253,9 +184,6 @@
             "example": "Barra de favoritos"
          }
       }
-   },
-   "reportError": {
-      "message": "Reportar Erro"
    },
    "reportedToDeveloper": {
       "description": "Mensagem indicando que um erro na extensão foi reportado ao desenvolvedor.",

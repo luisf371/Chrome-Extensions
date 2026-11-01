@@ -21,8 +21,7 @@ const Utils = {
         const inserters = {
             before: (context, element) => element.parentNode?.insertBefore(context, element),
             after: (context, element) => element.parentNode?.insertBefore(context, element.nextSibling),
-            bottom: (context, element) => element.appendChild(context),
-            top: (context, element) => element.insertBefore(context, element.firstChild)
+            bottom: (context, element) => element.appendChild(context)
         };
         inserters[where](el, target);
         return el;
