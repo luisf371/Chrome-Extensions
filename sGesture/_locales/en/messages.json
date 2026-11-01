@@ -159,16 +159,8 @@
     "message": "Re-open Last Closed Tab",
     "description": "Reopen last tab action"
   },
-  "btnSave": {
-    "message": "Save Configuration",
-    "description": "Save button text"
-  },
   "statusSaved": {
     "message": "Configuration Saved",
     "description": "Save success message"
-  },
-  "statusError": {
-    "message": "Error saving configuration",
-    "description": "Save error message"
   }
 }

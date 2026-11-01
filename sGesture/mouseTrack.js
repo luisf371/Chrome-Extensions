@@ -117,7 +117,6 @@
     };
 
     if (actions[action]) {
-      console.log(`sGesture: Executing action: ${action}`);
       actions[action]();
     } else {
       console.warn("sGesture: Unknown action:", action);
@@ -130,7 +129,7 @@
       return;
     }
 
-    chrome.runtime.sendMessage(Object.assign({ msg: msg }, extra), (response) => {
+    chrome.runtime.sendMessage(Object.assign({ msg: msg }, extra), () => {
       if (chrome.runtime.lastError) {
         console.error('sGesture: Error in sendChromeMessage:', chrome.runtime.lastError.message);
       }
@@ -153,7 +152,6 @@
         state.trail = result.trail === true;
         state.rockerRL = result.rockerRL || "back";
         state.rockerLR = result.rockerLR || "forward";
-        console.log("sGesture: Options loaded", state);
       });
     } catch (e) {
       console.error("sGesture: Error loading options: ", e);
@@ -176,7 +174,6 @@
           // R->L rocker gesture
           handleAction(state.rockerRL);
           state.rocked = true;
-          console.log("sGesture: Rocker (R->L) detected. state.rocked = true");
           event.preventDefault();
         }
       } else if (event.button === 2) { // Right-click
@@ -185,7 +182,6 @@
           // L->R rocker gesture
           handleAction(state.rockerLR);
           state.rocked = true;
-          console.log("sGesture: Rocker (L->R) detected. state.rocked = true");
           event.preventDefault();
         } else {
           // Start of a normal gesture.
@@ -244,9 +240,6 @@
 
     window.addEventListener('mouseup', (event) => {
       if (!event.isTrusted) return;
-      const wasRocked = state.rocked;
-      console.log(`sGesture: mouseup event.button: ${event.button}, wasRocked: ${wasRocked}, state.rocked: ${state.rocked}`);
-
       if (event.button === 2) { // Right-click up
         if (state.rmousedown && state.moved && !state.rocked) {
           exeFunc();
@@ -263,19 +256,18 @@
       }
 
       // Prevent default action if a rocker gesture was performed
-      if (wasRocked) {
+      if (state.rocked) {
         event.preventDefault();
       }
     }, true);
 
     window.addEventListener('contextmenu', (event) => {
-      console.log(`sGesture: contextmenu event. state.rocked: ${state.rocked}, state.moved: ${state.moved}`);
       if (state.rocked || state.moved) {
         event.preventDefault();
-        event.stopPropagation(); // Add this line
+        event.stopPropagation();
         state.rocked = false; // Reset after preventing context menu
         state.moved = false;  // Reset after preventing context menu
-        return false;
+        return;
       }
       // The native menu is opening (on Mac/Linux before mouseup), so the gesture is over.
       state.rmousedown = false;

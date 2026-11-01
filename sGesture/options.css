@@ -12,7 +12,6 @@
   --text-secondary: #a0a0a6;
   --text-muted: #666670;
   --accent: #4a9eff;
-  --accent-hover: #6aafff;
   --border: #3a3a42;
   --border-dark: #2a2a32;
   --success: #5cb85c;
@@ -30,7 +29,6 @@
   --text-secondary: #555555;
   --text-muted: #888888;
   --accent: #2568c4;
-  --accent-hover: #1a4f99;
   --border: #b0b0b0;
   --border-dark: #999999;
   --toggle-bg: #cccccc;
@@ -404,70 +402,6 @@ input:focus + .toggle-slider {
   color: var(--text-primary);
 }
 
-/* Footer */
-footer {
-  padding: 12px 15px;
-  border-top: 1px solid var(--border);
-  background: var(--bg-card);
-  border-radius: 0 0 6px 6px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Button */
-.btn {
-  padding: 6px 16px;
-  border: 1px solid var(--border);
-  font-size: 12px;
-  font-family: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: 3px;
-}
-
-.btn-primary {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-  flex: 1;
-  text-align: center;
-}
-
-.btn-primary:hover {
-  background: var(--accent-hover);
-}
-
-.btn-primary:active {
-  background: var(--accent);
-}
-
-/* Status */
-.status-message {
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  text-align: center;
-  border-radius: 3px;
-}
-
-.status-message.success {
-  background: #1a3a1a;
-  border: 1px solid var(--success);
-  color: var(--success);
-}
-
-.status-message.error {
-  background: #3a1a1a;
-  border: 1px solid var(--error);
-  color: var(--error);
-}
-
-.status-message:empty {
-  display: none;
-}
-
 /* Toast Notification */
 .toast {
   position: fixed;
@@ -594,11 +528,6 @@ footer {
 
 .rocker-arrow {
   color: var(--text-muted);
-}
-
-.rocker-action {
-  color: var(--text-primary);
-  font-weight: 500;
 }
 
 .rocker-select {

@@ -159,16 +159,8 @@
     "message": "Reabrir última pestaña cerrada",
     "description": "Reopen last tab action"
   },
-  "btnSave": {
-    "message": "Guardar configuración",
-    "description": "Save button text"
-  },
   "statusSaved": {
     "message": "Configuración guardada",
     "description": "Save success message"
-  },
-  "statusError": {
-    "message": "Error al guardar configuración",
-    "description": "Save error message"
   }
 }

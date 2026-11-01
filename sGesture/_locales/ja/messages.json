@@ -159,16 +159,8 @@
     "message": "最後に閉じたタブを再度開く",
     "description": "Reopen last tab action"
   },
-  "btnSave": {
-    "message": "設定を保存",
-    "description": "Save button text"
-  },
   "statusSaved": {
     "message": "設定を保存しました",
     "description": "Save success message"
-  },
-  "statusError": {
-    "message": "設定の保存中にエラーが発生しました",
-    "description": "Save error message"
   }
 }

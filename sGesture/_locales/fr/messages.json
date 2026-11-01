@@ -159,16 +159,8 @@
     "message": "Rouvrir le dernier onglet fermé",
     "description": "Reopen last tab action"
   },
-  "btnSave": {
-    "message": "Enregistrer la configuration",
-    "description": "Save button text"
-  },
   "statusSaved": {
     "message": "Configuration enregistrée",
     "description": "Save success message"
-  },
-  "statusError": {
-    "message": "Erreur lors de l'enregistrement",
-    "description": "Save error message"
   }
 }
