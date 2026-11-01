@@ -83,13 +83,6 @@ function windowsUpdate(windowId, options) {
   return chromePromisify(chrome.windows.update, windowId, options);
 }
 
-function safeTabTitle(tab) {
-  const title = (tab?.title ?? "").trim();
-  if (title) return title;
-  const url = (tab?.pendingUrl ?? tab?.url ?? "").trim();
-  return url || "(untitled)";
-}
-
 function toBase64Utf8(text) {
   const bytes = new TextEncoder().encode(text);
   let binary = "";
@@ -111,7 +104,6 @@ async function downloadTextFile({ text, filename }) {
       filename,
       saveAs: true
     });
-    return { method: "blob" };
   } catch {
     const b64 = toBase64Utf8(text);
     const dataUrl = `data:text/plain;charset=utf-8;base64,${b64}`;
@@ -120,7 +112,6 @@ async function downloadTextFile({ text, filename }) {
       filename,
       saveAs: true
     });
-    return { method: "data-base64" };
   } finally {
     // Delay revoke so the downloads manager has time to read the blob.
     setTimeout(() => URL.revokeObjectURL(blobUrl), 2 * 60 * 1000);
@@ -383,15 +374,15 @@ async function restoreFromExportText(windowsSpec) {
   let lastCreatedWindowId = null;
 
   for (const winSpec of windowsSpec) {
-    const allTabs = winSpec.groups.flatMap((g) => g.tabs);
-    const restorableTabsCount = allTabs.reduce((n, t) => n + (isRestorableUrl(t.url) ? 1 : 0), 0);
-    if (restorableTabsCount === 0) {
-      skippedTabs += allTabs.length;
-      continue;
-    }
+    // Build a flat ordered list matching the export ordering.
+    const orderedTabs = winSpec.groups.flatMap((g, groupIndex) => g.tabs.map((t) => ({ ...t, groupIndex })));
+    const restorableOrderedTabs = orderedTabs.filter((t) => isRestorableUrl(t.url));
+    skippedTabs += orderedTabs.length - restorableOrderedTabs.length;
+    if (restorableOrderedTabs.length === 0) continue;
 
     const createdWin = await windowsCreate({
-      type: WINDOW_TYPES.includes(winSpec.type) ? winSpec.type : "normal",
+      // parseExportTxt already restricts type to WINDOW_TYPES.
+      type: winSpec.type,
       // Create unfocused; focus is applied once after all windows are created.
       focused: false
     });
@@ -407,29 +398,12 @@ async function restoreFromExportText(windowsSpec) {
     /** @type {{tabId:number, groupIndex:number, pinned:boolean}[]} */
     const created = [];
 
-    // Build a flat ordered list matching the export ordering.
-    const orderedTabs = [];
-    let groupIndex = -1;
-    for (const g of winSpec.groups) {
-      groupIndex += 1;
-      for (const t of g.tabs) {
-        orderedTabs.push({ ...t, groupIndex });
-      }
-    }
-
-    if (orderedTabs.length === 0) {
-      continue;
-    }
-
-    const restorableOrderedTabs = orderedTabs.filter((t) => isRestorableUrl(t.url));
-    skippedTabs += orderedTabs.length - restorableOrderedTabs.length;
-
     let seedReused = false;
     let createdTabsThisWindow = 0;
     let tabsToCreate = restorableOrderedTabs;
 
     // Try to re-use the seed tab for the first restorable tab.
-    if (seedTab?.id && restorableOrderedTabs.length > 0) {
+    if (seedTab?.id) {
       const first = restorableOrderedTabs[0];
       try {
         await tabsUpdate(seedTab.id, { url: first.url, pinned: !!first.pinned });
@@ -440,8 +414,6 @@ async function restoreFromExportText(windowsSpec) {
         tabsToCreate = restorableOrderedTabs.slice(1);
       } catch (e) {
         errors.push(`Seed tab failed (${first.url}): ${String(e?.message ?? e)}`);
-        seedReused = false;
-        tabsToCreate = restorableOrderedTabs;
       }
     }
 
@@ -490,10 +462,9 @@ async function restoreFromExportText(windowsSpec) {
         const update = {};
         if (g.title) update.title = g.title;
         if (g.color && g.color !== "none") update.color = g.color;
-        if (typeof g.collapsed === "boolean") update.collapsed = g.collapsed;
-        if (Object.keys(update).length > 0) {
-          await tabGroupsUpdate(newGroupId, update);
-        }
+        // collapsed is always a boolean from parseExportTxt, so there is always something to update.
+        update.collapsed = g.collapsed;
+        await tabGroupsUpdate(newGroupId, update);
       } catch (e) {
         errors.push(`Group restore failed (${g.title || "Group"}): ${String(e?.message ?? e)}`);
       }
