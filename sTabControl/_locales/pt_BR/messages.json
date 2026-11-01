@@ -7,14 +7,6 @@
     "message": "Assuma o controle de suas abas. Escolha onde novas abas aparecem, gerencie o foco após o fechamento e bloqueie abas duplicadas.",
     "description": "Extension description"
   },
-  "popupDescription": {
-    "message": "Gerenciando suas guias em segundo plano.",
-    "description": "Popup description text"
-  },
-  "btnOpenSettings": {
-    "message": "Abrir configurações",
-    "description": "Button to open options page"
-  },
   "optionsTitle": {
     "message": "Configuração",
     "description": "Options page title"
@@ -78,10 +70,6 @@
   "statusSaved": {
     "message": "Configuração salva",
     "description": "Save success message"
-  },
-  "themeToggle": {
-    "message": "Tema",
-    "description": "Theme toggle button"
   },
   "optPreventDuplicates": {
     "message": "Evitar guias duplicadas",

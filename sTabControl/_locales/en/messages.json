@@ -7,14 +7,6 @@
     "message": "Take control of your tabs. Choose where new tabs appear, handle focus after closing, and block duplicate tabs.",
     "description": "Extension description"
   },
-  "popupDescription": {
-    "message": "Managing your tabs in the background.",
-    "description": "Popup description text"
-  },
-  "btnOpenSettings": {
-    "message": "Open Settings",
-    "description": "Button to open options page"
-  },
   "optionsTitle": {
     "message": "Configuration",
     "description": "Options page title"
@@ -94,10 +86,6 @@
   "footerExtensionName": {
     "message": "Extension Name:",
     "description": "Footer extension name label"
-  },
-  "themeToggle": {
-    "message": "Theme",
-    "description": "Theme toggle button"
   },
   "optPreventDuplicates": {
     "message": "Prevent duplicate tabs",

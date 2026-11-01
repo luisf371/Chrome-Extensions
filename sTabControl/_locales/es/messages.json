@@ -7,14 +7,6 @@
     "message": "Toma el control de tus pestañas. Elige dónde aparecen las nuevas pestañas, gestiona el enfoque al cerrar y bloquea las pestañas duplicadas.",
     "description": "Extension description"
   },
-  "popupDescription": {
-    "message": "Gestionando tus pestañas en segundo plano.",
-    "description": "Popup description text"
-  },
-  "btnOpenSettings": {
-    "message": "Abrir configuración",
-    "description": "Button to open options page"
-  },
   "optionsTitle": {
     "message": "Configuración",
     "description": "Options page title"
@@ -78,10 +70,6 @@
   "statusSaved": {
     "message": "Configuración guardada",
     "description": "Save success message"
-  },
-  "themeToggle": {
-    "message": "Tema",
-    "description": "Theme toggle button"
   },
   "optPreventDuplicates": {
     "message": "Evitar pestañas duplicadas",

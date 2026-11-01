@@ -8,7 +8,7 @@ const DEFAULT_SETTINGS = Object.freeze({
    duplicateMode: 'teleport'
 });
 
-const SETTING_IDS = ['tabsBehaviour', 'tabsActivate', 'tabsOpenMethod', 'preventDuplicates', 'duplicateMode'];
+const SETTING_IDS = Object.keys(DEFAULT_SETTINGS);
 
 // =====================
 // i18n Support
@@ -17,12 +17,8 @@ function initI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     const message = chrome.i18n.getMessage(key);
-    if (message) {
-      if (el.children.length === 0) {
-        el.textContent = message;
-      } else if (el.tagName === 'OPTION') {
-        el.textContent = message;
-      }
+    if (message && el.children.length === 0) {
+      el.textContent = message;
     }
   });
   

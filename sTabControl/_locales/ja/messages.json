@@ -7,14 +7,6 @@
     "message": "タブを完全にコントロール。新しいタブの表示位置を選択し、閉じた後のフォーカスを管理し、重複タブをブロックします。",
     "description": "Extension description"
   },
-  "popupDescription": {
-    "message": "バックグラウンドでタブを管理しています。",
-    "description": "Popup description text"
-  },
-  "btnOpenSettings": {
-    "message": "設定を開く",
-    "description": "Button to open options page"
-  },
   "optionsTitle": {
     "message": "設定",
     "description": "Options page title"
@@ -78,10 +70,6 @@
   "statusSaved": {
     "message": "設定を保存しました",
     "description": "Save success message"
-  },
-  "themeToggle": {
-    "message": "テーマ",
-    "description": "Theme toggle button"
   },
   "optPreventDuplicates": {
     "message": "重複タブを防止",
