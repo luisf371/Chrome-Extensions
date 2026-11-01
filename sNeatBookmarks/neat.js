@@ -307,7 +307,7 @@
                      btn.textContent = '+';
                  }, 1500);
              });
-        }).catch(console.error);
+        }).catch(actions.showError);
     });
     
     // Force middle clicks to trigger the focus event
@@ -737,7 +737,7 @@
                                 if (li) li.innerHTML = generateBookmarkHTML(title, url);
                             }
                             if (li) li.firstElementChild.focus();
-                        });
+                        }).catch(actions.showError);
                     }
                 });
             });
@@ -757,7 +757,7 @@
                     li2.remove();
                     if (searchMode && nearLi2) nearLi2.querySelector('a, span').focus();
                 }
-            });
+            }).catch(actions.showError);
         },
 
         deleteBookmarks: function(id, bookmarkCount, folderCount){
@@ -781,7 +781,7 @@
                     fn1: function(){
                         chrome.bookmarks.removeTree(id).then(function(){
                             li.remove();
-                        });
+                        }).catch(actions.showError);
                         const nearLi = li.nextElementSibling || li.previousElementSibling;
                         if (nearLi) nearLi.querySelector('a, span').focus();
                     },
@@ -792,7 +792,7 @@
             } else {
                 chrome.bookmarks.removeTree(id).then(function(){
                     li.remove();
-                });
+                }).catch(actions.showError);
                 const nearLi = li.nextElementSibling || li.previousElementSibling;
                 if (nearLi) nearLi.querySelector('a, span').focus();
             }
@@ -1068,7 +1068,11 @@
             // Enter/Space press the button itself, other keys move from its folder row
             if (e.code === 'Enter' || e.code === 'Space') return;
             item = item.parentNode;
-        } else if (!/^(a|span)$/i.test(item.tagName)) item = $tree.querySelector('.focus') || $tree.querySelector('li:first-child>span');
+        } else if (!/^(a|span)$/i.test(item.tagName)){
+            // start from the first row of the list that has focus: the tree is hidden under a search
+            item = this.querySelector('li:first-child>span, li:first-child>a');
+            if (!item) return;
+        }
         let li = item.parentNode;
         let code = e.code;
         const metaKey = e.metaKey;
@@ -1271,8 +1275,8 @@
 
     const treeKeyUp = function(e){
         let item = document.activeElement;
-        if (item.classList.contains('add-bookmark-btn')) return;
-        if (!/^(a|span)$/i.test(item.tagName)) item = $tree.querySelector('.focus') || $tree.querySelector('li:first-child>span');
+        // only delete the row that has focus, never a remembered or hidden one
+        if (!/^(a|span)$/i.test(item.tagName)) return;
         const li = item.parentNode;
         switch (e.code){
             case 'Backspace': // backspace
@@ -1511,6 +1515,11 @@
         dropOverlay.style.left = '-999px';
         canDrop = false;
     };
+    // a refused move must not leave the drag active
+    const onMoveError = function(){
+        onDrop();
+        actions.showError();
+    };
     document.addEventListener('mouseup', function(e){
         if (e.button != 0) return;
         if (!draggedBookmark) return;
@@ -1554,7 +1563,7 @@
                         relevel(draggedBookmarkParent, parseInt(elParent.parentNode.dataset.level), parentId);
                         draggedBookmark.focus();
                         onDrop();
-                    }).catch(onDrop); // a refused move must not leave the drag active
+                    }).catch(onMoveError);
                 }
             });
         } else if (el.tagName == 'SPAN'){
@@ -1584,7 +1593,7 @@
                         relevel(draggedBookmarkParent, parseInt(elParent.parentNode.dataset.level), parentId);
                         draggedBookmark.focus();
                         onDrop();
-                    }).catch(onDrop);
+                    }).catch(onMoveError);
                 });
             } else {
                 chrome.bookmarks.move(draggedID, {
@@ -1600,7 +1609,7 @@
                     }
                     el.focus();
                     onDrop();
-                }).catch(onDrop);
+                }).catch(onMoveError);
             }
         } else {
             onDrop();
