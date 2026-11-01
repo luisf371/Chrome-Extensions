@@ -7,14 +7,6 @@
     "message": "Prenez le contrôle de vos onglets. Choisissez l'emplacement des nouveaux onglets, gérez le focus après la fermeture et bloquez les onglets en double.",
     "description": "Extension description"
   },
-  "popupDescription": {
-    "message": "Gestion de vos onglets en arrière-plan.",
-    "description": "Popup description text"
-  },
-  "btnOpenSettings": {
-    "message": "Ouvrir les paramètres",
-    "description": "Button to open options page"
-  },
   "optionsTitle": {
     "message": "Configuration",
     "description": "Options page title"
@@ -78,10 +70,6 @@
   "statusSaved": {
     "message": "Configuration enregistrée",
     "description": "Save success message"
-  },
-  "themeToggle": {
-    "message": "Thème",
-    "description": "Theme toggle button"
   },
   "optPreventDuplicates": {
     "message": "Empêcher les onglets en double",

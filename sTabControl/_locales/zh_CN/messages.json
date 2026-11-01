@@ -7,14 +7,6 @@
     "message": "掌控您的标签页。选择新标签页出现的位置，处理关闭后的焦点，并拦截重复标签页。",
     "description": "Extension description"
   },
-  "popupDescription": {
-    "message": "在后台管理您的标签页。",
-    "description": "Popup description text"
-  },
-  "btnOpenSettings": {
-    "message": "打开设置",
-    "description": "Button to open options page"
-  },
   "optionsTitle": {
     "message": "配置",
     "description": "Options page title"
@@ -78,10 +70,6 @@
   "statusSaved": {
     "message": "配置已保存",
     "description": "Save success message"
-  },
-  "themeToggle": {
-    "message": "主题",
-    "description": "Theme toggle button"
   },
   "optPreventDuplicates": {
     "message": "防止重复标签页",

@@ -181,10 +181,6 @@ main {
   margin-bottom: 10px;
 }
 
-.section:last-child {
-  margin-bottom: 0;
-}
-
 .section-title {
   font-size: 11px;
   font-weight: 700;
@@ -226,61 +222,6 @@ main {
   gap: 6px;
   font-weight: 500;
   color: var(--text-primary);
-}
-
-/* Tooltip */
-.tooltip {
-  position: relative;
-  display: inline-block;
-}
-
-.tooltip-icon {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  line-height: 14px;
-  text-align: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  cursor: help;
-}
-
-.tooltip .tooltiptext {
-  visibility: hidden;
-  width: 180px;
-  background: var(--bg-card);
-  color: var(--text-primary);
-  text-align: left;
-  padding: 6px 8px;
-  position: absolute;
-  z-index: 100;
-  bottom: 100%;
-  left: 50%;
-  margin-left: -90px;
-  margin-bottom: 6px;
-  font-size: 11px;
-  font-weight: 400;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-}
-
-.tooltip .tooltiptext::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -4px;
-  border-width: 4px;
-  border-style: solid;
-  border-color: var(--border) transparent transparent transparent;
-}
-
-.tooltip:hover .tooltiptext {
-  visibility: visible;
 }
 
 /* Select */
@@ -354,43 +295,6 @@ input:checked + .toggle-slider:before {
 
 input:focus + .toggle-slider {
   outline: 1px solid var(--accent);
-}
-
-/* Footer */
-footer {
-  padding: 12px 15px;
-  border-top: 1px solid var(--border);
-  background: var(--bg-card);
-  border-radius: 0 0 6px 6px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Status */
-.status-message {
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  text-align: center;
-  border-radius: 3px;
-}
-
-.status-message.success {
-  background: #1a3a1a;
-  border: 1px solid var(--success);
-  color: var(--success);
-}
-
-.status-message.error {
-  background: #3a1a1a;
-  border: 1px solid var(--error);
-  color: var(--error);
-}
-
-.status-message:empty {
-  display: none;
 }
 
 /* Toast Notification */
@@ -480,11 +384,6 @@ footer {
 .footer a {
   color: var(--text-secondary);
   text-decoration: none;
-}
-
-#extension-name-display {
-  color: var(--text-secondary);
-  cursor: pointer;
 }
 
 .footer a:hover {

@@ -13,7 +13,6 @@ let settingsCache = { ...DEFAULT_SETTINGS };
 const storageApi = chrome.storage || null;
 const sessionStorageAvailable = Boolean(storageApi && storageApi.session);
 const duplicateRemovals = new Set();
-const duplicateCheckInProgress = new Set();
 // Normalized URLs currently being de-duplicated, so two tabs that commit the
 // same URL in the same burst can't each treat the other as the duplicate and
 // remove it (a delete-both race).
@@ -536,15 +535,13 @@ async function handleNavigationCommitted(details) {
    if (transitionType === 'reload') return;
    if (transitionQualifiers && transitionQualifiers.includes('from_address_bar')) return;
    if (transitionQualifiers && transitionQualifiers.includes('forward_back')) return;
-   if (duplicateCheckInProgress.has(tabId)) return;
 
    const normalizedUrl = normalizeUrl(url);
-   // URL-level lock (alongside the per-tab one): if another tab is already
+   // URL-level lock (freshTabs above already allows one check per tab): if another tab is already
    // de-duplicating this exact URL, bail so the two handlers can't remove each
    // other. The check-and-add is synchronous (no await between), so it is
    // race-free within the event loop.
    if (duplicateUrlsInFlight.has(normalizedUrl)) return;
-   duplicateCheckInProgress.add(tabId);
    duplicateUrlsInFlight.add(normalizedUrl);
 
    try {
@@ -617,7 +614,6 @@ async function handleNavigationCommitted(details) {
     } catch (error) {
        logIgnorableError(error);
     } finally {
-       duplicateCheckInProgress.delete(tabId);
        duplicateUrlsInFlight.delete(normalizedUrl);
     }
 }
