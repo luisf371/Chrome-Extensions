@@ -5,7 +5,7 @@ import {
     removeClosedTab, 
     removeClosedTabBatch, 
     createTab, 
-    createTabWindow, 
+    createTabsWindow,
     resetData, 
     multiFind, 
     multiReplace, 
@@ -741,15 +741,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     
     document.getElementById('open2').textContent = chrome.i18n.getMessage("popup_open2_btn");
     document.getElementById('open2').title = chrome.i18n.getMessage("popup_open2_tooltip");
-    document.getElementById('open2').addEventListener('click', function(e){
-        chrome.windows.create(async function(newWin){    
-            if(chkArray.length>0){
-                for(let i = chkArray.length - 1; i >= 0; i--) {
-                    await createTabWindow(chkArray[i], newWin.id);
-                }
-                window.close();
-            }
-        });
+    document.getElementById('open2').addEventListener('click', async function(e){
+        if(chkArray.length>0){
+            await createTabsWindow(chkArray.slice().reverse());
+            window.close();
+        }
     },false);
     
     document.getElementById('delete2').textContent = chrome.i18n.getMessage("popup_delbtn");

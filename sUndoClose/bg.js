@@ -88,7 +88,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
 });
 
 chrome.tabs.onRemoved.addListener(function(tabId, info) {
-	addClosedTab(tabId, 0).catch(error => {
+	addClosedTab(tabId).catch(error => {
         console.error('sUndoClose: Failed to record closed tab:', error);
     });
 });
@@ -223,13 +223,14 @@ async function settingsUpdate(){
     }
 }
 
-async function addClosedTab(tabId, mode){
+async function addClosedTab(tabId){
     await navigator.locks.request('sUndoClose_data', async (lock) => {
-        await addClosedTabInternal(tabId, mode);
+        await addClosedTabInternal(tabId);
     });
 }
 
-async function addClosedTabInternal(tabId, mode){
+// openUrls (startup only): URLs that are open again, so they are not "closed".
+async function addClosedTabInternal(tabId, openUrls){
 	const key = TABLIST_PREFIX + tabId;
 	let data = await getStorage([key, 'settings', 'ClosedTabIndex', 'TabListIndex']);
 
@@ -252,7 +253,7 @@ async function addClosedTabInternal(tabId, mode){
 		const url = tabData.url;
 		const re = /^(http:|https:|chrome-extension:|file:)/;
 		
-		if (url && re.test(url)) {
+		if (url && re.test(url) && !openUrls?.has(url)) {
 			let exists = -1;
 			const closedTabKeys = closedTabIndex.map(id => CLOSEDTAB_PREFIX + id);
 			const closedTabsData = await getStorage(closedTabKeys);
@@ -303,7 +304,7 @@ async function addClosedTabInternal(tabId, mode){
             // Add new to index
             await updateSearchIndex(rId, createObj.title, createObj.url);
 		} else {
-            // URL is not restorable: still persist the TabListIndex change and
+            // URL is not restorable (or open again): still persist the TabListIndex change and
             // drop the orphaned TabList- entry so it doesn't leak in storage.
             if (storageUpdates.TabListIndex) {
                 await setStorage({ TabListIndex: storageUpdates.TabListIndex });
@@ -315,7 +316,24 @@ async function addClosedTabInternal(tabId, mode){
 	}
 }
 
+// Session restore may still be opening tabs when onStartup fires, so wait
+// until the tab count stops changing (capped at ~5s).
+async function queryTabsWhenSettled() {
+    let tabs = await chrome.tabs.query({});
+    for (let i = 0; i < 10; i++) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const next = await chrome.tabs.query({});
+        if (next.length > 0 && next.length === tabs.length) return next;
+        tabs = next;
+    }
+    return tabs;
+}
+
 async function tabListProcessing() {
+    const openTabs = await queryTabsWhenSettled();
+    const openUrlById = new Map(openTabs.map(t => [t.id, t.url || t.pendingUrl]));
+    const openUrls = new Set(openUrlById.values());
+
     await navigator.locks.request('sUndoClose_data', async (lock) => {
         let allData = await getStorage(null);
         let tabListIndex = allData.TabListIndex || [];
@@ -324,7 +342,9 @@ async function tabListProcessing() {
             if(key.startsWith(TABLIST_PREFIX)) {
                 const tabListId = parseInt(key.substring(TABLIST_PREFIX.length), 10);
                 if(tabListIndex.includes(tabListId)){
-                    await addClosedTabInternal(tabListId,1);
+                    // Live tab already registered this session: leave it alone.
+                    if (openUrlById.get(tabListId) === allData[key].url) continue;
+                    await addClosedTabInternal(tabListId, openUrls);
                 }else{
                     await removeStorage([key]);
                 }

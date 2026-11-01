@@ -196,25 +196,29 @@ export async function createTab(id, selected) {
 	});
 }
 
-export async function createTabWindow(id, wId) {
+export async function createTabsWindow(ids) {
 	await navigator.locks.request('sUndoClose_data', async (lock) => {
-		const data = await getStorage([CLOSEDTAB_PREFIX + id]);
-		const entry = data[CLOSEDTAB_PREFIX + id];
-        
-		if (!entry) return;
+		const data = await getStorage(ids.map(id => CLOSEDTAB_PREFIX + id));
+		const found = ids.filter(id => data[CLOSEDTAB_PREFIX + id]);
 
-		const url = entry.url;
-		
-		await removeClosedTabInternal(id);
-        await incrementRestoreCounts();
+		if (found.length === 0) return;
 
-		chrome.tabs.create({ "url": url, "windowId": wId });
+		// Unfocused: a focused window closes the popup (and kills this code) before
+		// the entries are removed. Entries go only after the window exists.
+		const win = await chrome.windows.create({ url: found.map(id => data[CLOSEDTAB_PREFIX + id].url), focused: false });
+
+		for (const id of found) {
+			await removeClosedTabInternal(id);
+			await incrementRestoreCounts();
+		}
+		await chrome.windows.update(win.id, { focused: true });
 	});
 }
 
 export async function addNewTab(tab) {
 	const re = /^(http:|https:|chrome-extension:|file:)/;
-	if (re.test(tab.url)) {
+	// Never write Incognito tabs to disk.
+	if (!tab.incognito && re.test(tab.url)) {
 		await navigator.locks.request('sUndoClose_data', async (lock) => {
 			if (await chkNewTab(tab)) {
 				let insertThis = { url: tab.url, title: tab.title };
@@ -495,7 +499,7 @@ export async function regExistingTabs() {
         const re = /^(http:|https:|chrome-extension:|file:)/;
         
         for (const tab of tabs) {
-             if (re.test(tab.url)) {
+             if (!tab.incognito && re.test(tab.url)) {
                  const listKey = TABLIST_PREFIX + tab.id;
                  let insertThis = { url: tab.url, title: tab.title };
                  
