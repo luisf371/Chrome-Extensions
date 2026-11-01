@@ -8,11 +8,9 @@ import {
     setBadge,
     updateIcon,
     resetData,
-    updateSearchIndex,
-    removeFromSearchIndex,
-    rebuildSearchIndex,
     TABLIST_PREFIX,
-    CLOSEDTAB_PREFIX
+    CLOSEDTAB_PREFIX,
+    RESTORABLE_URL
 } from './common.js';
 
 const defaultSettings = {
@@ -88,7 +86,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
 });
 
 chrome.tabs.onRemoved.addListener(function(tabId, info) {
-	addClosedTab(tabId, 0).catch(error => {
+	addClosedTab(tabId).catch(error => {
         console.error('sUndoClose: Failed to record closed tab:', error);
     });
 });
@@ -141,7 +139,6 @@ async function initializeFreshInstall(){
         settings: defaultSettings,
         TabListIndex: [],
         ClosedTabIndex: [],
-        SearchIndex: [],
         restoreCountAllTime: 0,
         installDate: Date.now()
     });
@@ -151,15 +148,14 @@ async function initializeFreshInstall(){
 // For startup/update - non-destructive, preserves existing data
 async function ensureDefaults(){
     const existing = await getStorage([
-        'settings', 'TabListIndex', 'ClosedTabIndex', 
-        'SearchIndex', 'restoreCountAllTime', 'installDate'
+        'settings', 'TabListIndex', 'ClosedTabIndex',
+        'restoreCountAllTime', 'installDate'
     ]);
     
     const updates = {};
     if (!existing.settings) updates.settings = defaultSettings;
     if (!existing.TabListIndex) updates.TabListIndex = [];
     if (!existing.ClosedTabIndex) updates.ClosedTabIndex = [];
-    if (!existing.SearchIndex) updates.SearchIndex = [];
     if (existing.restoreCountAllTime === undefined) updates.restoreCountAllTime = 0;
     if (!existing.installDate) updates.installDate = Date.now();
     
@@ -169,14 +165,10 @@ async function ensureDefaults(){
 }
 
 async function settingsUpdate(){
-    let needsInit = false;
 	await navigator.locks.request('sUndoClose_data', async (lock) => {
 		let data = await getStorage(['settings']);
 		
-		if(!data.settings){ 
-            needsInit = true;
-            return; 
-        }
+		if(!data.settings) return;
 
         let settings = data.settings;
         const currDefKeys = Object.keys(defaultSettings);
@@ -204,32 +196,21 @@ async function settingsUpdate(){
         if (settingsChanged) {
             await setStorage({ settings: settings });
         }
-        
-        let checks = await getStorage(['TabListIndex', 'ClosedTabIndex', 'SearchIndex', 'restoreCountAllTime', 'installDate']);
-        if(!checks.TabListIndex){ await setStorage({ TabListIndex: [] }); }
-        if(!checks.ClosedTabIndex){ await setStorage({ ClosedTabIndex: [] }); }
-        if(!checks.restoreCountAllTime && checks.restoreCountAllTime !== 0){ await setStorage({ restoreCountAllTime: 0 }); }
-        if(!checks.installDate){ await setStorage({ installDate: Date.now() }); }
-        
-        if(!checks.SearchIndex && checks.ClosedTabIndex && checks.ClosedTabIndex.length > 0){
-            await rebuildSearchIndex();
-        } else if (!checks.SearchIndex) {
-            await setStorage({ SearchIndex: [] });
-        }
 	});
 
-    if (needsInit) {
-        await ensureDefaults();
-    }
+    await ensureDefaults();
+    // Older versions kept a SearchIndex copy of the closed tabs; drop it.
+    await removeStorage(['SearchIndex']);
 }
 
-async function addClosedTab(tabId, mode){
+async function addClosedTab(tabId){
     await navigator.locks.request('sUndoClose_data', async (lock) => {
-        await addClosedTabInternal(tabId, mode);
+        await addClosedTabInternal(tabId);
     });
 }
 
-async function addClosedTabInternal(tabId, mode){
+// openUrls (startup only): URLs that are open again, so they are not "closed".
+async function addClosedTabInternal(tabId, openUrls){
 	const key = TABLIST_PREFIX + tabId;
 	let data = await getStorage([key, 'settings', 'ClosedTabIndex', 'TabListIndex']);
 
@@ -240,7 +221,6 @@ async function addClosedTabInternal(tabId, mode){
 		
 		let storageUpdates = {};
 		let keysToRemove = [key];
-        let idsToRemoveIndex = [];
 
 		const tIdx = tabListIndex.indexOf(tabId);
 		if (tIdx > -1) {
@@ -250,21 +230,17 @@ async function addClosedTabInternal(tabId, mode){
 
         const tabData = data[key];
 		const url = tabData.url;
-		const re = /^(http:|https:|chrome-extension:|file:)/;
 		
-		if (url && re.test(url)) {
+		if (url && RESTORABLE_URL.test(url) && !openUrls?.has(url)) {
 			let exists = -1;
 			const closedTabKeys = closedTabIndex.map(id => CLOSEDTAB_PREFIX + id);
 			const closedTabsData = await getStorage(closedTabKeys);
 
 			for(let i = closedTabIndex.length-1; i>=0; i--){
 				const closedTab = closedTabsData[CLOSEDTAB_PREFIX + closedTabIndex[i]];
-				if (closedTab){
-                    const cTab = closedTab;
-					if (cTab.url === url){
-						exists=closedTabIndex[i];
-						break;
-					}
+				if (closedTab && closedTab.url === url){
+					exists=closedTabIndex[i];
+					break;
 				}
 			}
 
@@ -276,7 +252,6 @@ async function addClosedTabInternal(tabId, mode){
 
 			if (exists!=-1){
 				keysToRemove.push(CLOSEDTAB_PREFIX+exists);
-                idsToRemoveIndex.push(exists);
 				closedTabIndex.splice(closedTabIndex.indexOf(exists),1);
 			}
 
@@ -287,23 +262,14 @@ async function addClosedTabInternal(tabId, mode){
 			if (closedTabIndex.length > settings.numLimit){
 				const evictId = closedTabIndex.shift();
 				keysToRemove.push(CLOSEDTAB_PREFIX + evictId);
-				idsToRemoveIndex.push(evictId);
 			}
 			storageUpdates.ClosedTabIndex = closedTabIndex;
             
             // Perform writes
             await setStorage(storageUpdates);
             await removeStorage(keysToRemove);
-            
-            // Update Index (Wait for storage write first to be safe, or concurrent)
-            // Remove old/evicted from index
-            if(idsToRemoveIndex.length > 0) {
-                await removeFromSearchIndex(idsToRemoveIndex);
-            }
-            // Add new to index
-            await updateSearchIndex(rId, createObj.title, createObj.url);
 		} else {
-            // URL is not restorable: still persist the TabListIndex change and
+            // URL is not restorable (or open again): still persist the TabListIndex change and
             // drop the orphaned TabList- entry so it doesn't leak in storage.
             if (storageUpdates.TabListIndex) {
                 await setStorage({ TabListIndex: storageUpdates.TabListIndex });
@@ -315,7 +281,24 @@ async function addClosedTabInternal(tabId, mode){
 	}
 }
 
+// Session restore may still be opening tabs when onStartup fires, so wait
+// until the tab count stops changing (capped at ~5s).
+async function queryTabsWhenSettled() {
+    let tabs = await chrome.tabs.query({});
+    for (let i = 0; i < 10; i++) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const next = await chrome.tabs.query({});
+        if (next.length > 0 && next.length === tabs.length) return next;
+        tabs = next;
+    }
+    return tabs;
+}
+
 async function tabListProcessing() {
+    const openTabs = await queryTabsWhenSettled();
+    const openUrlById = new Map(openTabs.map(t => [t.id, t.url || t.pendingUrl]));
+    const openUrls = new Set(openUrlById.values());
+
     await navigator.locks.request('sUndoClose_data', async (lock) => {
         let allData = await getStorage(null);
         let tabListIndex = allData.TabListIndex || [];
@@ -324,7 +307,9 @@ async function tabListProcessing() {
             if(key.startsWith(TABLIST_PREFIX)) {
                 const tabListId = parseInt(key.substring(TABLIST_PREFIX.length), 10);
                 if(tabListIndex.includes(tabListId)){
-                    await addClosedTabInternal(tabListId,1);
+                    // Live tab already registered this session: leave it alone.
+                    if (openUrlById.get(tabListId) === allData[key].url) continue;
+                    await addClosedTabInternal(tabListId, openUrls);
                 }else{
                     await removeStorage([key]);
                 }
@@ -365,15 +350,6 @@ async function cleanClosedTabs() {
 
         if (indexChanged) {
             await setStorage({ ClosedTabIndex: newIndexList });
-            await rebuildSearchIndex();
-        } else {
-            let searchData = await getStorage(['SearchIndex']);
-            let searchIndex = searchData.SearchIndex || [];
-            let newSearchIndex = searchIndex.filter(item => db[item.id]);
-            
-            if (newSearchIndex.length !== searchIndex.length) {
-                await setStorage({ SearchIndex: newSearchIndex });
-            }
         }
     });
 }
