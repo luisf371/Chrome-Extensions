@@ -109,9 +109,6 @@
    "general": {
       "message": "常规设置"
    },
-   "ignore": {
-      "message": "忽略"
-   },
    "name": {
       "description": "书签或文件夹的名称",
       "message": "名称"
@@ -178,72 +175,6 @@
    "statusSaved": {
       "message": "已保存"
    },
-   "optionsFooterText1": {
-      "description": "选项页面的页脚文本",
-      "message": "联系开发者：$neatEmail$",
-      "placeholders": {
-         "neatEmail": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText2": {
-      "message": "$extName$ 是开源的！$neatGithub$",
-      "placeholders": {
-         "extName": {
-            "content": "$1"
-         },
-         "neatGithub": {
-            "content": "$2"
-         }
-      }
-   },
-   "optionsFooterText3": {
-      "message": "常见问题：$neatFaq$",
-      "placeholders": {
-         "neatFaq": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText4": {
-      "message": "查看问题或提交新问题：$neatIssues$",
-      "placeholders": {
-         "neatIssues": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText5": {
-      "message": "浏览自定义图标：$neatIcons$",
-      "placeholders": {
-         "neatIcons": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText6": {
-      "message": "帮助翻译 $extName$：$neatTranslate$",
-      "placeholders": {
-         "extName": {
-            "content": "$1"
-         },
-         "neatTranslate": {
-            "content": "$2"
-         }
-      }
-   },
-   "optionsFooterText7": {
-      "message": "基于 $linkCheeAun$ 的 $neatGithub$",
-      "placeholders": {
-         "linkCheeAun": {
-            "content": "$2"
-         },
-         "neatGithub": {
-            "content": "$1"
-         }
-      }
-   },
    "parentFolder": {
       "description": "在搜索结果列表中书签工具提示显示的父文件夹信息",
       "message": "所在文件夹：'$folderName$'",
@@ -253,9 +184,6 @@
             "example": "书签栏"
          }
       }
-   },
-   "reportError": {
-      "message": "报告错误"
    },
    "reportedToDeveloper": {
       "description": "表示扩展中发生的错误已报告给开发者的消息",

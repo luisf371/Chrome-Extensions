@@ -5,7 +5,7 @@ const reportError = function(msg, url, line) {
     console.error('sNeatBookmarks Error:', msg, 'URL:', url, 'Line:', line);
 };
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request) => {
     if (request.error) {
         reportError(...request.error);
     }
@@ -155,7 +155,6 @@ const restoreIcon = () => chrome.storage.local.get('customIcon').then((result) =
             for (const key in customIcon) {
                 imageData.data[key] = customIcon[key];
             }
-            ctx.putImageData(imageData, 0, 0); // Not strictly needed for setIcon with imageData, but good for completeness
             
             chrome.action.setIcon({ imageData: imageData });
         }

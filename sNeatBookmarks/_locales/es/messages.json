@@ -109,9 +109,6 @@
    "general": {
       "message": "Ajustes generales"
    },
-   "ignore": {
-      "message": "Ignorar"
-   },
    "name": {
       "description": "Nombre de marcador o de carpeta.",
       "message": "Nombre"
@@ -178,72 +175,6 @@
    "statusSaved": {
       "message": "Guardado"
    },
-   "optionsFooterText1": {
-      "description": "Texto de pie de página para la página de opciones.",
-      "message": "Enviar correo al desarrollador a $neatEmail$",
-      "placeholders": {
-         "neatEmail": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText2": {
-      "message": "¡$extName$ es de código abierto! $neatGithub$",
-      "placeholders": {
-         "extName": {
-            "content": "$1"
-         },
-         "neatGithub": {
-            "content": "$2"
-         }
-      }
-   },
-   "optionsFooterText3": {
-      "message": "Preguntas frecuentes: $neatFaq$",
-      "placeholders": {
-         "neatFaq": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText4": {
-      "message": "Ver problemas o informar uno nuevo: $neatIssues$",
-      "placeholders": {
-         "neatIssues": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText5": {
-      "message": "Explorar iconos personalizados: $neatIcons$",
-      "placeholders": {
-         "neatIcons": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText6": {
-      "message": "Ayuda a traducir $extName$ en $neatTranslate$",
-      "placeholders": {
-         "extName": {
-            "content": "$1"
-         },
-         "neatTranslate": {
-            "content": "$2"
-         }
-      }
-   },
-   "optionsFooterText7": {
-      "message": "Basado en $neatGithub$ por $linkCheeAun$",
-      "placeholders": {
-         "linkCheeAun": {
-            "content": "$2"
-         },
-         "neatGithub": {
-            "content": "$1"
-         }
-      }
-   },
    "parentFolder": {
       "description": "Información de la carpeta superior mostrada en la descripción del marcador en la lista de resultados de búsqueda.",
       "message": "Carpeta superior: \"$folderName$\"",
@@ -253,9 +184,6 @@
             "example": "Barra de marcadores"
          }
       }
-   },
-   "reportError": {
-      "message": "Informar del error"
    },
    "reportedToDeveloper": {
       "description": "Un mensaje para un error ocurrido en la extensión, el desarrollador ha sido informado.",

@@ -109,9 +109,6 @@
    "general": {
       "message": "一般設定"
    },
-   "ignore": {
-      "message": "無視"
-   },
    "name": {
       "description": "ブックマークまたはフォルダの名前",
       "message": "名前"
@@ -178,72 +175,6 @@
    "statusSaved": {
       "message": "保存しました"
    },
-   "optionsFooterText1": {
-      "description": "オプションページのフッターテキスト",
-      "message": "開発者へのメール: $neatEmail$",
-      "placeholders": {
-         "neatEmail": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText2": {
-      "message": "$extName$ はオープンソースです！ $neatGithub$",
-      "placeholders": {
-         "extName": {
-            "content": "$1"
-         },
-         "neatGithub": {
-            "content": "$2"
-         }
-      }
-   },
-   "optionsFooterText3": {
-      "message": "よくある質問: $neatFaq$",
-      "placeholders": {
-         "neatFaq": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText4": {
-      "message": "問題の報告や確認: $neatIssues$",
-      "placeholders": {
-         "neatIssues": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText5": {
-      "message": "カスタムアイコンを見る: $neatIcons$",
-      "placeholders": {
-         "neatIcons": {
-            "content": "$1"
-         }
-      }
-   },
-   "optionsFooterText6": {
-      "message": "$extName$ の翻訳に協力する: $neatTranslate$",
-      "placeholders": {
-         "extName": {
-            "content": "$1"
-         },
-         "neatTranslate": {
-            "content": "$2"
-         }
-      }
-   },
-   "optionsFooterText7": {
-      "message": "$linkCheeAun$ による $neatGithub$ をベースにしています",
-      "placeholders": {
-         "linkCheeAun": {
-            "content": "$2"
-         },
-         "neatGithub": {
-            "content": "$1"
-         }
-      }
-   },
    "parentFolder": {
       "description": "検索結果リストでブックマークのツールチップに表示される親フォルダ情報",
       "message": "親フォルダ: \"$folderName$\"",
@@ -253,9 +184,6 @@
             "example": "ブックマークバー"
          }
       }
-   },
-   "reportError": {
-      "message": "エラーを報告"
    },
    "reportedToDeveloper": {
       "description": "拡張機能でエラーが発生し、開発者に報告されたことを示すメッセージ",

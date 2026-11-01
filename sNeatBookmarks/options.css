@@ -507,9 +507,6 @@ textarea#userstyle:focus {
 .toast.success { border-left: 3px solid var(--success); }
 .toast.success .toast-icon { color: var(--success); }
 
-.toast.error { border-left: 3px solid var(--error); }
-.toast.error .toast-icon { color: var(--error); }
-
 [data-theme="light"] .toast {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }

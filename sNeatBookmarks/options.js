@@ -24,12 +24,10 @@
     let toastVisible = false;
     let saveDebounce = null;
 
-    function showToast(message = 'Saved', type = 'success') {
+    function showToast(message) {
         const toast = document.getElementById('toast');
         const toastIcon = toast.querySelector('.toast-icon');
         const toastMessage = toast.querySelector('.toast-message');
-        
-        if (!toast) return;
 
         if (toastTimeout) clearTimeout(toastTimeout);
         
@@ -42,8 +40,8 @@
         
         function displayToast() {
             toastMessage.textContent = message;
-            toastIcon.textContent = type === 'success' ? '\u2713' : '\u2717';
-            toast.className = 'toast ' + type;
+            toastIcon.textContent = '\u2713';
+            toast.className = 'toast success';
             
             requestAnimationFrame(() => {
                 toast.classList.add('show');
@@ -61,7 +59,7 @@
         if (saveDebounce) clearTimeout(saveDebounce);
         saveDebounce = setTimeout(() => {
             const msg = chrome.i18n.getMessage('statusSaved') || 'Saved';
-            showToast(msg, 'success');
+            showToast(msg);
         }, 300);
     }
 
